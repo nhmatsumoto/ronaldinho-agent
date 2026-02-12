@@ -1,0 +1,57 @@
+# Engineering Specifications: Kettei Platform V1
+
+## 1. API Architecture
+**Style**: RESTful API + GraphQL (Hybrid). 
+- **REST**: For standard CRUD and high-performance ingestion (Punches).
+- **GraphQL**: For complex UI dashboards requiring aggregated data (e.g., Employee Dashboard with Profile + Stats).
+
+## 2. Database Schema (PostgreSQL)
+
+### Schema: `identity`
+- **Users**: `Id (UUID)`, `Email`, `PasswordHash`, `SystemRole`, `TenantId`.
+
+### Schema: `organization`
+- **Departments**: `Id`, `Name`, `ManagerId (FK)`.
+- **Worksites**: `Id`, `Name`, `Address`.
+- **JobTitles**: `Id`, `Title`, `DepartmentId`, `BaseRate`.
+- **Employees**: 
+    - `Id (UUID)` matches `identity.Users.Id`.
+    - `Name`, `DepartmentId`, `WorksiteId`, `JobTitleId`.
+    - `BaseRate` (Override), `YukyuBalance`.
+    - `Status` (Active/Inactive), `HealthStatus`.
+
+### Schema: `attendance`
+- **Punches**: `Id`, `EmployeeId`, `Timestamp`, `Type`, `WorksiteId`, `Source`.
+- **Timesheets**: `Date`, `EmployeeId`, `TotalWorkMinutes`, `OvertimeMinutes`, `Status`.
+
+### Schema: `workflow`
+- **Requests**: `Id`, `EmployeeId`, `Type`, `Status`, `Reason`, `Date`, `ApproverId`.
+
+## 3. Technology Stack Updates
+- **ORM**: Entity Framework Core 8 (Code First).
+- **Auth**: ASP.NET Core Identity + JWT Bearer.
+- **Hashing**: BCrypt.Net-Next.
+- **Validation**: FluentValidation.
+
+## 4. Integration Points (Frontend -> Backend)
+
+| Frontend Component | API Endpoint / GraphQL Query | Actions |
+| :--- | :--- | :--- |
+| `App.tsx` (Login) | `POST /api/auth/login` | Returns JWT + Profile |
+| `OrganizationManagement` | `GET /api/organization/departments` | CRUD Departments |
+| `EmployeeManagement` | `GET /api/employees` | List with filters |
+| `PunchClock` | `POST /api/attendance/punch` | Register Entry/Exit |
+| `AdminDashboard` | `GraphQL { employees { id name department { name } } }` | Aggregated View |
+
+## 5. Implementation Phases (Orchestrated)
+
+### Phase 1: Foundation (Current Target)
+1.  **Clean up `Kettei.Domain`**: 
+    - Move `Employee` logic to utilize new schemas.
+    - Create `Department`, `Worksite`.
+2.  **Fix `Kettei.Infrastructure`**:
+    - Implement `BCrypt` hashing.
+    - Update `DbContext` with new DbSets.
+3.  **Update `Kettei.Api`**:
+    - `LoginHandler` to use Hash.
+    - `EmployeeController` exposed via REST.
