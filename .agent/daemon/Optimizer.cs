@@ -1,14 +1,19 @@
+using Microsoft.Extensions.Logging;
+
 namespace Ronaldinho.Daemon;
 
 public class Optimizer
 {
-    private readonly ILogger _logger;
-    private readonly string _logPath = "/workspace/.agent/PERFORMANCE_LOG.toon";
-    private readonly string _missionStorePath = "/workspace/.agent/MISSION_STORE.toon";
+    private readonly ILogger<Optimizer> _logger;
+    private readonly string _logPath;
+    private readonly string _missionStorePath;
 
-    public Optimizer(ILogger logger)
+    public Optimizer(ILogger<Optimizer> logger)
     {
         _logger = logger;
+        string root = Directory.Exists("/workspace") ? "/workspace" : Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../../../"));
+        _logPath = Path.Combine(root, ".agent/PERFORMANCE_LOG.toon");
+        _missionStorePath = Path.Combine(root, ".agent/MISSION_STORE.toon");
     }
 
     public async Task CheckPerformanceGapsAsync()
