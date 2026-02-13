@@ -36,29 +36,44 @@ app.UseStaticFiles(new StaticFileOptions
 // API Endpoints
 app.MapGet("/api/missions", async () => {
     if (!File.Exists(missionStorePath)) return Results.NotFound();
-    var content = await File.ReadAllTextAsync(missionStorePath);
+    using var fs = new FileStream(missionStorePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+    using var reader = new StreamReader(fs);
+    var content = await reader.ReadToEndAsync();
     return Results.Text(content, "text/plain");
 });
 
 app.MapGet("/api/project", async () => {
     if (!File.Exists(projectInfoPath)) return Results.NotFound();
-    var content = await File.ReadAllTextAsync(projectInfoPath);
+    using var fs = new FileStream(projectInfoPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+    using var reader = new StreamReader(fs);
+    var content = await reader.ReadToEndAsync();
     return Results.Text(content, "text/plain");
 });
 
 app.MapPost("/api/project", async (HttpRequest request) => {
-    using var reader = new StreamReader(request.Body);
-    var newDescription = await reader.ReadToEndAsync();
+    using var bodyReader = new StreamReader(request.Body);
+    var newDescription = await bodyReader.ReadToEndAsync();
     
-    // Atualiza o PROJECT_INFO.toon (mantendo o formato simples por enquanto)
-    var lines = await File.ReadAllLinesAsync(projectInfoPath);
+    // Atualiza o PROJECT_INFO.toon
+    string[] lines;
+    using (var fs = new FileStream(projectInfoPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+    using (var reader = new StreamReader(fs)) {
+        var content = await reader.ReadToEndAsync();
+        lines = content.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.None);
+    }
+
     for (int i = 0; i < lines.Length; i++) {
         if (lines[i].Contains("| Description |")) {
             lines[i] = $"| Description | {newDescription} |";
             break;
         }
     }
-    await File.WriteAllLinesAsync(projectInfoPath, lines);
+
+    using (var fs = new FileStream(projectInfoPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+    using (var writer = new StreamWriter(fs)) {
+        await writer.WriteAsync(string.Join("\n", lines));
+    }
+
     return Results.Ok();
 });
 

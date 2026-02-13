@@ -91,15 +91,23 @@ public class Worker : BackgroundService
 
     private async Task ExecuteMissionAsync(Mission m, CancellationToken ct)
     {
-        _logger.LogInformation("Executando Missão [{id}]: {name}", m.Id, m.Name);
-        
-        // Exemplo de uso da Toolbox: Busca rápida de erros críticos
-        var logs = await SearchTools.FindLinesWithPatternAsync(_workspaceRoot, "CRITICAL");
-        foreach(var log in logs) {
-            _logger.LogWarning("Trigger Detectado pela Toolbox: {log}", log);
+        try 
+        {
+            _logger.LogInformation("Executando Missão [{id}]: {name}", m.Id, m.Name);
+            
+            // Busca gatilhos no log de performance
+            string perfLog = Path.Combine(_workspaceRoot, ".agent/PERFORMANCE_LOG.toon");
+            var logs = await SearchTools.FindLinesWithPatternAsync(perfLog, "CRITICAL");
+            foreach(var log in logs) {
+                _logger.LogWarning("Trigger Detectado no Log: {log}", log);
+            }
+            
+            await Task.Delay(2000, ct);
         }
-        
-        await Task.Delay(2000, ct); // Simula trabalho persistente
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao executar missão {id}", m.Id);
+        }
     }
 
     private List<Mission> ParseMissions(string content)
