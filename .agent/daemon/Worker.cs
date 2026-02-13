@@ -20,23 +20,42 @@ public class Worker : BackgroundService
     public Worker(ILogger<Worker> logger, ILogger<Optimizer> optimizerLogger)
     {
         _logger = logger;
-        _optimizer = new Optimizer(optimizerLogger);
+        _workspaceRoot = GetWorkspaceRoot();
+        _optimizer = new Optimizer(optimizerLogger, _workspaceRoot);
         
-        // Detecta o root baseando-se no ambiente (Docker vs Local)
-        _workspaceRoot = Directory.Exists("/workspace") ? "/workspace" : Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../../../"));
         _missionStorePath = Path.Combine(_workspaceRoot, ".agent/MISSION_STORE.toon");
-        
         string agentPath = Path.Combine(_workspaceRoot, ".agent");
+        
+        _logger.LogInformation("--- Ronaldinho Runtime Diagnostics ---");
+        _logger.LogInformation("Base Directory: {base}", AppDomain.CurrentDomain.BaseDirectory);
         _logger.LogInformation("Workspace Root: {root}", _workspaceRoot);
-        _logger.LogInformation("Monitoring Directory: {path}", agentPath);
+        _logger.LogInformation("Mission Store: {path}", _missionStorePath);
 
-        // Configura o Watcher para monitorar mudanças no MISSION_STORE
-        _watcher = new FileSystemWatcher(agentPath) // Updated to use agentPath
+        if (!Directory.Exists(agentPath)) {
+            _logger.LogError("Diretório .agent NÃO ENCONTRADO em: {path}", agentPath);
+        }
+
+        _watcher = new FileSystemWatcher(agentPath) 
         {
             Filter = "MISSION_STORE.toon",
             NotifyFilter = NotifyFilters.LastWrite
         };
         _watcher.Changed += OnMissionStoreChanged;
+    }
+
+    private string GetWorkspaceRoot()
+    {
+        if (Directory.Exists("/workspace")) return "/workspace";
+        
+        var current = AppDomain.CurrentDomain.BaseDirectory;
+        while (!string.IsNullOrEmpty(current))
+        {
+            if (Directory.Exists(Path.Combine(current, ".agent"))) return current;
+            var parent = Path.GetDirectoryName(current);
+            if (parent == null || parent == current) break;
+            current = parent;
+        }
+        return AppDomain.CurrentDomain.BaseDirectory;
     }
 
     private void OnMissionStoreChanged(object sender, FileSystemEventArgs e)

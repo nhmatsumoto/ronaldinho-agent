@@ -26,10 +26,19 @@ builder.Services.AddCors(options => options.AddPolicy("AllowAll", p => p.AllowAn
 var app = builder.Build();
 
 app.UseCors("AllowAll");
-app.UseDefaultFiles(); // Procura por index.html
+
+var dashboardPath = Path.Combine(root, ".agent/dashboard");
+Console.WriteLine($"Serving dashboard from: {dashboardPath}");
+
+var fileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(dashboardPath);
+app.UseDefaultFiles(new DefaultFilesOptions
+{
+    FileProvider = fileProvider,
+    RequestPath = ""
+});
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(Path.Combine(root, ".agent/dashboard")),
+    FileProvider = fileProvider,
     RequestPath = ""
 });
 
