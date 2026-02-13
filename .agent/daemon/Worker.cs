@@ -1,24 +1,37 @@
-using System.Diagnostics;
-using System.Text.RegularExpressions;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
+using Ronaldinho.Toolbox;
 
 namespace Ronaldinho.Daemon;
 
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
-    private readonly string _workspaceRoot = "/workspace";
-    private readonly string _missionStorePath = "/workspace/.agent/MISSION_STORE.toon";
-    private readonly string _securityPolicyPath = "/workspace/.agent/SECURITY_POLICY.toon";
+    private readonly string _workspaceRoot; // Removed direct initialization
+    private readonly string _missionStorePath; // Removed direct initialization
     private readonly FileSystemWatcher _watcher;
     private readonly Optimizer _optimizer;
 
-    public Worker(ILogger<Worker> logger)
+    public Worker(ILogger<Worker> logger, ILogger<Optimizer> optimizerLogger)
     {
         _logger = logger;
-        _optimizer = new Optimizer(logger);
+        _optimizer = new Optimizer(optimizerLogger);
         
+        // Detecta o root baseando-se no ambiente (Docker vs Local)
+        _workspaceRoot = Directory.Exists("/workspace") ? "/workspace" : Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../../../"));
+        _missionStorePath = Path.Combine(_workspaceRoot, ".agent/MISSION_STORE.toon");
+        
+        string agentPath = Path.Combine(_workspaceRoot, ".agent");
+        _logger.LogInformation("Workspace Root: {root}", _workspaceRoot);
+        _logger.LogInformation("Monitoring Directory: {path}", agentPath);
+
         // Configura o Watcher para monitorar mudanças no MISSION_STORE
-        _watcher = new FileSystemWatcher("/workspace/.agent")
+        _watcher = new FileSystemWatcher(agentPath) // Updated to use agentPath
         {
             Filter = "MISSION_STORE.toon",
             NotifyFilter = NotifyFilters.LastWrite
@@ -55,16 +68,25 @@ public class Worker : BackgroundService
 
     private async Task ProcessMissionsAsync(CancellationToken ct)
     {
-        if (!File.Exists(_missionStorePath)) return;
+        try 
+        {
+            if (!File.Exists(_missionStorePath)) 
+            {
+                _logger.LogWarning("Mission Store não encontrado em: {path}", _missionStorePath);
+                return;
+            }
 
-        var content = await File.ReadAllTextAsync(_missionStorePath, ct);
-        var missions = ParseMissions(content);
-
-        var activeMissions = missions.Where(m => m.Status == "EM_PROGRESSO" || m.Status == "EM_PLANEJAMENTO");
-        
-        // MULTITASKING: Processa missões em paralelo usando TPL
-        var tasks = activeMissions.Select(m => Task.Run(() => ExecuteMissionAsync(m, ct), ct));
-        await Task.WhenAll(tasks);
+            var content = await File.ReadAllTextAsync(_missionStorePath, ct);
+            var missions = ParseMissions(content);
+            var activeMissions = missions.Where(m => m.Status == "EM_PROGRESSO" || m.Status == "EM_PLANEJAMENTO");
+            
+            var tasks = activeMissions.Select(m => Task.Run(() => ExecuteMissionAsync(m, ct), ct));
+            await Task.WhenAll(tasks);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao processar missões em {path}", _missionStorePath);
+        }
     }
 
     private async Task ExecuteMissionAsync(Mission m, CancellationToken ct)
@@ -72,7 +94,7 @@ public class Worker : BackgroundService
         _logger.LogInformation("Executando Missão [{id}]: {name}", m.Id, m.Name);
         
         // Exemplo de uso da Toolbox: Busca rápida de erros críticos
-        var logs = Ronaldinho.Toolbox.SearchTools.FindLinesWithPattern(_workspaceRoot, "CRITICAL");
+        var logs = await SearchTools.FindLinesWithPatternAsync(_workspaceRoot, "CRITICAL");
         foreach(var log in logs) {
             _logger.LogWarning("Trigger Detectado pela Toolbox: {log}", log);
         }
