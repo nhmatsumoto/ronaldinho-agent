@@ -8,10 +8,9 @@ public class Optimizer
     private readonly string _logPath;
     private readonly string _missionStorePath;
 
-    public Optimizer(ILogger<Optimizer> logger)
+    public Optimizer(ILogger<Optimizer> logger, string root)
     {
         _logger = logger;
-        string root = Directory.Exists("/workspace") ? "/workspace" : Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../../../"));
         _logPath = Path.Combine(root, ".agent/PERFORMANCE_LOG.toon");
         _missionStorePath = Path.Combine(root, ".agent/MISSION_STORE.toon");
     }
