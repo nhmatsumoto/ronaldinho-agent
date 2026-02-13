@@ -1,0 +1,16 @@
+services:
+  ronaldinho-daemon:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: ronaldinho_daemon
+    env_file:
+      - .env
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    environment:
+      - DOTNET_ENVIRONMENT=Production
+      - AGENT_ROOT=/workspace
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    restart: unless-stopped

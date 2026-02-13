@@ -1,0 +1,21 @@
+# Secrets
+.env
+*.env
+.env.*
+
+# .agent metadados
+.agent/PERFORMANCE_LOG.toon
+
+# Build artifacts
+[Bb]in/
+[Oo]bj/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Docker
+.docker/
+docker-compose.override.yml*
+
+# Logs
+*.log
