@@ -1,4 +1,4 @@
-# Engineering Specifications: Kettei Platform V1
+# Engineering Specifications: [PROJECT_NAME]
 
 ## 1. API Architecture
 **Style**: RESTful API + GraphQL (Hybrid). 
