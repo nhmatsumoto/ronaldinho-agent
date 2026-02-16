@@ -19,9 +19,10 @@ public class Optimizer
     {
         if (!File.Exists(_logPath)) return;
 
-        var lines = await File.ReadAllLinesAsync(_logPath);
-        // Lógica simplificada: se uma operação leva mais de 500ms, sugere otimização
-        foreach (var rawLine in lines)
+        var logs = await File.ReadAllLinesAsync(_logPath);
+        var existingMissionsContent = File.Exists(_missionStorePath) ? await File.ReadAllTextAsync(_missionStorePath) : "";
+
+        foreach (var rawLine in logs)
         {
             var line = Ronaldinho.Toolbox.SecurityGuard.Sanitize(rawLine);
             if (line.Contains("ms |"))
@@ -29,8 +30,17 @@ public class Optimizer
                 var parts = line.Split('|');
                 if (parts.Length > 3 && int.TryParse(parts[3].Replace("ms", "").Trim(), out int ms) && ms > 500)
                 {
-                    _logger.LogWarning("Gargalo detectado: {op} levou {ms}ms. Iniciando Missão de Auto-Otimização.", parts[2].Trim(), ms);
-                    await CreateOptimizationMissionAsync(parts[2].Trim());
+                    string operation = parts[2].Trim();
+                    
+                    // Check if mission already exists for this operation
+                    if (!existingMissionsContent.Contains($"Otimizar {operation}"))
+                    {
+                        _logger.LogWarning("Gargalo detectado: {op} levou {ms}ms. Iniciando Missão de Auto-Otimização.", operation, ms);
+                        await CreateOptimizationMissionAsync(operation);
+                        
+                        // Update local content variable to avoid duplicates in the same loop if multiple logs exist
+                        existingMissionsContent += $"Otimizar {operation}";
+                    }
                 }
             }
         }
