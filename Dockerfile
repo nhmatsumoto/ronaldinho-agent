@@ -20,6 +20,8 @@ RUN mkdir -p /workspace/.agent/dashboard
 
 # Copiar os arquivos do frontend e metadados para o local esperado pelo daemon
 COPY .agent/dashboard /workspace/.agent/dashboard
+COPY .agent/specialists /workspace/.agent/specialists
+COPY .agent/scripts /workspace/.agent/scripts
 COPY .agent/*.toon /workspace/.agent/
 COPY .env /app/.env
 

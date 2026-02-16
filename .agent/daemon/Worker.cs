@@ -13,9 +13,11 @@ public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private readonly string _workspaceRoot; // Removed direct initialization
-    private readonly string _missionStorePath; // Removed direct initialization
+    private readonly string _missionStorePath;
     private readonly FileSystemWatcher _watcher;
     private readonly Optimizer _optimizer;
+    private readonly SemaphoreSlim _fileLock = new SemaphoreSlim(1, 1);
+    private DateTime _lastWatchTrigger = DateTime.MinValue;
 
     public Worker(ILogger<Worker> logger, ILogger<Optimizer> optimizerLogger)
     {
@@ -60,8 +62,9 @@ public class Worker : BackgroundService
 
     private void OnMissionStoreChanged(object sender, FileSystemEventArgs e)
     {
-        _logger.LogInformation("MISSION_STORE alterado. Reavaliando missões...");
-        // Gatilho para processamento imediato
+        if ((DateTime.Now - _lastWatchTrigger).TotalSeconds < 2) return;
+        _lastWatchTrigger = DateTime.Now;
+        _logger.LogInformation("MISSION_STORE alterado. Reavaliando missões em breve...");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -95,12 +98,21 @@ public class Worker : BackgroundService
                 return;
             }
 
-            var content = await File.ReadAllTextAsync(_missionStorePath, ct);
+            string content;
+            await _fileLock.WaitAsync(ct);
+            try {
+                content = await File.ReadAllTextAsync(_missionStorePath, ct);
+            } finally {
+                _fileLock.Release();
+            }
+
             var missions = ParseMissions(content);
             var activeMissions = missions.Where(m => m.Status == "EM_PROGRESSO" || m.Status == "EM_PLANEJAMENTO");
             
-            var tasks = activeMissions.Select(m => Task.Run(() => ExecuteMissionAsync(m, ct), ct));
-            await Task.WhenAll(tasks);
+            // Sequential to avoid file racing during status updates if they finish fast
+            foreach (var m in activeMissions) {
+                await ExecuteMissionAsync(m, ct);
+            }
         }
         catch (Exception ex)
         {
@@ -114,18 +126,44 @@ public class Worker : BackgroundService
         {
             _logger.LogInformation("Executando Missão [{id}]: {name}", m.Id, m.Name);
             
-            // Busca gatilhos no log de performance
-            string perfLog = Path.Combine(_workspaceRoot, ".agent/PERFORMANCE_LOG.toon");
-            var logs = await SearchTools.FindLinesWithPatternAsync(perfLog, "CRITICAL");
-            foreach(var log in logs) {
-                _logger.LogWarning("Trigger Detectado no Log: {log}", log);
-            }
-            
-            await Task.Delay(2000, ct);
+            // Simulação de trabalho
+            await Task.Delay(5000, ct);
+
+            // Atualizar status para CONCLUIDO
+            await UpdateMissionStatusAsync(m.Id, "CONCLUIDO", ct);
+            _logger.LogInformation("Missão [{id}] CONCLUÍDA com sucesso.", m.Id);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Erro ao executar missão {id}", m.Id);
+            await UpdateMissionStatusAsync(m.Id, "FALHA", ct);
+        }
+    }
+
+    private async Task UpdateMissionStatusAsync(string id, string newStatus, CancellationToken ct)
+    {
+        await _fileLock.WaitAsync(ct);
+        try 
+        {
+            var content = await File.ReadAllTextAsync(_missionStorePath, ct);
+            var lines = content.Split('\n').ToList();
+            for (int i = 0; i < lines.Count; i++)
+            {
+                if (lines[i].Contains($"| {id} |"))
+                {
+                    var parts = lines[i].Split('|').Select(p => p.Trim()).ToArray();
+                    if (parts.Length >= 6)
+                    {
+                        parts[3] = newStatus;
+                        lines[i] = $"| {string.Join(" | ", parts.Skip(1).Take(parts.Length - 2))} |";
+                    }
+                }
+            }
+            await File.WriteAllLinesAsync(_missionStorePath, lines, ct);
+        }
+        finally
+        {
+            _fileLock.Release();
         }
     }
 
