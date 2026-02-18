@@ -51,6 +51,33 @@ app.MapGet("/api/missions", async () => {
     return Results.Text(content, "text/plain");
 });
 
+app.MapGet("/api/logs", async () => {
+    string logsRoot = Path.Combine(root, "logs/runs");
+    if (!Directory.Exists(logsRoot)) return Results.Text("");
+
+    // Busca o diretório de data mais recente
+    var lastDateDir = Directory.GetDirectories(logsRoot)
+        .OrderByDescending(d => d)
+        .FirstOrDefault();
+
+    if (lastDateDir == null) return Results.Text("");
+
+    // Busca todos os arquivos .jsonl do dia e concatena os últimos
+    var logFiles = Directory.GetFiles(lastDateDir, "*.jsonl")
+        .OrderByDescending(f => File.GetLastWriteTime(f))
+        .Take(5); // Pega os 5 arquivos de log mais recentes
+
+    var allContent = new List<string>();
+    foreach (var file in logFiles)
+    {
+        using var fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var reader = new StreamReader(fs);
+        allContent.Add(await reader.ReadToEndAsync());
+    }
+
+    return Results.Text(string.Join("\n", allContent), "text/plain");
+});
+
 app.MapGet("/api/project", async () => {
     if (!File.Exists(projectInfoPath)) return Results.NotFound();
     using var fs = new FileStream(projectInfoPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);

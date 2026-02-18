@@ -386,28 +386,54 @@
             }
         }
 
+        // Logs reais de atividade
+        let displayedLogs = new Set();
+
+        async function fetchLogs() {
+            try {
+                const res = await fetch('/api/logs');
+                const text = await res.text();
+                if (!text) return;
+
+                const logLines = text.split('\n').filter(l => l.trim().startsWith('{'));
+                const container = document.getElementById('log-container');
+
+                logLines.forEach(line => {
+                    try {
+                        const data = JSON.parse(line);
+                        const logId = data.ts + data.event + data.status;
+                        
+                        if (!displayedLogs.has(logId)) {
+                            displayedLogs.add(logId);
+                            const time = new Date(data.ts).toLocaleTimeString('pt-BR', { hour12: false });
+                            const entry = document.createElement('div');
+                            entry.className = 'log-entry';
+                            
+                            let msgClass = 'log-msg-info';
+                            if (data.status === 'done' || data.status === 'success') msgClass = 'log-msg-success';
+                            if (data.status === 'error' || data.status === 'blocked') msgClass = 'log-msg-warning';
+
+                            const message = `${data.agent}: ${data.event} -> ${data.status} ${data.error ? '(' + data.error + ')' : ''}`;
+                            entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${msgClass}">${message}</span>`;
+                            container.appendChild(entry);
+                            
+                            // Manter apenas os últimos 50 no DOM
+                            if (container.children.length > 50) {
+                                container.removeChild(container.firstChild);
+                            }
+                            container.scrollTop = container.scrollHeight;
+                        }
+                    } catch (e) { /* silent parse error */ }
+                });
+            } catch (e) { console.error("Erro ao buscar logs:", e); }
+        }
+
         // Init
         fetchMissions();
         fetchProject();
+        fetchLogs();
         setInterval(fetchMissions, 5000);
-
-        // Simulação de logs (no futuro virá via API/SignalR)
-        const logContainer = document.getElementById('log-container');
-        const activities = [
-            { msg: "Watcher: Novo arquivo detectado no Toolbox.", type: "success" },
-            { msg: "Gemini: Analisando tokens para a próxima missão.", type: "info" },
-            { msg: "Optimizer: Monitorando latência do SimpleDiff.", type: "warning" }
-        ];
-
-        setInterval(() => {
-            const act = activities[Math.floor(Math.random() * activities.length)];
-            const time = new Date().toLocaleTimeString('pt-BR', { hour12: false });
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-msg-${act.type}">${act.msg}</span>`;
-            logContainer.appendChild(entry);
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }, 4000);
+        setInterval(fetchLogs, 3000);
     </script>
 </body>
 
