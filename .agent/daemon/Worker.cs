@@ -107,7 +107,7 @@ public class Worker : BackgroundService
             }
 
             var missions = ParseMissions(content);
-            var activeMissions = missions.Where(m => m.Status == "EM_PROGRESSO" || m.Status == "EM_PLANEJAMENTO");
+            var activeMissions = missions.Where(m => m.Status == "EM_PROGRESSO" || m.Status == "EM_PLANEJAMENTO" || m.Status == "EM_EXECUCAO");
             
             // Sequential to avoid file racing during status updates if they finish fast
             foreach (var m in activeMissions) {
