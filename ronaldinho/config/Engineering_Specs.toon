@@ -55,3 +55,6 @@
 3.  **Update `Kettei.Api`**:
     - `LoginHandler` to use Hash.
     - `EmployeeController` exposed via REST.
+
+## 🔧 TROUBLESHOOTING (KNOWLEDGE BASE)
+- **Vite/TypeScript**: Se o erro `Cannot find type definition file for 'vite/client'` ocorrer, verifique se `vite` está instalado no local e se o `tsconfig` referencia corretamente as definições de tipos do Vite. use `troubleshooter.py` para correções automáticas.
