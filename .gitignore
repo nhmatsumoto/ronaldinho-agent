@@ -1,16 +1,20 @@
-# Secrets
+# Secrets & Credentials
 .env
 *.env
 .env.*
+secrets/
 
-# Ronaldinho Workspace
+# Ronaldinho Local Workspace
 workspace/
-.agent/REPORTS/
-logs/
-.env
+ronaldinho/audit/*.jsonl
+ronaldinho/memory/snapshots/*.json
+ronaldinho/reports/*.md
+!ronaldinho/audit/.gitkeep
+!ronaldinho/memory/snapshots/.gitkeep
 
-# .agent metadados
-.agent/PERFORMANCE_LOG.toon
+# Metadata & Performance
+.agent/
+ronaldinho/config/PERFORMANCE_LOG.toon
 
 # Build artifacts
 [Bb]in/
@@ -18,10 +22,14 @@ logs/
 *.user
 *.userosscache
 *.sln.docstates
+dist/
+build/
 
 # Docker
 .docker/
 docker-compose.override.yml*
 
-# Logs
+# Logs & Temporary
 *.log
+logs/runs/
+tmp/
