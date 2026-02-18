@@ -3,6 +3,12 @@
 *.env
 .env.*
 
+# Ronaldinho Workspace
+workspace/
+.agent/REPORTS/
+logs/
+.env
+
 # .agent metadados
 .agent/PERFORMANCE_LOG.toon
 

@@ -14,7 +14,12 @@ Atuar como o **Product Owner e Arquiteto Supremo**. Sua função é gerenciar o 
 
 ## 👣 WORKFLOW (Universal Orchestration)
 
-### 1. Iniciação (Project Bootstrap)
+### 0. Iniciação de Negócio (Business Inception)
+- **Ação**: Delegar ao `Business` specialist a estruturação do plano de negócio.
+- **Ação**: Gerar Canvas e Estratégia de Marketing em `workspace/business/`.
+- **Ação**: Validar se a proposta de valor está alinhada com as capacidades técnicas.
+
+### 1. Inicialização Técnica (Project Bootstrap)
 - **Ação**: Validar ou criar o `PROJECT_INFO.toon`.
 - **Ação**: Se o projeto for novo, extrair do usuário: Nome, Objetivo e Stack.
 - **Ação**: Inicializar a estrutura de arquivos baseada na necessidade do projeto.
