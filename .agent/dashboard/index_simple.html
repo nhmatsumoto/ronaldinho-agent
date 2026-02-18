@@ -213,36 +213,26 @@
             } catch (e) { }
         }
 
-        async function sendMessage() {
+        function sendMessage() {
             const input = document.getElementById('userInput');
-            const text = input.value;
-            if (!text) return;
+            if (!input.value) return;
 
             const chat = document.getElementById('chat');
             const msg = document.createElement('div');
             msg.className = 'msg user';
-            msg.innerText = text;
+            msg.innerText = input.value;
             chat.appendChild(msg);
+
+            setTimeout(() => {
+                const botMsg = document.createElement('div');
+                botMsg.className = 'msg bot';
+                botMsg.innerText = "Entendido. Estou analisando seu pedido...";
+                chat.appendChild(botMsg);
+                chat.scrollTop = chat.scrollHeight;
+            }, 600);
 
             input.value = '';
             chat.scrollTop = chat.scrollHeight;
-
-            try {
-                await fetch('/api/chat', {
-                    method: 'POST',
-                    body: text
-                });
-
-                setTimeout(() => {
-                    const botMsg = document.createElement('div');
-                    botMsg.className = 'msg bot';
-                    botMsg.innerText = "Entendido. A missão foi registrada no sistema e estou começando a trabalhar nela agora mesmo!";
-                    chat.appendChild(botMsg);
-                    chat.scrollTop = chat.scrollHeight;
-                }, 600);
-            } catch (e) {
-                console.error(e);
-            }
         }
 
         setInterval(updateStatus, 3000);

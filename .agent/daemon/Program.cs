@@ -98,6 +98,18 @@ app.MapGet("/api/project", async () => {
     return Results.Text(content, "text/plain");
 });
 
+app.MapPost("/api/chat", async (HttpRequest request) => {
+    using var reader = new StreamReader(request.Body);
+    var message = await reader.ReadToEndAsync();
+    
+    // Gera uma nova missão baseada no chat
+    string missionId = $"M-CHAT-{DateTime.Now:fff}";
+    string missionLine = $"| {missionId} | {message} | EM_EXECUCAO | Orquestrador |";
+    
+    await File.AppendAllTextAsync(missionStorePath, "\n" + missionLine);
+    return Results.Ok(new { status = "Mission Created", id = missionId });
+});
+
 app.MapPost("/api/project", async (HttpRequest request) => {
     using var bodyReader = new StreamReader(request.Body);
     var newDescription = await bodyReader.ReadToEndAsync();
