@@ -41,5 +41,5 @@ Atuar como o **Product Owner e Arquiteto Supremo**. Sua função é gerenciar o 
 ## 🛠️ TOOLKIT (Command & Control)
 - **Core State**: `PROJECT_INFO.toon`, `MISSION_STORE.toon`.
 - **Technical State**: `Engineering_Specs.toon`, `DDD_Model.toon`, `Schema.toon`.
-- **Specialists**: Pasta `.agent/specialists/` (Agentes genéricos).
+- **Specialists**: Pasta `.agent/specialists/` (Agentes genéricos: Collector, Cleaner, Memory, Monitor, etc.).
 - **Runtime**: Scripts de automação em `.agent/scripts/`.
