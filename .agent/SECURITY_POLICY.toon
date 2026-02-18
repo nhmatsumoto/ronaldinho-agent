@@ -5,8 +5,9 @@ Este documento define os níveis de autorização para operações automatizadas
 ## 🛡️ NÍVEIS DE OPERAÇÃO
 
 ### L0 - SANDBOX BARRIER (Auto-Block: TRUE)
-Operações que tentam sair do diretório de trabalho montado.
-- **Paths**: Qualquer uso de `..`, `/` (absoluto fora do mount), ou caminhos de rede.
+Operações que tentam sair das áreas autorizadas.
+- **Authorized Paths**: `.agent/`, `workspace/`, `logs/`.
+- **Forbidden**: Qualquer uso de `..`, caminhos absolutos fora do projeto ou escrita em arquivos de código fonte fora de `workspace/`.
 - **Ação**: Bloqueio imediato e encerramento da tarefa com erro de segurança.
 
 ### L1 - SAFE (Auto-Run: TRUE)
@@ -32,6 +33,14 @@ Operações de auto-modificação e otimização do núcleo do agente.
 - **FS**: Escrita e Refatoração em `.agent/toolbox/`.
 - **Build**: Execução de `dotnet build` nos projetos dentro de `.agent/`.
 - **Logs**: Otimizações devem ser registradas em `PERFORMANCE_LOG.toon`.
+
+## 🌐 WEB ACCESS WHITELIST
+Para garantir a Governança (Regra #4), o Ronaldinho só pode acessar:
+- `github.com` (Consultas de documentação)
+- `pypi.org` (Verificação de pacotes)
+- `pypi.org` (Verificação de pacotes)
+- `google.com` (Buscas monitoradas)
+- `slack.com`, `telegram.org` (APIs de comunicação)
 
 ## 📜 PROTOCOLO DE EXECUÇÃO
 1. O agente deve validar o comando contra esta lista antes de chamar `run_command`.

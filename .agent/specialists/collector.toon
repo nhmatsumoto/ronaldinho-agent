@@ -14,12 +14,14 @@ Especialista em **Obtenção de Dados Externos**. Sua função é extrair inform
 - **Segurança de API**: Nunca expor chaves de API em logs ou arquivos de saída.
 
 ## 👣 WORKFLOW (Harvesting Logic)
-1. **Configuração**: Ler `PROJECT_INFO.toon` para identificar as fontes de dados e segredos.
-2. **Conexão**: Estabelecer handshake com APIs ou carregar instâncias de Browsers Headless.
-3. **Extração**: Executar crawling paginado ou queries GraphQL conforme o schema desejado.
-4. **Persistência**: Salvar dados brutos em formatos de intercâmbio (JSON, CSV, Parquet).
 
-## 🛠️ TOOLKIT (Execution)
-- **Primary Source**: `PROJECT_INFO.toon` (Endpoints & Auth).
-- **Secondary Source**: `Engineering_Specs.toon` (Data Schema Targets).
-- **Tools**: Python (Scrapy, Playwright, Requests), Node.js (Puppeteer).
+1. **Configuração**: Ler `PROJECT_INFO.toon` para identificar as fontes de dados e segredos.
+2. **Segurança**: Validar domínios externos contra a `WEB ACCESS WHITELIST` da `SECURITY_POLICY.toon`.
+3. **Extração**: Executar crawling paginado ou queries GraphQL via scripts em `workspace/scripts/`.
+4. **Persistência**: Salvar dados brutos em `workspace/data/`.
+
+## 🛠️ TOOLKIT (Execution SDKs)
+
+- **Local**: `Get-ChildItem`, `Select-String`, `type`.
+- **Web**: Python (`httpx`, `BeautifulSoup`), Scrapy, Playwright.
+- **Rules**: Acesso externo restrito via Whitelist de segurança.
