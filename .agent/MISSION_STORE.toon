@@ -7,6 +7,12 @@
 | M-OPT-99a2 | Otimizar DatabaseQuery:Users | CONCLUIDO | ALTA | Refatorar algoritmo em Ronaldinho.Toolbox via Gemini Intelligence |
 
 
-| M-CHAT-778 | Teste | EM_EXECUCAO | Orquestrador |
-| M-CHAT-893 | Você pode me responder? | EM_EXECUCAO | Orquestrador |
-| M-CHAT-800 | crie um arquivo .mp3 com a voz do bombe esponja e dizend olá patrick | EM_EXECUCAO | Orquestrador |
+| M-CHAT-778 | Teste | CONCLUIDO | Orquestrador |
+| M-CHAT-893 | Você pode me responder? | CONCLUIDO | Orquestrador |
+| M-CHAT-800 | crie um arquivo .mp3 com a voz do bombe esponja e dizend olá patrick | CONCLUIDO | Orquestrador |
+
+
+
+| M-CHAT-049 | Olá | CONCLUIDO | Orquestrador |
+
+| M-CHAT-269 | crie um index html e clone o spotfy dele | CONCLUIDO | Orquestrador |
