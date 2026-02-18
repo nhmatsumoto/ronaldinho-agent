@@ -163,6 +163,16 @@
         </div>
 
         <div class="plan-list">
+            <div class="section-title">Análise Financeira</div>
+            <div id="finance-panel"
+                style="padding: 1rem; background: rgba(0,255,136,0.05); border-radius: 0.75rem; border: 1px dashed var(--accent); margin-bottom: 1.5rem;">
+                <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.25rem;">PROJEÇÃO ROI</div>
+                <div id="roi-val" style="font-size: 1.2rem; font-weight: 800; color: var(--accent);">--%</div>
+                <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.75rem; margin-bottom: 0.25rem;">
+                    VALOR ATUAL LÍQUIDO (VPL)</div>
+                <div id="npv-val" style="font-size: 1rem; font-weight: 600;">$--</div>
+            </div>
+
             <div class="section-title">Planos Ativos</div>
             <div id="missions">
                 <!-- Missions will load here -->
@@ -228,6 +238,15 @@
             } catch (e) { }
         }
 
+        async function fetchFinance() {
+            try {
+                const res = await fetch('/api/finance');
+                const data = await res.json();
+                document.getElementById('roi-val').innerText = data.roi;
+                document.getElementById('npv-val').innerText = `$${data.npv}`;
+            } catch (e) { }
+        }
+
         function sendMessage() {
             const input = document.getElementById('userInput');
             if (!input.value) return;
@@ -251,7 +270,9 @@
         }
 
         setInterval(fetchState, 3000);
+        setInterval(fetchFinance, 5000);
         fetchState();
+        fetchFinance();
     </script>
 </body>
 
