@@ -77,6 +77,14 @@ def run_loop():
             log_event("Orquestrador", f"Missão {m['name']} finalizada", "SUCESSO", m['id'])
             print(f"> Mission {m['id']} DONE.")
 
+        # Self-Audit Loop (Rule #11 - Evolution)
+        try:
+            audit_script = os.path.join(WORKSPACE_ROOT, "ronaldinho", "skills", "audit_tool.py")
+            memory_dir = os.path.join(WORKSPACE_ROOT, "ronaldinho", "memory")
+            subprocess.run(["python", audit_script, LOG_DIR, memory_dir], capture_output=True)
+        except Exception as e:
+            print(f"! Self-Audit Failed: {e}")
+
         time.sleep(10)
 
 if __name__ == "__main__":

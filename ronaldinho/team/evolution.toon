@@ -22,6 +22,7 @@ Especialista em **Análise de Arquitetura e Auto-Evolução**. Sua função é e
 5.  **Validação**: Testar a nova capacidade no `workspace/`.
 
 ## 🛠️ TOOLKIT (Evolutionary Engine)
-- **Knowledge Base**: `.agent/knowledge/memory/` (Histórico de decisões).
-- **Tool**: `.toolbox/memory_tool.py` (Versionamento Git).
-- **Audit Source**: Todos os arquivos `.toon` e scripts em `.toolbox/`.
+- **Knowledge Base**: `ronaldinho/memory/` (Histórico de decisões).
+- **Audit Source**: Todos os arquivos `.toon` e scripts em `ronaldinho/skills/`.
+- **Logs**: Analisar `ronaldinho/audit/` para detecção de erros.
+- **Troubleshooter**: Atualizar `ronaldinho/skills/troubleshooter.py` com novas soluções.
