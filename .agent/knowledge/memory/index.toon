@@ -1,6 +1,0 @@
-# MEMORY INDEX (TOON)
-
-| Commit ID | Timestamp | Topic | Keywords | Snapshot Path |
-| :--- | :--- | :--- | :--- | :--- |
-| INIT-000 | 2026-02-19T01:55:00Z | Initialization | system, startup, memory | .agent/knowledge/memory/commits/init_000.json |
-| MEM-1771433634 | 2026-02-19T01:53:54.698475 | Snapshot | Base infrastructure implemente | .agent/knowledge/memory/commits/MEM-1771433634.json |
