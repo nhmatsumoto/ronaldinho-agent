@@ -78,6 +78,18 @@ app.MapGet("/api/logs", async () => {
     return Results.Text(string.Join("\n", allContent), "text/plain");
 });
 
+app.MapGet("/api/finance", () => {
+    // Simulação usando o novo FinancialEngine
+    double npv = Ronaldinho.Toolbox.FinancialEngine.CalculateNPV(0.1, new double[] { -1000, 400, 500, 600 });
+    double roi = Ronaldinho.Toolbox.FinancialEngine.CalculateROI(1500, 1000);
+    
+    return Results.Json(new { 
+        npv = Math.Round(npv, 2), 
+        roi = Math.Round(roi * 100, 2) + "%", 
+        health = "SAUDÁVEL" 
+    });
+});
+
 app.MapGet("/api/project", async () => {
     if (!File.Exists(projectInfoPath)) return Results.NotFound();
     using var fs = new FileStream(projectInfoPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
