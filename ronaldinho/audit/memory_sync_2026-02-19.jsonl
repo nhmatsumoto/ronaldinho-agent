@@ -1,0 +1,1 @@
+{"ts": 1771449679.46667, "agent": "MemoryTool", "event": "sync", "status": "COMMIT_ONLY", "artifacts": [], "error": "Git error: fatal: 'origin' does not appear to be a git repository\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.\n"}

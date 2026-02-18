@@ -82,8 +82,12 @@ def run_loop():
             audit_script = os.path.join(WORKSPACE_ROOT, "ronaldinho", "skills", "audit_tool.py")
             memory_dir = os.path.join(WORKSPACE_ROOT, "ronaldinho", "memory")
             subprocess.run(["python", audit_script, LOG_DIR, memory_dir], capture_output=True)
+            
+            # Memory Sync to GitHub
+            memory_script = os.path.join(WORKSPACE_ROOT, "ronaldinho", "skills", "memory_tool.py")
+            subprocess.run(["python", memory_script, "sync", "--summary", "Automatic context sync"], capture_output=True)
         except Exception as e:
-            print(f"! Self-Audit Failed: {e}")
+            print(f"! Self-Audit or Memory Sync Failed: {e}")
 
         time.sleep(10)
 

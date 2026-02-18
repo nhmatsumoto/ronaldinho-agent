@@ -6,30 +6,26 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
-# Constants
-MEMORY_DIR = Path(".agent/knowledge/memory")
-COMMIT_DIR = MEMORY_DIR / "commits"
-LOG_DIR_BASE = Path("logs/runs")
+# Updated Constants for Themed Structure
+WORKSPACE_ROOT = Path(__file__).parents[2]
+MEMORY_DIR = WORKSPACE_ROOT / "ronaldinho" / "memory"
+CONFIG_DIR = WORKSPACE_ROOT / "ronaldinho" / "config"
+LOG_DIR_BASE = WORKSPACE_ROOT / "ronaldinho" / "audit"
 
 def log_event(event: str, status: str, artifacts: list = None, error: str = None):
     """Governance Rule #6: Structured Logging"""
-    date_str = datetime.now().strftime("%Y-%m-%d")
-    log_dir = LOG_DIR_BASE / date_str
+    log_dir = LOG_DIR_BASE
     log_dir.mkdir(parents=True, exist_ok=True)
     
-    run_id = f"tool_mem_{int(time.time())}"
-    log_file = log_dir / f"run_{run_id}.jsonl"
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    log_file = log_dir / f"memory_sync_{date_str}.jsonl"
     
     log_entry = {
-        "ts": datetime.now().isoformat(),
-        "run_id": run_id,
-        "task_id": "T-MEMORY",
+        "ts": time.time(),
         "agent": "MemoryTool",
         "event": event,
         "status": status,
-        "duration_ms": 0,
         "artifacts": artifacts or [],
-        "retries": 0,
         "error": error
     }
     
@@ -48,17 +44,22 @@ def read_toon_table(path: Path) -> str:
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
-def commit(summary: str):
+def sync(summary: str):
     try:
-        if not COMMIT_DIR.exists():
-            COMMIT_DIR.mkdir(parents=True, exist_ok=True)
+        if not MEMORY_DIR.exists():
+            MEMORY_DIR.mkdir(parents=True, exist_ok=True)
+            
+        # Initialize if not a repo
+        if not (MEMORY_DIR / ".git").exists():
+            print("Initializing memory repository...")
+            run_git_command(["init"])
             
         timestamp = datetime.now().isoformat()
         commit_id = f"MEM-{int(time.time())}"
         
-        # Capture context into a file in the memory repo
-        mission_store = read_toon_table(Path(".agent/MISSION_STORE.toon"))
-        project_info = read_toon_table(Path(".agent/PROJECT_INFO.toon"))
+        # Capture context into the memory repo
+        mission_store = read_toon_table(CONFIG_DIR / "MISSION_STORE.toon")
+        project_info = read_toon_table(CONFIG_DIR / "PROJECT_INFO.toon")
         
         snapshot = {
             "commit_id": commit_id,
@@ -70,57 +71,45 @@ def commit(summary: str):
             }
         }
         
-        snapshot_path = COMMIT_DIR / f"state.json"
+        snapshot_dir = MEMORY_DIR / "snapshots"
+        snapshot_dir.mkdir(exist_ok=True)
+        snapshot_path = snapshot_dir / "latest_context.json"
+        
         with open(snapshot_path, "w", encoding="utf-8") as f:
             json.dump(snapshot, f, indent=4)
             
-        # Git Lifecycle for Memory Repo
+        # Git Lifecycle
         run_git_command(["add", "."])
-        run_git_command(["commit", "-m", f"[{commit_id}] {summary}"])
-        
-        log_event("commit", "done", artifacts=[str(snapshot_path)])
-        print(f"Context committed to memory repository: {commit_id}")
-        
-    except Exception as e:
-        log_event("commit", "error", error=str(e))
-        print(f"Error during memory commit: {e}")
-
-def search(query: str):
-    try:
-        # Use git log to search commit messages
-        print(f"Searching memory for: {query}")
-        results = run_git_command(["log", "--grep", query, "--oneline"])
-        
-        if not results.strip():
-            print("No matching memory commits found.")
+        # Check if there are changes to commit
+        status = run_git_command(["status", "--porcelain"])
+        if status.strip():
+            run_git_command(["commit", "-m", f"[{commit_id}] {summary}"])
+            print(f"Context committed: {commit_id}")
+            
+            # Push to GitHub
+            try:
+                print("Syncing with GitHub...")
+                run_git_command(["push", "origin", "master"]) # Assuming master/main
+                log_event("sync", "SUCCESS", artifacts=[str(snapshot_path)])
+            except Exception as push_err:
+                print(f"Warning: Could not push to remote. Is 'origin' configured? {push_err}")
+                log_event("sync", "COMMIT_ONLY", error=str(push_err))
         else:
-            print(results)
-                
-        log_event("search", "done")
+            print("No changes to sync.")
+        
     except Exception as e:
-        log_event("search", "error", error=str(e))
-        print(f"Error during memory search: {e}")
+        log_event("sync", "ERROR", error=str(e))
+        print(f"Error during memory sync: {e}")
 
 def main():
-    parser = argparse.ArgumentParser(description="Git-based Memory Management Tool for Ronaldinho Agent")
-    subparsers = parser.add_subparsers(dest="command", help="Commands")
-    
-    # Commit
-    commit_parser = subparsers.add_parser("commit", help="Commit current context to memory")
-    commit_parser.add_argument("--summary", required=True, help="Summary of the context state")
-    
-    # Search
-    search_parser = subparsers.add_parser("search", help="Search the memory history")
-    search_parser.add_argument("--query", required=True, help="Query string")
+    parser = argparse.ArgumentParser(description="GitHub-integrated Memory Tool for Ronaldinho Agent")
+    parser.add_argument("command", choices=["sync"], help="Commands")
+    parser.add_argument("--summary", required=True, help="Summary of the context state")
     
     args = parser.parse_args()
     
-    if args.command == "commit":
-        commit(args.summary)
-    elif args.command == "search":
-        search(args.query)
-    else:
-        parser.print_help()
+    if args.command == "sync":
+        sync(args.summary)
 
 if __name__ == "__main__":
     main()
