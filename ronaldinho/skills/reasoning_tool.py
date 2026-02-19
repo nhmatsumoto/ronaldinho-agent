@@ -2,11 +2,26 @@ import re
 import os
 import sys
 
-def parse_instruction(text):
+# Add project root to sys.path for internal imports
+root_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if root_path not in sys.path:
+    sys.path.append(root_path)
+
+def parse_instruction(text, user_id="default"):
+    # Try Gemini Reasoning first
+    try:
+        from ronaldinho.skills.gemini_skill import analyze_instruction
+        plan = analyze_instruction(text, user_id)
+        if plan and "skill" in plan and "error" not in plan:
+            return plan
+    except Exception as e:
+        # Fallback to Regex if Gemini fails
+        print(f"DEBUG: Gemini Error: {e}", file=sys.stderr)
+        pass
+
     text = text.lower()
     
     # Pattern: Create file
-    # Example: "crie um arquivo chamado 'test.txt' com 'hello'"
     create_match = re.search(r"crie (?:um )?arquivo chamado ['\"](.+?)['\"](?: com (?:o texto )?['\"](.+?)['\"])?", text)
     if create_match:
         filename = create_match.group(1)
@@ -17,16 +32,7 @@ def parse_instruction(text):
             "args": [filename, content]
         }
     
-    # Pattern: Currency / Dollar (Search simulation)
-    if any(k in text for k in ["dolar", "valor do", "cotacao", "pesquise"]):
-        return {
-            "skill": "orchestrator_skill",
-            "action": "create",
-            "args": [
-                "currency_tool",
-                "import random; print(f'Cotacao simulada: R$ {random.uniform(5.5, 5.9):.2f}')"
-            ]
-        }
+    # ... (rest of regex patterns)
     
     # Pattern: List files
     if any(k in text for k in ["liste", "listar", "quais arquivos"]):
@@ -45,7 +51,8 @@ if __name__ == "__main__":
         sys.exit(0)
     
     instruction = sys.argv[1]
-    result = parse_instruction(instruction)
+    uid = sys.argv[2] if len(sys.argv) > 2 else "default"
+    result = parse_instruction(instruction, uid)
     if result:
         print(json.dumps(result))
     else:

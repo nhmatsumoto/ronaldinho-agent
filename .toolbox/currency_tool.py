@@ -1,0 +1,1 @@
+import random; print(f'Cotacao simulada: R$ {random.uniform(5.5, 5.9):.2f}')

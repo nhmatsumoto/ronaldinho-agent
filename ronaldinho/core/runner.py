@@ -103,7 +103,7 @@ def run_loop():
                     print(f"[+] Telegram Message Received: {text}")
                     
                     # 1. Reasoning
-                    reason_res = subprocess.run(["python", reasoning_script, text], capture_output=True, text=True)
+                    reason_res = subprocess.run(["python", reasoning_script, text, str(user_id)], capture_output=True, text=True)
                     try:
                         # Clean the output in case there's extra text
                         output = reason_res.stdout.strip()
@@ -134,4 +134,10 @@ def run_loop():
         time.sleep(2)
 
 if __name__ == "__main__":
-    run_loop()
+    try:
+        run_loop()
+    except KeyboardInterrupt:
+        print("\n[!] Ronaldinho Runner interruped by user. Shutting down...")
+    except Exception as e:
+        print(f"\n[!] Critical Runner Error: {e}")
+        log_event("SISTEMA", f"Erro crítico: {e}", "CRASH")
