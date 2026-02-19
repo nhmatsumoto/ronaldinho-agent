@@ -38,21 +38,21 @@ GEMINI_API_KEY=your_key_here
 ### 2. Choose Your Environment
 
 #### 🪐 Antigravity (Recommended)
-
-1. Download and install **Antigravity**.
-2. Open the `Ronaldinho-Agent` folder.
-3. The agent will be automatically detected.
-
+...
 #### 🛠️ Internal Gemini CLI
+...
 
-- **Start the Agent**:
-  ```bash
-  python gemini_cli.py start
-  ```
-- **Sync Memory**:
-  ```bash
-  python gemini_cli.py sync --summary "Brief description of work"
-  ```
+---
+
+## 🧪 Try it Out (Proofs)
+
+Validate Ronaldinho's capabilities immediately using our educational examples:
+
+- **Security Demo**: `python examples/security_demo.py`
+- **Monitoring Demo**: `python examples/monitoring_demo.py`
+- **Autonomy Demo**: `python examples/autonomy_demo.py`
+
+See the [Examples Guide](examples/README.md) for more details.
 
 ---
 
