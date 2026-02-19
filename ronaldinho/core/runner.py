@@ -125,14 +125,23 @@ def run_loop():
                             action = plan["action"]
                             args = plan["args"]
                             
-                            print(f"[!] Executing Action: {plan['skill']} -> {action}")
-                            exec_res = subprocess.run(["python", skill_script, action] + args, capture_output=True, text=True)
-                            response_text = f"Acao concluida:\n{exec_res.stdout.strip()}"
+                            if plan["skill"] == "file_skill" and plan["action"] == "send":
+                                print(f"[!] Sending File: {args[0]}")
+                                subprocess.run(["python", skill_script, "send", args[0]], capture_output=True) # Validate existence
+                                subprocess.run(["python", bridge_script, "--file", str(user_id), args[0]])
+                                response_text = f"✅ Arquivo '{os.path.basename(args[0])}' enviado com sucesso!"
+                            else:
+                                print(f"[!] Executing Action: {plan['skill']} -> {action}")
+                                exec_res = subprocess.run(["python", skill_script, action] + args, capture_output=True, text=True)
+                                response_text = f"Acao concluida:\n{exec_res.stdout.strip()}"
                         else:
                             response_text = f"🤔 Ronaldinho ainda não sabe como fazer isso diretamente: '{text}'. Vou tentar evoluir para aprender!"
                     except Exception as e:
                         print(f"! Error parsing reasoning: {e}")
-                        response_text = f"🤖 Recebi: '{text}'. Processando com o nucleo de evolução..."
+                        if "error" in locals() and isinstance(plan, dict) and "error" in plan:
+                            response_text = f"🤖 Ronaldinho está com uma instabilidade técnica: {plan['error']}. Vou tentar evoluir para resolver!"
+                        else:
+                            response_text = f"🤖 Tive um erro interno ao processar sua instrução: {e}. Ronaldinho está se auto-ajustando!"
 
                     # 2. Respond
                     subprocess.run(["python", bridge_script, "--respond", str(user_id), response_text])

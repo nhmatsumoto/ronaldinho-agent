@@ -9,18 +9,6 @@
         {
             "role": "model",
             "parts": [
-                "{\"skill\": \"gemini\", \"action\": \"chat\", \"args\": [\"Opa! Tudo certo por aqui. Como o Ronaldinho pode te ajudar hoje? S\u00f3 mandar a bola!\"]}"
-            ]
-        },
-        {
-            "role": "user",
-            "parts": [
-                "Oi"
-            ]
-        },
-        {
-            "role": "model",
-            "parts": [
                 "{\"skill\": \"gemini\", \"action\": \"chat\", \"args\": [\"Opa! Tudo bem? Ronaldinho na \u00e1rea. Como posso te ajudar hoje? S\u00f3 passar a jogada!\"]}"
             ]
         },
@@ -58,6 +46,18 @@
             "role": "model",
             "parts": [
                 "{\"skill\": \"file_skill\", \"action\": \"create\", \"args\": [\"index.html\", \"<!DOCTYPE html>\\n<html lang=\\\"pt-br\\\">\\n<head>\\n    <meta charset=\\\"UTF-8\\\">\\n    <title>Hello World</title>\\n</head>\\n<body>\\n    <h1>Hello World</h1>\\n</body>\\n</html>\"]}"
+            ]
+        },
+        {
+            "role": "user",
+            "parts": [
+                "Ol\u00e1"
+            ]
+        },
+        {
+            "role": "model",
+            "parts": [
+                "{\"skill\": \"gemini\", \"action\": \"chat\", \"args\": [\"Opa! Tudo certo? Ronaldinho pronto para entrar em campo. Como posso te ajudar agora?\"]}"
             ]
         }
     ]

@@ -15,26 +15,25 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 HISTORY_FILE = WORKSPACE_ROOT / "ronaldinho" / "data" / "chat_history.json"
 
-def connect_gemini(with_search=False):
+def connect_gemini(with_search=False, model_tier="1.5"):
     if not GEMINI_API_KEY or "your_gemini_api_key" in GEMINI_API_KEY:
-        print(f"DEBUG: Invalid API Key: {GEMINI_API_KEY[:10]}...", file=sys.stderr)
         return None
     
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        model_name = "gemini-flash-latest"
+        # Use Gemini 3 Flash as requested by user, fallback to 1.5 if needed
+        model_name = "gemini-3-flash-preview" if model_tier == "3.0" else "gemini-flash-latest"
         
         tools = []
         if with_search:
              try:
-                # Tools registration for search grounding
                 tools = [genai.protos.Tool(google_search_retrieval=genai.protos.GoogleSearchRetrieval())]
              except:
                 pass
 
         model = genai.GenerativeModel(model_name, tools=tools)
         return model
-    except Exception as e:
+    except Exception:
         return None
 
 def load_history(user_id):
@@ -63,30 +62,36 @@ def save_history(user_id, history):
 
 def analyze_instruction(prompt, user_id="default"):
     history = load_history(user_id)
+    mode = os.getenv("REASONING_MODE", "FAST").upper() # FAST or PLANNING
     
     # Check if prompt requires search
     requires_search = any(k in prompt.lower() for k in ["pesquise", "quem e", "valor do", "noticia", "hoje"])
     
-    model = connect_gemini(with_search=requires_search)
+    # Try 3.0 Tier first (Gemini 3 Flash Preview as requested)
+    model = connect_gemini(with_search=requires_search, model_tier="3.0")
     if not model:
-        return {"error": "Gemini API Key missing or model unavailable."}
+        return {"error": "Gemini API Key missing or unavailable."}
 
-    system_prompt = """
+    planning_addon = ""
+    if mode == "PLANNING":
+        planning_addon = "Pense passo a passo antes de decidir a ação. Analise se precisa criar ferramentas ou ler arquivos primeiro."
+
+    system_prompt = f"""
     Você é o Ronaldinho, um agente de IA inteligente e prestativo.
     Sua personalidade é amigável, direta e focada em resolver tarefas.
-    Não mencione "Antigravity" ou outros modelos — você é apenas o Ronaldinho.
+    {planning_addon}
     Converta instruções em JSON ou responda conversacionalmente de forma natural.
 
     Ações disponíveis:
-    1. file_skill: create ([filename, content]), read ([filename]), list ([])
+    1. file_skill: create ([filename, content]), read ([filename]), list ([]), send ([filename])
     2. orchestrator_skill: create ([script_name, content]), run ([script_name, *args])
     3. network_skill: curl ([url, method]), oauth ([service])
     4. context_skill: missions ([]), audit ([]), structure ([])
 
     Sempre responda APENAS o JSON:
-    {"skill": "nome", "action": "acao", "args": []}
+    {{"skill": "nome", "action": "acao", "args": []}}
     OU se for conversa:
-    {"skill": "gemini", "action": "chat", "args": ["Sua resposta natural aqui"]}
+    {{"skill": "gemini", "action": "chat", "args": ["Sua resposta natural aqui"]}}
     """
 
     messages = [{"role": "user", "parts": [system_prompt]}]
@@ -96,23 +101,37 @@ def analyze_instruction(prompt, user_id="default"):
 
     try:
         response = model.generate_content(messages)
-        text = response.text.strip()
-        
-        # Simple extraction
-        if "{" in text and "}" in text:
-            json_text = text[text.find("{"):text.rfind("}")+1]
-            result = json.loads(json_text)
+    except Exception as e:
+        # Fallback to 1.5 if 2.0 is over quota
+        if "429" in str(e) or "quota" in str(e).lower():
+            # Fallback to model_tier="1.5" which points to models/gemini-flash-latest
+            model_15 = connect_gemini(with_search=requires_search, model_tier="1.5")
+            if model_15:
+                try:
+                    response = model_15.generate_content(messages)
+                except Exception as e2:
+                    return {"error": f"Gemini 3.0 and 1.5 exhausted: {e2}"}
+            else:
+                return {"error": f"Gemini 3.0 exhausted and 1.5 unavailable: {e}"}
         else:
-            result = {"skill": "gemini", "action": "chat", "args": [text]}
+            return {"error": f"Gemini Error: {e}"}
+    
+    try:
+        # Clean the response - sometimes it comes with backticks or "json"
+        response_text = response.text.strip()
+        if response_text.startswith("```"):
+            response_text = response_text.replace("```json", "").replace("```", "").strip()
+            
+        plan = json.loads(response_text)
         
-        # Update history
-        history.append({"role": "user", "parts": [prompt]})
-        history.append({"role": "model", "parts": [text]})
+        # Add to history
+        history.append({"role": "user", "parts": [prompt]}) # Add user prompt to history
+        history.append({"role": "model", "parts": [response_text]})
         save_history(user_id, history)
         
-        return result
+        return plan
     except Exception as e:
-        return {"error": f"Failed to generate reasoning: {e}"}
+        return {"error": f"Failed to parse JSON response: {e}. Raw: {response.text[:100]}"}
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

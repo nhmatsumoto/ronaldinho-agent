@@ -67,7 +67,18 @@ public class TelegramJob
                         await _exchangeService.MarkAsSentAsync(response.ts);
                     }
                     
-                    if (!string.IsNullOrEmpty(response.text))
+                    if (!string.IsNullOrEmpty(response.file_path) && File.Exists(response.file_path))
+                    {
+                        _logger.LogInformation("Sending document {file} to {userId}", response.file_path, response.user_id);
+                        using var stream = File.OpenRead(response.file_path);
+                        await _botClient.SendRequest(new SendDocumentRequest 
+                        { 
+                            ChatId = response.user_id, 
+                            Document = InputFile.FromStream(stream, Path.GetFileName(response.file_path))
+                        });
+                        await _exchangeService.MarkAsSentAsync(response.ts);
+                    }
+                    else if (!string.IsNullOrEmpty(response.text))
                     {
                         _logger.LogInformation("Sending response to {userId}", response.user_id);
                         await _botClient.SendRequest(new SendMessageRequest 

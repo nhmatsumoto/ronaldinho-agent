@@ -34,6 +34,14 @@ if __name__ == "__main__":
     if cmd == "create" and len(sys.argv) >= 3:
         content = sys.argv[3] if len(sys.argv) > 3 else ""
         print(create_file(sys.argv[2], content))
+    elif cmd == "send" and len(sys.argv) >= 3:
+        # The runner will handle the actual sending via bridge_tool
+        # This skill just validates the file existence and returns the path
+        path = sys.argv[2]
+        if os.path.exists(path):
+            print(os.path.abspath(path))
+        else:
+            print(f"Erro: Arquivo '{path}' não encontrado.")
     elif cmd == "read" and len(sys.argv) >= 3:
         print(read_file(sys.argv[2]))
     elif cmd == "list":

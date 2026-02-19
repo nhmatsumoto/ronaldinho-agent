@@ -72,11 +72,31 @@ def send_action(user_id, action):
         f.write(json.dumps(entry) + "\n")
     print(f"[+] Action '{action}' for {user_id} added to outbox.")
 
+def send_file(user_id, file_path):
+    """Writes a file path to the outbox for the bridge to pick up and send."""
+    try:
+        user_id = int(user_id)
+    except:
+        pass
+        
+    entry = {
+        "ts": datetime.now().isoformat(),
+        "user_id": user_id,
+        "text": f"Enviando arquivo: {Path(file_path).name}",
+        "file_path": str(file_path),
+        "sent": False
+    }
+    OUTBOX_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(OUTBOX_FILE, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry) + "\n")
+    print(f"[+] File '{file_path}' for {user_id} added to outbox.")
+
 def main():
     parser = argparse.ArgumentParser(description="Ronaldinho Internal Bridge Tool")
     parser.add_argument("--check", action="store_true", help="Check for and print new messages")
     parser.add_argument("--respond", nargs=2, metavar=('USER_ID', 'TEXT'), help="Send a response to a user")
     parser.add_argument("--typing", metavar='USER_ID', help="Send typing status to a user")
+    parser.add_argument("--file", nargs=2, metavar=('USER_ID', 'FILE_PATH'), help="Send a file to a user")
     
     args = parser.parse_args()
 
@@ -92,6 +112,9 @@ def main():
     
     elif args.typing:
         send_action(args.typing, "typing")
+    
+    elif args.file:
+        send_file(args.file[0], args.file[1])
     
     else:
         parser.print_help()
