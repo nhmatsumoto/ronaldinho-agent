@@ -27,10 +27,18 @@ def update_troubleshooting_log(memory_path, errors):
     if not errors: return
     
     log_file = os.path.join(memory_path, "troubleshooting_log.toon")
+    existing_lines = set()
+    if os.path.exists(log_file):
+        with open(log_file, "r", encoding="utf-8") as f:
+            existing_lines = set(line.strip() for line in f)
+
     with open(log_file, "a", encoding="utf-8") as f:
         for err in errors:
             timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(err['ts']))
-            f.write(f"| {timestamp} | {err['agent']} | {err['event']} | {err.get('mission_id', 'N/A')} |\n")
+            log_line = f"| {timestamp} | {err['agent']} | {err['event']} | {err.get('mission_id', 'N/A')} |"
+            if log_line not in existing_lines:
+                f.write(log_line + "\n")
+                existing_lines.add(log_line)
 
 def main():
     if len(sys.argv) < 3:
