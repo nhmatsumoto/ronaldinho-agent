@@ -12,6 +12,19 @@ Ronaldinho-Agent is an autonomous development ecosystem designed for high perfor
 
 ---
 
+## 🧠 How Ronaldinho Works
+
+Ronaldinho is more than just a chatbot; it's a **state-driven orchestration engine**. Here is how it operates:
+
+1.  **State Observation**: The agent constantly watches the `ronaldinho/config/MISSION_STORE.toon` file. Any mission added there becomes a goal for the agent.
+2.  **Autonomous Execution**: When a mission is detected, the **Orquestrador** delegates the work to a specialized **Skill** (standardized Python modules).
+3.  **Audit & Evolution**: Every action is logged in JSONL format. A background **Self-Audit loop** analyzes these logs to identify errors and performance bottlenecks, which may trigger new optimization missions automatically.
+4.  **Zero-Trust Security**: Interaction with sensitive data is gated by the `SecurityGuard`, ensuring that your keys are never stored and your logs are always sanitized.
+
+For a deeper dive into these processes, see our [Internal Documentation](docs/architecture.md).
+
+---
+
 ## 🚀 Quick Start
 
 ### 1. Credentials Setup
@@ -26,53 +39,31 @@ GEMINI_API_KEY=your_key_here
 
 #### 🪐 Antigravity (Recommended)
 
-Antigravity is the native home for Ronaldinho-Agent.
-
 1. Download and install **Antigravity**.
 2. Open the `Ronaldinho-Agent` folder.
-3. The agent will be automatically detected and ready for missions.
-
-#### 💻 Visual Studio Code
-
-1. Open the project in VS Code.
-2. Ensure you have Python 3.9+ installed.
-3. Use the **Gemini CLI** (details below) to start the agent.
+3. The agent will be automatically detected.
 
 #### 🛠️ Internal Gemini CLI
 
-Ronaldinho-Agent comes with a unified control tool: `gemini_cli.py`.
-
 - **Start the Agent**:
-
   ```bash
   python gemini_cli.py start
   ```
-
-- **Sync Memory/Context**:
-
+- **Sync Memory**:
   ```bash
-  python gemini_cli.py sync --summary "Brief description of work done"
+  python gemini_cli.py sync --summary "Brief description of work"
   ```
 
 ---
 
-## 🎮 Mission Management
+## 🎮 Navigation & Documentation
 
-The agent is driven by **Missions**. You interact with it by editing the state files in `ronaldinho/config/`.
+Learn more about Ronaldinho's internal mechanics:
 
-1. **Add Missions**: Open `ronaldinho/config/MISSION_STORE.toon` and add your task.
-   - Format: `| ID | Title | Status | Priority | Description |`
-   - Example: `| M-001 | Optimize DB Queries | EM_PLANEJAMENTO | HIGH | Analysis of slow queries... |`
-
-2. **Monitor Evolution**: Watch the `MISSION_STORE`. Ronaldinho will create `M-OPT-` missions when it identifies opportunities for self-optimization.
-
-3. **Audit Logs**: Check `ronaldinho/audit/` for detailed run history.
-
----
-
-## 📜 Governance & Rules
-
-Ronaldinho-Agent follows a strict governance model defined in `ronaldinho/config/SECURITY_POLICY.toon`. All actions are logged and audited to ensure safety and determinism.
+- 📑 [Mission Lifecycle](docs/mission_lifecycle.md): How tasks are managed.
+- 🛡️ [Security & Privacy](docs/security_model.md): How your data is protected.
+- 🧬 [Autonomy & Self-Audit](docs/autonomy_audit.md): How the agent evolves.
+- 🏗️ [Architecture](docs/architecture.md): The modular system design.
 
 ---
 *Ronaldinho-Agent: Where autonomy meets engineering mastery.*
