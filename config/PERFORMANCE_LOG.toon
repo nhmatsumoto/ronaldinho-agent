@@ -1,8 +1,0 @@
-# PERFORMANCE LOG (TOON)
-
-| Timestamp | Operação | Latência |
-| :--- | :--- | :--- |
-| 2026-02-14 02:40:00 | SimpleDiff | 1200ms |
-| 2026-02-14 02:40:05 | SearchLines:critical_data.log | 850ms |
-| 2026-02-14 02:40:10 | AI_KEY_TEST:AIzaSyA1234567890 | 100ms |
-| 2026-02-17 00:40:00 | DatabaseQuery:Users | 1500ms |
