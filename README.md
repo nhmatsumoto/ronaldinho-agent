@@ -63,6 +63,7 @@ Learn more about Ronaldinho's internal mechanics:
 - 📑 [Mission Lifecycle](docs/mission_lifecycle.md): How tasks are managed.
 - 🛡️ [Security & Privacy](docs/security_model.md): How your data is protected.
 - 🧬 [Autonomy & Self-Audit](docs/autonomy_audit.md): How the agent evolves.
+- 📈 [Emergent Governance](docs/emergent_governance.md): How the agent learns from you.
 - 🏗️ [Architecture](docs/architecture.md): The modular system design.
 - 🔌 [Integration Roadmap](docs/integration_roadmap.md): Plans for Slack, Telegram, Jira, and more.
 

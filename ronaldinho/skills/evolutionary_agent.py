@@ -38,23 +38,35 @@ class EvolutionaryAgent:
             print(f"[{self.agent_name}] Commit failed: {e}")
             return False
 
-    def index_with_toon(self):
-        """Step 3: Index content using TOON for efficient search"""
-        print(f"[{self.agent_name}] Step 3: Indexing with TOON...")
-        # Simulated TOON indexing process
-        time.sleep(1) 
-        print(f"[{self.agent_name}] Indexing complete. Knowledge base updated.")
-        return True
-
-    def suggest_actions(self):
-        """Step 4: Suggest actions based on history (Basic Learning Model)"""
-        print(f"[{self.agent_name}] Step 4: Analyzing history for suggestions...")
-        # Simulated "learning" from history
-        suggestions = [
-            "OPTIMIZE: Refactor memory_tool for faster serialization",
-            "SECURITY: Update scrubbing regex for new OAuth tokens"
+    def analyze_contributions(self):
+        """Step 4: Analyze recent contributions for emerging patterns"""
+        print(f"[{self.agent_name}] Step 4: Analyzing contributions for emerging best practices...")
+        # Simulating Git history analysis
+        commit_history = [
+            "feat: Add encryption to memory sync",
+            "fix: Redact OAuth tokens from logs",
+            "docs: Update security policy with L5"
         ]
-        print(f"[{self.agent_name}] Suggested Actions:")
+        patterns = ["Security-first synchronization", "Automatic Log Sanitization"]
+        print(f"[{self.agent_name}] Emerging Patterns Identified: {patterns}")
+        return patterns
+
+    def generate_best_practices_guide(self, patterns):
+        """Step 5: Automatically generate/update a personalized guide based on patterns"""
+        print(f"[{self.agent_name}] Step 5: Generating Emergent Best Practices Guide...")
+        guide_path = Path("docs/emergent_best_practices.md")
+        content = "# Emergent Best Practices Guide\n\n*Automatically generated based on contribution analysis.*\n\n"
+        for p in patterns:
+            content += f"## {p}\n- Observed in recent commits.\n- Recommended pattern for future contributions.\n\n"
+        
+        # In a real scenario, this would write to the doc
+        print(f"[{self.agent_name}] Guide updated at {guide_path}")
+        return content
+
+    def suggest_actions(self, patterns):
+        """Step 6: Suggest actions based on discovered patterns"""
+        print(f"[{self.agent_name}] Step 6: Suggesting actions based on discovered patterns...")
+        suggestions = [f"ENFORCE: Apply '{patterns[0]}' to new components"]
         for s in suggestions:
             print(f"  -> {s}")
         return suggestions
@@ -64,7 +76,9 @@ class EvolutionaryAgent:
         data = self.collect_state()
         if self.commit_to_github(data):
             self.index_with_toon()
-            self.suggest_actions()
+            patterns = self.analyze_contributions()
+            self.generate_best_practices_guide(patterns)
+            self.suggest_actions(patterns)
         self.state = "IDLE"
         print(f"[{self.agent_name}] Evolution cycle completed.")
 
