@@ -35,11 +35,25 @@ def parse_instruction(text, user_id="default"):
 
     # --- 0. CONVERSATIONAL HEURISTICS ---
     text_clean = text.lower().replace("?", "").replace("!", "").strip()
-    greetings = ["alô", "alo", "ola", "oi", "bom dia", "boa tarde", "boa noite", "eae", "e ai", "e aí", "fala", "salve", "opa", "blz", "teste", "testando"]
+    
+    # High-quality system commands
+    if text_clean in ["/start", "start"]:
+        return {"skill": "gemini", "action": "chat", "args": ["Salve, craque! ⚽🤖 Ronaldinho na área, pronto pra entrar em campo. Eu sou seu Agente Autônomo de elite.\n\nPosso criar ferramentas, editar arquivos, fazer pesquisas e automatizar tudo o que você precisar aqui no repositório. O que vamos conquistar hoje? 🎩⚡"]}
+    
+    if text_clean in ["/help", "help", "ajuda"]:
+        return {"skill": "gemini", "action": "chat", "args": ["Ronaldinho Help Center: ⚽🎩\n- Me peça para criar ferramentas (ex: 'calcule a média das vendas')\n- Edite arquivos (ex: 'adiciona um botão no index.html')\n- Pesquise no projeto (ex: 'quais arquivos temos aqui?')\n- Ou apenas troque uma ideia! Eu cuido do resto no back-office. 🚀⚡"]}
+
+    greetings = ["alô", "alo", "ola", "olá", "oi", "bom dia", "boa tarde", "boa noite", "eae", "e ai", "e aí", "fala", "salve", "opa", "blz", "teste", "testando"]
     if any(text_clean == g for g in greetings) or text_clean in greetings:
         return {"skill": "gemini", "action": "chat", "args": [f"Fala craque! Ronaldinho na área. O que vamos criar agora? ⚽🤖"]}
 
-    # --- 1. MEMORY TOOL SYNC (Existing) ---
+    # --- 1. CONTEXTUAL HEURISTICS (Anti-Limbo) ---
+    if any(k in text_clean for k in ["projeto", "arquivos", "onde estou", "resumo"]):
+        return [
+            {"skill": "context_skill", "action": "summary", "args": []},
+            {"skill": "context_skill", "action": "map", "args": []}
+        ]
+
     # --- 2. EMERGENCY REGEX FALLBACK (Heuristic Reasoning) ---
     text = text.lower()
     

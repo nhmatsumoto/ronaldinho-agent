@@ -52,7 +52,21 @@ def run_once(silent=False):
             print(f"> Processing Mission: {m['name']}")
             update_mission_status(m['id'], "CONCLUIDO")
 
-        # 2. Telegram Bridge Polling
+        # 2. Scheduler Check (Proactive Mode)
+        scheduler_script = os.path.join(SKILLS_DIR, "scheduler_skill.py")
+        sched_res = subprocess.run(["python", scheduler_script, "check"], capture_output=True, text=True)
+        if sched_res.stdout.strip() != "[]":
+            scheduled_tasks = json.loads(sched_res.stdout)
+            for t in scheduled_tasks:
+                print(f"[!] Proactive Trigger: {t['skill']}:{t['action']}")
+                # Execute proactive task
+                # (Logic similar to message processing can be extracted to a helper if needed)
+                # For now, simplistic execution:
+                skill_script = os.path.join(SKILLS_DIR, f"{t['skill']}.py")
+                if not os.path.exists(skill_script): skill_script = os.path.join(SKILLS_DIR, f"{t['skill']}_skill.py")
+                subprocess.run(["python", skill_script, t["action"]] + [str(a) for a in t["args"]])
+
+        # 3. Telegram Bridge Polling
         bridge_script = os.path.join(SKILLS_DIR, "bridge_tool.py")
         result = subprocess.run(["python", bridge_script, "--check"], capture_output=True, text=True)
         

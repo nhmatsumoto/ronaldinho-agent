@@ -1,4 +1,0 @@
-  File "<string>", line 1
-    import os, sys, google.generativeai as genai; from dotenv import load_dotenv; load_dotenv(); genai.configure(api_key=os.getenv('GEMINI_API_KEY')); model=genai.GenerativeModel('gemini-1.5-flash'); try: print(model.generate_content('Oi').text); except Exception as e: print(str(e))
-                                                                                                                                                                                                        ^^^
-SyntaxError: invalid syntax

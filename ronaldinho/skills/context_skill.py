@@ -1,60 +1,69 @@
 import os
 import sys
+import json
 from pathlib import Path
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent.parent
-MISSION_STORE = WORKSPACE_ROOT / "ronaldinho" / "config" / "mission_store.toon"
-AUDIT_DIR = WORKSPACE_ROOT / "ronaldinho" / "audit"
 
-def get_missions():
-    if not MISSION_STORE.exists():
-        return "Nenhuma missão encontrada."
-    try:
-        with open(MISSION_STORE, "r", encoding="utf-8") as f:
-            return f.read()
-    except Exception as e:
-        return f"Erro ao ler missões: {e}"
+def map_project(max_depth=3):
+    """Generates a recursive map of the project structure."""
+    tree = []
+    ignore = {".git", "__pycache__", "bin", "obj", "node_modules", ".venv"}
+    
+    def walk(path, depth):
+        if depth > max_depth: return
+        try:
+            for item in sorted(os.listdir(path)):
+                if item in ignore: continue
+                full_path = os.path.join(path, item)
+                rel_path = os.path.relpath(full_path, WORKSPACE_ROOT)
+                is_dir = os.path.isdir(full_path)
+                
+                prefix = "  " * depth + ("📁 " if is_dir else "📄 ")
+                tree.append(f"{prefix}{rel_path}")
+                
+                if is_dir:
+                    walk(full_path, depth + 1)
+        except Exception as e:
+            tree.append(f"  " * depth + f"⚠️ Error reading {path}: {e}")
 
-def get_audit_summary():
-    if not AUDIT_DIR.exists():
-        return "Nenhum log de auditoria encontrado."
-    try:
-        logs = sorted(AUDIT_DIR.glob("*.jsonl"))
-        if not logs:
-            return "Nenhum log encontrado."
-        # Read the last 10 lines of the most recent log
-        with open(logs[-1], "r", encoding="utf-8") as f:
-            lines = f.readlines()
-            return "".join(lines[-10:])
-    except Exception as e:
-        return f"Erro ao ler logs: {e}"
+    walk(WORKSPACE_ROOT, 0)
+    result = "\n".join(tree)
+    print(result)
+    return result
 
-def list_project_structure():
-    try:
-        output = []
-        for root, dirs, files in os.walk(WORKSPACE_ROOT):
-            # Ignore hidden dirs and build artifacts
-            dirs[:] = [d for d in dirs if not d.startswith(".") and d not in ["bin", "obj", "__pycache__"]]
-            level = root.replace(str(WORKSPACE_ROOT), "").count(os.sep)
-            indent = " " * 4 * level
-            output.append(f"{indent}{os.path.basename(root)}/")
-            sub_indent = " " * 4 * (level + 1)
-            for f in files:
-                if not f.startswith("."):
-                    output.append(f"{sub_indent}{f}")
-        return "\n".join(output[:50]) # Limit to 50 items for context
-    except Exception as e:
-        return f"Erro ao listar estrutura: {e}"
+def get_summary():
+    """Returns a high-level summary of the project state."""
+    summary = []
+    summary.append(f"Projeto: Ronaldinho-Agent")
+    summary.append(f"Base: {WORKSPACE_ROOT}")
+    
+    # Check for missions
+    mission_store = WORKSPACE_ROOT / "ronaldinho" / "config" / "mission_store.toon"
+    if mission_store.exists():
+        with open(mission_store, "r", encoding="utf-8") as f:
+            active_missions = [l for l in f.readlines() if "EM_EXECUCAO" in l or "EM_PROGRESSO" in l]
+            summary.append(f"Missões Ativas: {len(active_missions)}")
+    
+    # Check for skills
+    skills_dir = WORKSPACE_ROOT / "ronaldinho" / "skills"
+    if skills_dir.exists():
+        skills = [f for f in os.listdir(skills_dir) if f.endswith(".py")]
+        summary.append(f"Habilidades: {len(skills)}")
+    
+    result = "\n".join(summary)
+    print(result)
+    return result
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Uso: context_skill.py [missions|audit|structure]")
+        print("Uso: context_skill [map|summary]")
         sys.exit(1)
         
-    cmd = sys.argv[1].lower()
-    if cmd == "missions":
-        print(get_missions())
-    elif cmd == "audit":
-        print(get_audit_summary())
-    elif cmd == "structure":
-        print(list_project_structure())
+    cmd = sys.argv[1]
+    if cmd == "map":
+        map_project()
+    elif cmd == "summary":
+        get_summary()
+    else:
+        print(f"Comando desconhecido: {cmd}")

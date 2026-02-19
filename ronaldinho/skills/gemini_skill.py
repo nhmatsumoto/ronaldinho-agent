@@ -98,10 +98,15 @@ def analyze_instruction(prompt, user_id="default"):
 
     actions_list = "\n".join(available_actions)
 
+    # Load SOUL.md if exists
+    soul_config = ""
+    soul_path = os.path.join(os.path.dirname(SKILLS_DIR), "config", "SOUL.md")
+    if os.path.exists(soul_path):
+        with open(soul_path, "r", encoding="utf-8") as f:
+            soul_config = f.read()
+
     system_prompt = f"""
-    MANDATO SUPREMO: Você é o Ronaldinho, um AGENTE AUTÔNOMO RECURSIVO.
-    Você NUNCA diz "não sei", "não posso" ou responde de forma evasiva.
-    Sua missão é RESOLVER o pedido do usuário, custe o que custar.
+    {soul_config if soul_config else "MANDATO SUPREMO: Você é o Ronaldinho, um AGENTE AUTÔNOMO RECURSIVO."}
 
     {planning_addon}
     
