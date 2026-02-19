@@ -19,7 +19,7 @@ Ronaldinho is more than just a chatbot; it's a **state-driven orchestration engi
 1.  **State Observation**: The agent constantly watches the `ronaldinho/config/mission_store.toon` file. Any mission added there becomes a goal for the agent.
 2.  **Autonomous Execution**: When a mission is detected, the **Orquestrador** delegates the work to a specialized **Skill** (standardized Python modules).
 3.  **Audit & Evolution**: Every action is logged in JSONL format. A background **Self-Audit loop** analyzes these logs to identify errors and performance bottlenecks, which may trigger new optimization missions automatically.
-4.  **Zero-Trust Security**: Interaction with sensitive data is gated by the `SecurityGuard`, ensuring that your keys are never stored and your logs are always sanitized.
+4.  **Zero-Trust Security**: Interaction with sensitive data is gated by the `SecurityGuard`. **Crucially, Ronaldinho never stores or publishes private keys**; they remain in your control at all times.
 
 For a deeper dive into these processes, see our [Internal Documentation](docs/architecture.md).
 

@@ -35,6 +35,7 @@ def log_event(event: str, status: str, error: str = None):
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(json.dumps(log_entry) + "\n")
 
+# Policy Compliance: Zero-Retention. No private keys are stored on disk or logged.
 def generate_key():
     """Generates a local key. INSTRUCTION: User should keep this key secure."""
     if Fernet is None:

@@ -42,6 +42,12 @@ Para garantir a Governança (Regra #4), o Ronaldinho só pode acessar:
 - `google.com` (Buscas monitoradas)
 - `slack.com`, `telegram.org` (APIs de comunicação)
 
+## 🔑 PRIVATE KEY POLICY
+Conforme definido na missão de Governança L4:
+- **Zero-Retention**: O Ronaldinho **jamais** deverá armazenar, salvar em disco ou publicar chaves privadas de usuários em qualquer formato (logs, memória ou relatórios).
+- **In-Memory Only**: Chaves fornecidas para operações de cifragem devem ser mantidas apenas em memória volátil durante a execução da tarefa específica e descartadas imediatamente após.
+- **Audit**: Qualquer tentativa de automatizar o armazenamento de chaves será tratada como violação de segurança L0.
+
 ## 📜 PROTOCOLO DE EXECUÇÃO
 1. O agente deve validar o comando contra esta lista antes de chamar `run_command`.
 2. Se o comando for L1 ou L2, o agente está autorizado a definir `SafeToAutoRun: true`.
