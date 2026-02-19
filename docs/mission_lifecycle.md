@@ -1,9 +1,9 @@
 # Mission Lifecycle
 
-The Ronaldinho-Agent is an mission-oriented ecosystem. Every action the agent takes is defined as a "Mission" within the `ronaldinho/config/MISSION_STORE.toon` state file.
+The Ronaldinho-Agent is an mission-oriented ecosystem. Every action the agent takes is defined as a "Mission" within the `ronaldinho/config/mission_store.toon` state file.
 
 ## 1. Mission Detection
-The Ronaldinho Daemon (`ronaldinho/core/runner.py`) continuously monitors the `MISSION_STORE.toon` file. It uses a parser to extract missions and identifies those with the following statuses:
+The Ronaldinho Daemon (`ronaldinho/core/runner.py`) continuously monitors the `mission_store.toon` file. It uses a parser to extract missions and identifies those with the following statuses:
 - `EM_PLANEJAMENTO` (Planning)
 - `EM_EXECUCAO` (Execution)
 - `EM_PROGRESSO` (In Progress)

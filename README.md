@@ -16,7 +16,7 @@ Ronaldinho-Agent is an autonomous development ecosystem designed for high perfor
 
 Ronaldinho is more than just a chatbot; it's a **state-driven orchestration engine**. Here is how it operates:
 
-1.  **State Observation**: The agent constantly watches the `ronaldinho/config/MISSION_STORE.toon` file. Any mission added there becomes a goal for the agent.
+1.  **State Observation**: The agent constantly watches the `ronaldinho/config/mission_store.toon` file. Any mission added there becomes a goal for the agent.
 2.  **Autonomous Execution**: When a mission is detected, the **Orquestrador** delegates the work to a specialized **Skill** (standardized Python modules).
 3.  **Audit & Evolution**: Every action is logged in JSONL format. A background **Self-Audit loop** analyzes these logs to identify errors and performance bottlenecks, which may trigger new optimization missions automatically.
 4.  **Zero-Trust Security**: Interaction with sensitive data is gated by the `SecurityGuard`, ensuring that your keys are never stored and your logs are always sanitized.

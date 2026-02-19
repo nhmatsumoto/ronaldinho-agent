@@ -22,7 +22,7 @@ Ronaldinho-Agent/
 ## Key Components
 
 ### 1. The Orquestrador (Core)
-The central brain that reads the `MISSION_STORE.toon` and delegates tasks to specialists. It ensures that all governance rules are followed.
+The central brain that reads the `mission_store.toon` and delegates tasks to specialists. It ensures that all governance rules are followed.
 
 ### 2. Specialized Skills
 Standardized Python modules that the agent can call to perform specific technical tasks:
@@ -37,7 +37,7 @@ All configuration and state management use **Table-Oriented Object Notation**. T
 
 ```mermaid
 graph TD
-    User(User) -->|Creates Mission| MS[MISSION_STORE.toon]
+    User(User) -->|Creates Mission| MS[mission_store.toon]
     MS -->|Polled by| Runner[Core Runner]
     Runner -->|Delegates to| Skill[Specialized Skill]
     Skill -->|Logs Trace| Audit[Audit Logs]

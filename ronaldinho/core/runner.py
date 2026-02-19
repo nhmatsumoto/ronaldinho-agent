@@ -4,7 +4,7 @@ import json
 import subprocess
 
 WORKSPACE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-MISSION_STORE = os.path.join(WORKSPACE_ROOT, "ronaldinho", "config", "MISSION_STORE.toon")
+MISSION_STORE = os.path.join(WORKSPACE_ROOT, "ronaldinho", "config", "mission_store.toon")
 LOG_DIR = os.path.join(WORKSPACE_ROOT, "ronaldinho", "audit")
 SKILLS_DIR = os.path.join(WORKSPACE_ROOT, "ronaldinho", "skills")
 

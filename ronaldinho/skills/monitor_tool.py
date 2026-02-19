@@ -7,7 +7,7 @@ from collections import defaultdict
 
 # Constants
 LOG_DIR_BASE = Path("logs/runs")
-PERFORMANCE_LOG = Path(".agent/PERFORMANCE_LOG.toon")
+PERFORMANCE_LOG = Path("ronaldinho/config/performance_log.toon")
 REPORT_SINK = Path(".agent/REPORTS")
 PERFORMANCE_REPORT_PATH = REPORT_SINK / "PERFORMANCE_REPORT.md"
 

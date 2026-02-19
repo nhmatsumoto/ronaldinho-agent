@@ -8,7 +8,7 @@ from pathlib import Path
 WORKSPACE_ROOT = Path(__file__).parents[1]
 AUDIT_DIR = WORKSPACE_ROOT / "ronaldinho" / "audit"
 MEMORY_DIR = WORKSPACE_ROOT / "ronaldinho" / "memory"
-MISSION_STORE = WORKSPACE_ROOT / "ronaldinho" / "config" / "MISSION_STORE.toon"
+MISSION_STORE = WORKSPACE_ROOT / "ronaldinho" / "config" / "mission_store.toon"
 AUDIT_TOOL = WORKSPACE_ROOT / "ronaldinho" / "skills" / "audit_tool.py"
 MONITOR_TOOL = WORKSPACE_ROOT / "ronaldinho" / "skills" / "monitor_tool.py"
 
