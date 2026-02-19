@@ -36,6 +36,11 @@ def read_new_messages():
 
 def send_response(user_id, text):
     """Writes a response to the outbox for the bridge to pick up."""
+    try:
+        user_id = int(user_id)
+    except:
+        pass
+        
     entry = {
         "ts": datetime.now().isoformat(),
         "user_id": user_id,

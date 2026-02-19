@@ -57,7 +57,7 @@ def update_mission_status(mission_id, new_status):
                 f.write(line)
 
 def run_loop():
-    print("--- Ronaldinho LITE Runner Started ---")
+    print("=== Ronaldinho LITE Runner Started ===")
     while True:
         missions = parse_missions()
         active = [m for m in missions if m["status"] in ["EM_EXECUCAO", "EM_PROGRESSO", "EM_PLANEJAMENTO"]]
@@ -89,7 +89,49 @@ def run_loop():
         except Exception as e:
             print(f"! Self-Audit or Memory Sync Failed: {e}")
 
-        time.sleep(10)
+        # Telegram Bridge Polling (Rule #4 Compliance)
+        try:
+            bridge_script = os.path.join(SKILLS_DIR, "bridge_tool.py")
+            reasoning_script = os.path.join(SKILLS_DIR, "reasoning_tool.py")
+            
+            result = subprocess.run(["python", bridge_script, "--check"], capture_output=True, text=True)
+            if result.stdout.strip() != "[]":
+                messages = json.loads(result.stdout)
+                for msg in messages:
+                    user_id = msg['user_id']
+                    text = msg['text']
+                    print(f"[+] Telegram Message Received: {text}")
+                    
+                    # 1. Reasoning
+                    reason_res = subprocess.run(["python", reasoning_script, text], capture_output=True, text=True)
+                    try:
+                        # Clean the output in case there's extra text
+                        output = reason_res.stdout.strip()
+                        if not output:
+                             raise ValueError("Empty reasoning output")
+                             
+                        plan = json.loads(output)
+                        if plan and "skill" in plan:
+                            skill_script = os.path.join(SKILLS_DIR, f"{plan['skill']}.py")
+                            action = plan["action"]
+                            args = plan["args"]
+                            
+                            print(f"[!] Executing Action: {plan['skill']} -> {action}")
+                            exec_res = subprocess.run(["python", skill_script, action] + args, capture_output=True, text=True)
+                            response_text = f"Acao concluida:\n{exec_res.stdout.strip()}"
+                        else:
+                            response_text = f"🤔 Ronaldinho ainda não sabe como fazer isso diretamente: '{text}'. Vou tentar evoluir para aprender!"
+                    except Exception as e:
+                        print(f"! Error parsing reasoning: {e}")
+                        response_text = f"🤖 Recebi: '{text}'. Processando com o nucleo de evolução..."
+
+                    # 2. Respond
+                    subprocess.run(["python", bridge_script, "--respond", str(user_id), response_text])
+                    log_event("Orquestrador", f"Telegram msg from {user_id}", "PROCESSADO")
+        except Exception as e:
+            print(f"! Telegram Polling Failed: {e}")
+
+        time.sleep(2)
 
 if __name__ == "__main__":
     run_loop()

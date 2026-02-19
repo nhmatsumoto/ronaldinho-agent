@@ -43,15 +43,25 @@ class TelegramBridge:
         return None
 
     def poll_telegram(self):
-        """
-        In a real implementation, use requests to poll Telegram Bot API.
-        For this bridge, we demonstrate the exchange mechanism.
-        """
-        print(f"[*] Polling Telegram... (Token: {self.token[:5]}...)")
-        # Simulated message arrival
-        # In actual use, this would be: 
-        # r = requests.get(f"https://api.telegram.org/bot{self.token}/getUpdates?offset={self.last_update_id + 1}")
-        pass
+        """Polls Telegram for new messages."""
+        try:
+            import requests
+            url = f"https://api.telegram.org/bot{self.token}/getUpdates"
+            params = {"offset": self.last_update_id + 1, "timeout": 30}
+            response = requests.get(url, params=params, timeout=35)
+            
+            if response.status_code == 200:
+                updates = response.json().get("result", [])
+                for update in updates:
+                    self.last_update_id = update["update_id"]
+                    if "message" in update and "text" in update["message"]:
+                        user_id = update["message"]["from"]["id"]
+                        text = update["message"]["text"]
+                        print(f"[!] New message from {user_id}: {text}")
+                        self.write_to_inbox(user_id, text)
+        except Exception as e:
+            print(f"[X] Telegram Poll Error: {e}")
+            log_bridge_event("poll_error", "error", error=str(e))
 
     def write_to_inbox(self, user_id, text):
         entry = {
@@ -62,7 +72,7 @@ class TelegramBridge:
         }
         with open(INBOX_FILE, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry) + "\n")
-        print(f"[+] Message from {user_id} added to inbox.")
+        print(f"[+] Message added to inbox: {INBOX_FILE.name}")
         log_bridge_event("inbox_write", "done")
 
     def check_outbox(self):
@@ -75,18 +85,33 @@ class TelegramBridge:
         if not lines:
             return
 
-        # Simple logic: process lines that aren't marked as sent
-        # (Enhancement: rewrite file or use separate state)
+        remaining_lines = []
         for line in lines:
             try:
+                import requests
                 data = json.loads(line)
                 if not data.get("sent"):
-                    print(f"[*] Outbox -> Sending to Telegram: {data.get('text')}")
-                    # In actual use: requests.post(...)
-                    # Marking as sent locally for demo
-                    log_bridge_event("outbox_send", "simulated")
-            except:
-                continue
+                    print(f"[*] Sending response to Telegram (User {data.get('user_id')})...")
+                    url = f"https://api.telegram.org/bot{self.token}/sendMessage"
+                    payload = {
+                        "chat_id": data.get("user_id"),
+                        "text": data.get("text")
+                    }
+                    res = requests.post(url, json=payload, timeout=10)
+                    if res.status_code == 200:
+                        data["sent"] = True
+                        data["sent_at"] = datetime.now().isoformat()
+                        log_bridge_event("outbox_send", "done")
+                    else:
+                        print(f"[X] Failed to send message: {res.text}")
+                remaining_lines.append(json.dumps(data) + "\n")
+            except Exception as e:
+                print(f"[X] Outbox processing error: {e}")
+                remaining_lines.append(line)
+
+        # Update outbox to mark as sent
+        with open(OUTBOX_FILE, "w", encoding="utf-8") as f:
+            f.writelines(remaining_lines)
 
 def main():
     parser = argparse.ArgumentParser(description="Ronaldinho Telegram Bridge")

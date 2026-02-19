@@ -2,30 +2,38 @@
 
 This guide explains how to set up the Telegram Bridge to interact with Ronaldinho remotely while maintaining **Local-Only Governance**.
 
-## 1. Create a Telegram Bot
-1. Open Telegram and search for **@BotFather**.
-2. Send `/newbot` and follow the instructions to get your **Bot Token**.
-3. (Optional) Save the token in `workspace/data/secrets/telegram.json`:
-   ```json
-   {
-     "token": "YOUR_BOT_TOKEN_HERE"
-   }
-   ```
+## 1. Prerequisites
 
-## 2. Run the Bridge Script
-On your machine (where the project is located), open a terminal and run:
+- **.NET 9 SDK** (already verified on your machine).
+- Your Telegram Bot Token (already saved in `workspace/data/secrets/telegram.json`).
 
-```bash
-python dev_scripts/telegram_bridge.py --token YOUR_BOT_TOKEN_HERE
+## 2. Start Ronaldinho (Unified Command)
+
+The easiest way to start everything is with a single command:
+
+```powershell
+python gemini_cli.py start
 ```
 
-This script will start polling Telegram and exchanging messages with Ronaldinho via local files in `workspace/data/telegram/`.
+This will automatically:
+- Start the **Telegram Bridge** (.NET) in the background.
+- Start the **Ronaldinho Agent Brain** (Python) in your terminal.
+- Properly shut down both services when you press **Ctrl+C**.
 
-## 3. Interaction Flow
-- **You** send a message to the bot on Telegram.
-- **The Bridge** (running locally) writes your message to `inbox.jsonl`.
-- **Ronaldinho** (the agent) monitors `inbox.jsonl`, processes the request, and writes a response to `outbox.jsonl`.
-- **The Bridge** reads the response from `outbox.jsonl` and sends it back to your Telegram chat.
+## 3. Manual Startup (Optional)
 
-> [!NOTE]
-> Since Ronaldinho follows strict local-only governance, he cannot talk to Telegram directly. The bridge script you run is the "messenger" that makes this possible without compromising security.
+If you need to run the bridge service independently for debugging, you can still run it manually:
+
+```bash
+dotnet run --project services/Ronaldinho.Bridge/Ronaldinho.Bridge.csproj
+```
+
+## 4. Interaction Flow
+
+- **You** send a message to `@ronaldinho_agent_bot` on Telegram.
+- **Ronaldinho.Bridge** (.NET) polls Telegram and writes your message to `workspace/data/telegram/inbox.jsonl`.
+- **Ronaldinho Agent** (Python) monitors the inbox, processes the request, and writes a response to `outbox.jsonl`.
+- **Ronaldinho.Bridge** (.NET) detects the response and sends it back to you on Telegram.
+
+> [!TIP]
+> This new .NET service is much more resilient than the previous script, thanks to Hangfire's automatic retries and SQLite-backed job storage.
