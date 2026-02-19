@@ -21,19 +21,19 @@ def connect_gemini(with_search=False):
     
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        model_name = "gemini-1.5-flash"
+        model_name = "gemini-flash-latest"
         
         tools = []
         if with_search:
              try:
+                # Tools registration for search grounding
                 tools = [genai.protos.Tool(google_search_retrieval=genai.protos.GoogleSearchRetrieval())]
              except:
-                print("DEBUG: Google Search tool not available in this SDK version.", file=sys.stderr)
+                pass
 
         model = genai.GenerativeModel(model_name, tools=tools)
         return model
     except Exception as e:
-        print(f"DEBUG: Gemini Connection Error: {e}", file=sys.stderr)
         return None
 
 def load_history(user_id):
@@ -71,8 +71,11 @@ def analyze_instruction(prompt, user_id="default"):
         return {"error": "Gemini API Key missing or model unavailable."}
 
     system_prompt = """
-    Você é o cérebro do Ronaldinho-Agent (Modo Antigravity).
-    Converta instruções em JSON ou responda conversacionalmente.
+    Você é o Ronaldinho, um agente de IA inteligente e prestativo.
+    Sua personalidade é amigável, direta e focada em resolver tarefas.
+    Não mencione "Antigravity" ou outros modelos — você é apenas o Ronaldinho.
+    Converta instruções em JSON ou responda conversacionalmente de forma natural.
+
     Ações disponíveis:
     1. file_skill: create ([filename, content]), read ([filename]), list ([])
     2. orchestrator_skill: create ([script_name, content]), run ([script_name, *args])
@@ -82,7 +85,7 @@ def analyze_instruction(prompt, user_id="default"):
     Sempre responda APENAS o JSON:
     {"skill": "nome", "action": "acao", "args": []}
     OU se for conversa:
-    {"skill": "gemini", "action": "chat", "args": ["Resposta"]}
+    {"skill": "gemini", "action": "chat", "args": ["Sua resposta natural aqui"]}
     """
 
     messages = [{"role": "user", "parts": [system_prompt]}]

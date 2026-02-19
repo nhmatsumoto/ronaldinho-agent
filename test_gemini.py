@@ -10,7 +10,7 @@ if not api_key:
     exit(1)
 
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-flash-latest")
 
 print(f"Testing Gemini 1.5 Flash with key: {api_key[:10]}...")
 try:

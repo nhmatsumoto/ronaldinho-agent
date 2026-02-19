@@ -102,6 +102,9 @@ def run_loop():
                     text = msg['text']
                     print(f"[+] Telegram Message Received: {text}")
                     
+                    # 0. Show Typing Status
+                    subprocess.run(["python", bridge_script, "--typing", str(user_id)])
+                    
                     # 1. Reasoning
                     reason_res = subprocess.run(["python", reasoning_script, text, str(user_id)], capture_output=True, text=True)
                     try:

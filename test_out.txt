@@ -8,5 +8,5 @@ https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/READM
 
   import google.generativeai as genai
 Testing Gemini 1.5 Flash with key: AIzaSyDDoV...
-Gemini Test Failed:
-404 models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Response Success!
+Oi! Tudo bem? Como posso te ajudar hoje?

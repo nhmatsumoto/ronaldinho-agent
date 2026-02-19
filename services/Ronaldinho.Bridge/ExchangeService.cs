@@ -14,6 +14,7 @@ public class OutboxMessage
     public string ts { get; set; } = string.Empty;
     public long user_id { get; set; }
     public string text { get; set; } = string.Empty;
+    public string action { get; set; } = string.Empty; // e.g., "typing"
     public bool sent { get; set; }
 }
 

@@ -8,19 +8,30 @@ if root_path not in sys.path:
     sys.path.append(root_path)
 
 def parse_instruction(text, user_id="default"):
-    # Try Gemini Reasoning first
-    try:
-        from ronaldinho.skills.gemini_skill import analyze_instruction
-        plan = analyze_instruction(text, user_id)
-        if plan:
-            if "error" in plan:
-                print(f"DEBUG: Gemini Logic Error: {plan['error']}")
-            if "skill" in plan and "error" not in plan:
+    engine = os.getenv("REASONING_ENGINE", "gemini").lower()
+    
+    # 1. Main Reasoning Engine (with Fallback)
+    engines_to_try = [engine]
+    if engine == "gemini":
+        engines_to_try.append("claude_local")
+    else:
+        engines_to_try.append("gemini")
+
+    for current_engine in engines_to_try:
+        try:
+            if current_engine == "gemini":
+                from ronaldinho.skills.gemini_skill import analyze_instruction
+                plan = analyze_instruction(text, user_id)
+            elif current_engine == "claude_local":
+                from ronaldinho.skills.claude_skill import analyze_instruction_local
+                plan = analyze_instruction_local(text, user_id)
+            else:
+                continue
+
+            if plan and "skill" in plan and "error" not in plan:
                 return plan
-    except Exception as e:
-        # Fallback to Regex if Gemini fails
-        print(f"DEBUG: Gemini Exception: {e}")
-        pass
+        except Exception:
+            continue
 
     text = text.lower()
     
