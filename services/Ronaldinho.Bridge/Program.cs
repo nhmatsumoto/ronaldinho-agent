@@ -63,7 +63,7 @@ using (var scope = host.Services.CreateScope())
     recurringJobManager.AddOrUpdate<TelegramJob>(
         "telegram-polling",
         job => job.ExecuteAsync(),
-        "*/10 * * * * *" // Every 10 seconds
+        "*/1 * * * * *" // Every 1 second
     );
 }
 

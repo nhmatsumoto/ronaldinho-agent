@@ -1,0 +1,1 @@
+print('Gerado automaticamente para: Crie instruções para melhorar Ronaldinho nesses aspectos que ele está pecando')

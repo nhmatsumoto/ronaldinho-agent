@@ -55,6 +55,25 @@ public class ExchangeService : IExchangeService
 
         var json = JsonSerializer.Serialize(entry, _jsonOptions);
         await File.AppendAllLinesAsync(_inboxPath, new[] { json });
+
+        // Trigger Ronaldinho Runner (Zero-Queue Vision)
+        try
+        {
+            var pythonPath = "python"; // Assumes python is in PATH
+            var runnerPath = Path.Combine(Path.GetDirectoryName(_inboxPath)!, "..", "..", "core", "runner.py");
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = pythonPath,
+                Arguments = $"\"{runnerPath}\" --once",
+                CreateNoWindow = true,
+                UseShellExecute = false
+            });
+        }
+        catch (Exception ex)
+        {
+            // Log but don't fail the message writing
+            Console.WriteLine($"! Trigger Failed: {ex.Message}");
+        }
     }
 
     public async Task<List<OutboxMessage>> ReadNewOutboxMessagesAsync()

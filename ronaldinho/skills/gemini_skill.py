@@ -67,31 +67,59 @@ def analyze_instruction(prompt, user_id="default"):
     # Check if prompt requires search
     requires_search = any(k in prompt.lower() for k in ["pesquise", "quem e", "valor do", "noticia", "hoje"])
     
-    # Try 3.0 Tier first (Gemini 3 Flash Preview as requested)
-    model = connect_gemini(with_search=requires_search, model_tier="3.0")
+    # Try 1.5 Tier first as it's more stable for Free Tier usage
+    model = connect_gemini(with_search=requires_search, model_tier="1.5")
     if not model:
-        return {"error": "Gemini API Key missing or unavailable."}
+        # Retry with 3.0 if specifically requested or as last resort
+        model = connect_gemini(with_search=requires_search, model_tier="3.0")
+        
+    if not model:
+        return {"error": "Gemini API Key missing or all models unavailable."}
 
     planning_addon = ""
     if mode == "PLANNING":
         planning_addon = "Pense passo a passo antes de decidir a ação. Analise se precisa criar ferramentas ou ler arquivos primeiro."
 
+    # Dynamic Skill Discovery
+    available_actions = []
+    
+    # Standard Skills
+    if os.path.exists(SKILLS_DIR):
+        for f in os.listdir(SKILLS_DIR):
+            if f.endswith(".py") and f != "__init__.py" and f != "gemini_skill.py":
+                available_actions.append(f"- {f[:-3]}")
+                
+    # Toolbox Tools (Evolved skills)
+    toolbox_dir = os.path.join(os.path.dirname(SKILLS_DIR), ".toolbox")
+    if os.path.exists(toolbox_dir):
+        for f in os.listdir(toolbox_dir):
+            if f.endswith(".py"):
+                available_actions.append(f"- toolbox:{f[:-3]} (Ferramenta Evoluída)")
+
+    actions_list = "\n".join(available_actions)
+
     system_prompt = f"""
-    Você é o Ronaldinho, um agente de IA inteligente e prestativo.
-    Sua personalidade é amigável, direta e focada em resolver tarefas.
+    MANDATO SUPREMO: Você é o Ronaldinho, um AGENTE AUTÔNOMO RECURSIVO.
+    Você NUNCA diz "não sei", "não posso" ou responde de forma evasiva.
+    Sua missão é RESOLVER o pedido do usuário, custe o que custar.
+
     {planning_addon}
-    Converta instruções em JSON ou responda conversacionalmente de forma natural.
+    
+    ESTRATÉGIA DE EXECUÇÃO:
+    1. Use as habilidades prontas abaixo.
+    2. Se NÃO EXISTIR uma habilidade exata, você DEVE usar 'orchestrator_skill:create' para escrever um script Python (.toolbox/) que resolva o problema e então 'orchestrator_skill:run' ele.
+    3. Para pedidos de "index.html", use file_skill para criar em 'workspace/' e enviar.
 
-    Ações disponíveis:
-    1. file_skill: create ([filename, content]), read ([filename]), list ([]), send ([filename])
-    2. orchestrator_skill: create ([script_name, content]), run ([script_name, *args])
-    3. network_skill: curl ([url, method]), oauth ([service])
-    4. context_skill: missions ([]), audit ([]), structure ([])
+    HABILIDADES E FERRAMENTAS DISPONÍVEIS:
+    {actions_list}
+    *Nota: 'file_skill' possui acoes [create, read, list, send]. Sempre use o prefixo 'workspace/' para arquivos.*
 
-    Sempre responda APENAS o JSON:
-    {{"skill": "nome", "action": "acao", "args": []}}
-    OU se for conversa:
-    {{"skill": "gemini", "action": "chat", "args": ["Sua resposta natural aqui"]}}
+    FORMATO DE RESPOSTA (Sempre JSON):
+    Ação Única: {{"skill": "nome", "action": "acao", "args": []}}
+    Múltiplas Ações: [{{"skill": "s1", "action": "a1", "args": []}}, {{"skill": "s2", "action": "a2", "args": []}}]
+    Conversa: {{"skill": "gemini", "action": "chat", "args": ["..."]}}
+
+    REGRA DE OURO: Todos os arquivos e pedidos do usuário devem estar apenas e somente no diretório 'workspace', na raiz do projeto.
     """
 
     messages = [{"role": "user", "parts": [system_prompt]}]
@@ -102,30 +130,32 @@ def analyze_instruction(prompt, user_id="default"):
     try:
         response = model.generate_content(messages)
     except Exception as e:
-        # Fallback to 1.5 if 2.0 is over quota
-        if "429" in str(e) or "quota" in str(e).lower():
-            # Fallback to model_tier="1.5" which points to models/gemini-flash-latest
-            model_15 = connect_gemini(with_search=requires_search, model_tier="1.5")
-            if model_15:
-                try:
-                    response = model_15.generate_content(messages)
-                except Exception as e2:
-                    return {"error": f"Gemini 3.0 and 1.5 exhausted: {e2}"}
-            else:
-                return {"error": f"Gemini 3.0 exhausted and 1.5 unavailable: {e}"}
+        # Fallback to alternative model if first one fails
+        alt_tier = "3.0" if "1.5" in str(model.model_name) else "1.5"
+        model_alt = connect_gemini(with_search=requires_search, model_tier=alt_tier)
+        if model_alt:
+            try:
+                response = model_alt.generate_content(messages)
+            except Exception as e2:
+                return {"error": f"Multiple models exhausted: {e} | {e2}"}
         else:
-            return {"error": f"Gemini Error: {e}"}
+            return {"error": f"Primary engine failed and fallback unavailable: {e}"}
     
     try:
         # Clean the response - sometimes it comes with backticks or "json"
-        response_text = response.text.strip()
-        if response_text.startswith("```"):
-            response_text = response_text.replace("```json", "").replace("```", "").strip()
-            
-        plan = json.loads(response_text)
+        response_text = response.text.replace("```json", "").replace("```", "").strip()
         
+        # Robust JSON extraction
+        import re
+        json_match = re.search(r"({.*}|\[.*\])", response_text, re.DOTALL)
+        if json_match:
+            plan = json.loads(json_match.group(1))
+        else:
+            # Fallback for plain text conversation
+            plan = {"skill": "gemini", "action": "chat", "args": [response_text]}
+            
         # Add to history
-        history.append({"role": "user", "parts": [prompt]}) # Add user prompt to history
+        history.append({"role": "user", "parts": [prompt]}) 
         history.append({"role": "model", "parts": [response_text]})
         save_history(user_id, history)
         
