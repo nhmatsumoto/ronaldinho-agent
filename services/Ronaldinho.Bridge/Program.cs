@@ -9,12 +9,12 @@ var builder = Host.CreateApplicationBuilder(args);
 
 // 1. Load Secrets and find Root
 var baseDir = AppContext.BaseDirectory;
-while (!Directory.Exists(Path.Combine(baseDir, "workspace")) && Path.GetDirectoryName(baseDir) != null)
+while (!Directory.Exists(Path.Combine(baseDir, "ronaldinho")) && Path.GetDirectoryName(baseDir) != null)
 {
     baseDir = Path.GetDirectoryName(baseDir)!;
 }
 
-var secretsPath = Path.Combine(baseDir, "workspace", "data", "secrets", "telegram.json");
+var secretsPath = Path.Combine(baseDir, "ronaldinho", "data", "secrets", "telegram.json");
 string token = "";
 
 if (File.Exists(secretsPath))
@@ -28,7 +28,7 @@ if (File.Exists(secretsPath))
 
 if (string.IsNullOrEmpty(token))
 {
-    Console.WriteLine("CRITICAL: Telegram Token not found in workspace/data/secrets/telegram.json");
+    Console.WriteLine("CRITICAL: Telegram Token not found in ronaldinho/data/secrets/telegram.json");
 }
 else
 {
@@ -42,7 +42,7 @@ builder.Services.AddSingleton<IExchangeService, ExchangeService>();
 builder.Services.AddTransient<TelegramJob>();
 
 // 3. Configure Hangfire
-var dbDir = Path.Combine(baseDir, "workspace", "data");
+var dbDir = Path.Combine(baseDir, "ronaldinho", "data");
 var dbPath = Path.Combine(dbDir, "bridge.db");
 Directory.CreateDirectory(dbDir); // Ensure directory exists
 

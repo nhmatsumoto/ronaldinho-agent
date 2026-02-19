@@ -26,13 +26,13 @@ public class ExchangeService : IExchangeService
     public ExchangeService()
     {
         var baseDir = AppContext.BaseDirectory;
-        while (!Directory.Exists(Path.Combine(baseDir, "workspace")) && Path.GetDirectoryName(baseDir) != null)
+        while (!Directory.Exists(Path.Combine(baseDir, "ronaldinho")) && Path.GetDirectoryName(baseDir) != null)
         {
             baseDir = Path.GetDirectoryName(baseDir)!;
         }
 
-        _inboxPath = Path.Combine(baseDir, "workspace", "data", "telegram", "inbox.jsonl");
-        _outboxPath = Path.Combine(baseDir, "workspace", "data", "telegram", "outbox.jsonl");
+        _inboxPath = Path.Combine(baseDir, "ronaldinho", "data", "telegram", "inbox.jsonl");
+        _outboxPath = Path.Combine(baseDir, "ronaldinho", "data", "telegram", "outbox.jsonl");
         
         Directory.CreateDirectory(Path.GetDirectoryName(_inboxPath)!);
     }

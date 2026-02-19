@@ -5,8 +5,9 @@ from datetime import datetime
 
 # Path Configuration
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-INBOX_FILE = BASE_DIR / "workspace/data/telegram/inbox.jsonl"
-OUTBOX_FILE = BASE_DIR / "workspace/data/telegram/outbox.jsonl"
+DATA_DIR = BASE_DIR / "ronaldinho/data/telegram"
+INBOX_FILE = DATA_DIR / "inbox.jsonl"
+OUTBOX_FILE = DATA_DIR / "outbox.jsonl"
 
 def read_new_messages():
     """Reads messages from inbox that haven't been processed yet."""

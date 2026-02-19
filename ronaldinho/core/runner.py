@@ -108,12 +108,18 @@ def run_loop():
                     # 1. Reasoning
                     reason_res = subprocess.run(["python", reasoning_script, text, str(user_id)], capture_output=True, text=True)
                     try:
-                        # Clean the output in case there's extra text
+                        # Clean the output and extract JSON if mixed with text
                         output = reason_res.stdout.strip()
                         if not output:
                              raise ValueError("Empty reasoning output")
                              
-                        plan = json.loads(output)
+                        # Robust JSON extraction
+                        import re
+                        json_match = re.search(r"({.*})", output, re.DOTALL)
+                        if json_match:
+                            plan = json.loads(json_match.group(1))
+                        else:
+                            raise ValueError(f"Could not find valid JSON in output: {output[:100]}...")
                         if plan and "skill" in plan:
                             skill_script = os.path.join(SKILLS_DIR, f"{plan['skill']}.py")
                             action = plan["action"]

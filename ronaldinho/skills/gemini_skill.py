@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
 import os
 import sys
 import json
@@ -11,8 +13,7 @@ env_path = WORKSPACE_ROOT / ".env"
 load_dotenv(dotenv_path=env_path)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-WORKSPACE_ROOT = Path(__file__).resolve().parent.parent.parent
-HISTORY_FILE = WORKSPACE_ROOT / "workspace" / "data" / "chat_history.json"
+HISTORY_FILE = WORKSPACE_ROOT / "ronaldinho" / "data" / "chat_history.json"
 
 def connect_gemini(with_search=False):
     if not GEMINI_API_KEY or "your_gemini_api_key" in GEMINI_API_KEY:
