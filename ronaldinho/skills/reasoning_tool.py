@@ -12,11 +12,14 @@ def parse_instruction(text, user_id="default"):
     try:
         from ronaldinho.skills.gemini_skill import analyze_instruction
         plan = analyze_instruction(text, user_id)
-        if plan and "skill" in plan and "error" not in plan:
-            return plan
+        if plan:
+            if "error" in plan:
+                print(f"DEBUG: Gemini Logic Error: {plan['error']}")
+            if "skill" in plan and "error" not in plan:
+                return plan
     except Exception as e:
         # Fallback to Regex if Gemini fails
-        print(f"DEBUG: Gemini Error: {e}", file=sys.stderr)
+        print(f"DEBUG: Gemini Exception: {e}")
         pass
 
     text = text.lower()

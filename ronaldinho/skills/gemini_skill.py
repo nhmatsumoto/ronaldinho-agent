@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 # Load API Key
-load_dotenv()
+WORKSPACE_ROOT = Path(__file__).resolve().parent.parent.parent
+env_path = WORKSPACE_ROOT / ".env"
+load_dotenv(dotenv_path=env_path)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -14,21 +16,24 @@ HISTORY_FILE = WORKSPACE_ROOT / "workspace" / "data" / "chat_history.json"
 
 def connect_gemini(with_search=False):
     if not GEMINI_API_KEY or "your_gemini_api_key" in GEMINI_API_KEY:
+        print(f"DEBUG: Invalid API Key: {GEMINI_API_KEY[:10]}...", file=sys.stderr)
         return None
     
-    genai.configure(api_key=GEMINI_API_KEY)
-    model_name = "gemini-2.0-flash"
-    
-    tools = []
-    if with_search:
-        # Note: Google Search grounding syntax for Gemini Python SDK
-        tools = [genai.protos.Tool(google_search_retrieval=genai.protos.GoogleSearchRetrieval())]
-
     try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        model_name = "gemini-1.5-flash"
+        
+        tools = []
+        if with_search:
+             try:
+                tools = [genai.protos.Tool(google_search_retrieval=genai.protos.GoogleSearchRetrieval())]
+             except:
+                print("DEBUG: Google Search tool not available in this SDK version.", file=sys.stderr)
+
         model = genai.GenerativeModel(model_name, tools=tools)
         return model
     except Exception as e:
-        print(f"Error configuring model {model_name}: {e}")
+        print(f"DEBUG: Gemini Connection Error: {e}", file=sys.stderr)
         return None
 
 def load_history(user_id):
