@@ -34,6 +34,13 @@ Operações de auto-modificação e otimização do núcleo do agente.
 - **Build**: Execução de `dotnet build` nos projetos dentro de `.agent/`.
 - **Logs**: Otimizações devem ser registradas em `PERFORMANCE_LOG.toon`.
 
+### L5 - INTEGRATION (Auto-Run: FALSE + ENCRYPTION)
+Operações que envolvem conexão com plataformas externas (Slack, Jira, etc.).
+- **OAuth**: O agente jamais deve manipular tokens em texto claro no front-end.
+- **Storage**: Tokens devem ser armazenados exclusivamente no backend em estado cifrado.
+- **HTTPS**: Toda comunicação externa deve ser via canal seguro e criptografado.
+- **Revogação**: Tokens devem possuir expiração curta e revogação automática.
+
 ## 🌐 WEB ACCESS WHITELIST
 Para garantir a Governança (Regra #4), o Ronaldinho só pode acessar:
 - `github.com` (Consultas de documentação)

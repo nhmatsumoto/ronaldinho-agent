@@ -64,6 +64,7 @@ Learn more about Ronaldinho's internal mechanics:
 - 🛡️ [Security & Privacy](docs/security_model.md): How your data is protected.
 - 🧬 [Autonomy & Self-Audit](docs/autonomy_audit.md): How the agent evolves.
 - 🏗️ [Architecture](docs/architecture.md): The modular system design.
+- 🔌 [Integration Roadmap](docs/integration_roadmap.md): Plans for Slack, Telegram, Jira, and more.
 
 ---
 *Ronaldinho-Agent: Where autonomy meets engineering mastery.*
