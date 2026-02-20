@@ -1,4 +1,6 @@
 using Microsoft.SemanticKernel;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Services;
 using System.Runtime.CompilerServices;
@@ -14,8 +16,7 @@ public class ClaudeStrategy : ILLMStrategy
 
     public void Configure(IKernelBuilder builder, IConfiguration configuration)
     {
-        string apiKey = configuration["ANTHROPIC_API_KEY"] 
-            ?? throw new ArgumentNullException("ANTHROPIC_API_KEY not found in configuration");
+        string apiKey = configuration["ANTHROPIC_API_KEY"] ?? "placeholder_key";
             
         string modelId = configuration["CLAUDE_MODEL_ID"] ?? "claude-3-5-sonnet-20240620";
 

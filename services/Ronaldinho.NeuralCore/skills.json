@@ -1,0 +1,24 @@
+{
+    "skills": [
+        {
+            "name": "file",
+            "enabled": true,
+            "description": "File system operations"
+        },
+        {
+            "name": "context",
+            "enabled": true,
+            "description": "Context management"
+        },
+        {
+            "name": "auth",
+            "enabled": true,
+            "description": "Authentication and Identity"
+        },
+        {
+            "name": "findings",
+            "enabled": true,
+            "description": "Persistent research memory (findings.toon)"
+        }
+    ]
+}

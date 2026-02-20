@@ -1,0 +1,7 @@
+C:\nhmatsumoto\Ronaldinho-Agent\services\Ronaldinho.NeuralCore\Gateway\TelegramGateway.cs(63,68): error CS1503: Argumento 1: não é possível converter de "long" para "Ronaldinho.NeuralCore.Core.Memory.SessionContext" [C:\nhmatsumoto\Ronaldinho-Agent\services\Ronaldinho.NeuralCore\Ronaldinho.NeuralCore.csproj]
+
+FALHA da compilação.
+    11 Aviso(s)
+    1 Erro(s)
+
+Tempo Decorrido 00:00:02.88

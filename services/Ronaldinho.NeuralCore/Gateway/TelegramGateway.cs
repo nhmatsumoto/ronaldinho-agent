@@ -6,10 +6,13 @@ using Ronaldinho.NeuralCore.Core;
 
 namespace Ronaldinho.NeuralCore.Gateway;
 
-public class TelegramGateway
+public class TelegramGateway : IGateway
 {
     private readonly ITelegramBotClient _botClient;
     private readonly NeuralOrchestrator _orchestrator;
+    private CancellationTokenSource? _cts;
+
+    public string Name => "Telegram";
 
     public TelegramGateway(string token, NeuralOrchestrator orchestrator)
     {
@@ -17,12 +20,12 @@ public class TelegramGateway
         _orchestrator = orchestrator;
     }
 
-    public async Task StartAsync()
+    public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        var me = await _botClient.GetMeAsync();
-        Console.WriteLine($"[Gateway] Ronaldinho NeuralCore online as @{me.Username}");
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-        using var cts = new CancellationTokenSource();
+        var me = await _botClient.GetMeAsync(_cts.Token);
+        Console.WriteLine($"[Gateway] Ronaldinho NeuralCore online as @{me.Username}");
 
         var receiverOptions = new ReceiverOptions
         {
@@ -33,31 +36,62 @@ public class TelegramGateway
             updateHandler: HandleUpdateAsync,
             pollingErrorHandler: HandlePollingErrorAsync,
             receiverOptions: receiverOptions,
-            cancellationToken: cts.Token
+            cancellationToken: _cts.Token
         );
+    }
 
-        // Keep running
-        await Task.Delay(-1);
+    public Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        _cts?.Cancel();
+        Console.WriteLine($"[Gateway] Stopped listening for Telegram.");
+        return Task.CompletedTask;
     }
 
     private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
-        if (update.Message is not { Text: { } messageText } message)
-            return;
+        try
+        {
+            if (update.Message is not { Text: { } messageText } message)
+                return;
 
-        var chatId = message.Chat.Id;
-        
-        // Indicate typing
-        await botClient.SendChatActionAsync(chatId, ChatAction.Typing, cancellationToken: cancellationToken);
+            var chatId = message.Chat.Id;
+            
+            // Indicate typing
+            await botClient.SendChatActionAsync(chatId, ChatAction.Typing, cancellationToken: cancellationToken);
 
-        // Process via Neural Core
-        var response = await _orchestrator.ProcessMessageAsync(chatId, messageText);
+            // Process via Neural Core (Injecting Context & Memory)
+            var context = _orchestrator.Router.Route("Telegram", chatId.ToString(), message.From?.Id.ToString() ?? "Unknown");
 
-        // Send response
-        await botClient.SendTextMessageAsync(
-            chatId: chatId,
-            text: response,
-            cancellationToken: cancellationToken);
+            // 1. Save user's fresh input to memory
+            await _orchestrator.Memory.SaveMemoryAsync(context.SessionId, "user", messageText);
+
+            // 2. Process via AI
+            var response = await _orchestrator.ProcessMessageAsync(context, messageText);
+
+            // 3. Save AI's response to memory
+            await _orchestrator.Memory.SaveMemoryAsync(context.SessionId, "assistant", response);
+
+            // Send response
+            await botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: response,
+                cancellationToken: cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Gateway] Unhandled Exception: {ex.Message}");
+            if (update.Message != null)
+            {
+                try 
+                {
+                    await botClient.SendTextMessageAsync(
+                        chatId: update.Message.Chat.Id,
+                        text: $"🚨 Falha de operação na infraestrutura HTTP (Google API / Modelos?): {ex.Message}",
+                        cancellationToken: cancellationToken);
+                } 
+                catch { /* Ignore inner send errors */ }
+            }
+        }
     }
 
     private Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)

@@ -1,0 +1,16 @@
+[
+    {
+        "Id": "daily_greeting",
+        "ScheduleCron": "09:00",
+        "ActionPayload": "Bom dia! Quais são as principais métricas e objetivos do dia?",
+        "Enabled": true,
+        "LastRun": null
+    },
+    {
+        "Id": "hourly_audit",
+        "ScheduleCron": "17:00",
+        "ActionPayload": "Realize um resumo do dia. O que foi avançado?",
+        "Enabled": true,
+        "LastRun": null
+    }
+]

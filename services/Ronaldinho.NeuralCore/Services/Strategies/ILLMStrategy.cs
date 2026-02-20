@@ -1,4 +1,5 @@
 using Microsoft.SemanticKernel;
+using Microsoft.Extensions.Configuration;
 
 namespace Ronaldinho.NeuralCore.Services.Strategies;
 

@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Configuration;
+
 namespace Ronaldinho.NeuralCore.Services.Strategies;
 
 public class LLMStrategyFactory

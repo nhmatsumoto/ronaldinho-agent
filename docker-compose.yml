@@ -1,0 +1,32 @@
+services:
+  ronaldinho-neuralcore:
+    build:
+      context: .
+      dockerfile: services/Ronaldinho.NeuralCore/Dockerfile
+    container_name: ronaldinho_neuralcore
+    environment:
+      - DOTNET_ENVIRONMENT=Production
+    volumes:
+      # Mount root configurations to container root 
+      # because the agent traverses 5 levels up from /app to find them
+      - ./.env:/.env:ro
+      - ./ronaldinho:/ronaldinho
+      - ./logs:/logs
+    restart: unless-stopped
+
+  ronaldinho-configui:
+    build:
+      context: services/Ronaldinho.ConfigUI
+      dockerfile: Dockerfile
+    container_name: ronaldinho_configui
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount the UI code so local edits sync instantly
+      - ./services/Ronaldinho.ConfigUI:/app
+      # Hide node_modules from the host to prevent cross-OS issues
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+

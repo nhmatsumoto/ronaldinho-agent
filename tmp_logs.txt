@@ -1,0 +1,176 @@
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
+ronaldinho_neuralcore  | ⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽
+ronaldinho_neuralcore  | [System] Environment loaded from root .env
+ronaldinho_neuralcore  | [System] Initializing Multi-Agent Coordination Protocol (MCP)...
+ronaldinho_neuralcore  | [MCP] Booting CodeSpecialistAgent with ClaudeStrategy...
+ronaldinho_neuralcore  | Unhandled exception. System.ArgumentNullException: Value cannot be null. (Parameter 'ANTHROPIC_API_KEY not found in configuration')
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Services.Strategies.ClaudeStrategy.Configure(IKernelBuilder builder, IConfiguration configuration) in /src/services/Ronaldinho.NeuralCore/Services/Strategies/ClaudeStrategy.cs:line 19
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.Main(String[] args) in /src/services/Ronaldinho.NeuralCore/Program.cs:line 87
+ronaldinho_neuralcore  |    at Ronaldinho.NeuralCore.Program.<Main>(String[] args)
