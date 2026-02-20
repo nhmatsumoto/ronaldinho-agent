@@ -10,6 +10,8 @@ using Ronaldinho.NeuralCore.Gateway;
 using Ronaldinho.NeuralCore.Services.Strategies;
 using Ronaldinho.NeuralCore.Services.MCP.Core;
 using Ronaldinho.NeuralCore.Services.MCP.Agents;
+using Ronaldinho.NeuralCore.Services;
+using Google.Apis.Auth;
 using DotNetEnv;
 using System.Text.Json;
 
@@ -63,6 +65,18 @@ class Program
                 });
         });
 
+        // Add Security Services Early
+        builder.Services.AddDataProtection();
+        builder.Services.AddSingleton<ILocalKeyVault, LocalKeyVault>();
+        
+        // Inject DB Vault Keys into IConfiguration
+        var earlyProvider = builder.Services.BuildServiceProvider();
+        var earlyVault = earlyProvider.GetRequiredService<ILocalKeyVault>();
+        
+        if (earlyVault.GetGlobalKey("GEMINI") is string gk) builder.Configuration["GEMINI_API_KEY"] = gk;
+        if (earlyVault.GetGlobalKey("OPENAI") is string ok) builder.Configuration["OPENAI_API_KEY"] = ok;
+        if (earlyVault.GetGlobalKey("ANTHROPIC") is string ak) builder.Configuration["ANTHROPIC_API_KEY"] = ak;
+
         // 5. Initialize Core Services (singleton-like instantiations)
         var tokenStorage = new Services.Auth.TokenStorageService(rootPath);
         var googleAuth = new Services.Auth.GoogleAuthService(builder.Configuration, tokenStorage);
@@ -105,13 +119,40 @@ class Program
 
         // --- API ROUTES ---
         
-        app.MapGet("/api/settings", async () => 
+        // --- AUTH MIDDLEWARE HELPER ---
+        async Task<GoogleJsonWebSignature.Payload?> ValidateGoogleToken(HttpContext context)
         {
+            var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+            if (authHeader == null || !authHeader.StartsWith("Bearer ")) return null;
+            
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+            try
+            {
+                return await GoogleJsonWebSignature.ValidateAsync(token);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        // --- API ROUTES ---
+        
+        app.MapGet("/api/settings", async (HttpContext ctx) => 
+        {
+            var payload = await ValidateGoogleToken(ctx);
+            if (payload == null) return Results.Unauthorized();
+
             var config = app.Services.GetRequiredService<IConfiguration>();
+            var vault = app.Services.GetRequiredService<ILocalKeyVault>();
+            
             var currentSoul = File.Exists(soulPath) ? await File.ReadAllTextAsync(soulPath) : "";
             
+            // Check if key exists in vault to return a placeholder indicator (boolean essentially, but typed as string for UI compatibility)
+            var hasGeminiKey = vault.GetKey(payload.Subject, "GEMINI") != null ? "VAULT_LOCKED_KEY" : "";
+            
             return Results.Ok(new AgentSettingsDto(
-                GeminiApiKey: config["GEMINI_API_KEY"] ?? "",
+                GeminiApiKey: hasGeminiKey,
                 TelegramToken: config["TELEGRAM_BOT_TOKEN"] ?? "",
                 AiModel: config["LLM_PROVIDER"] ?? "gemini",
                 Personality: currentSoul,
@@ -119,16 +160,29 @@ class Program
             ));
         });
 
-        app.MapPost("/api/settings", async ([FromBody] AgentSettingsDto request) =>
+        app.MapPost("/api/settings", async (HttpContext ctx, [FromBody] AgentSettingsDto request) =>
         {
-            Console.WriteLine("[API] Saving new configurations...");
+            var payload = await ValidateGoogleToken(ctx);
+            if (payload == null) return Results.Unauthorized();
+
+            Console.WriteLine($"[API] Saving new configurations for user: {payload.Email}...");
             
+            // 0. Key Vault Savings
+            var vault = app.Services.GetRequiredService<ILocalKeyVault>();
+            if (!string.IsNullOrEmpty(request.GeminiApiKey) && request.GeminiApiKey != "VAULT_LOCKED_KEY")
+            {
+                 vault.SaveKey(payload.Subject, "GEMINI", request.GeminiApiKey);
+                 Console.WriteLine("[Security] Gemini API Key encrypted and saved to LocalKeyVault.");
+                 // Important: update live config so it takes effect immediately without full restart if possible
+                 config["GEMINI_API_KEY"] = request.GeminiApiKey;
+            }
+
             // 1. Update SOUL.md (Personality)
             var dir = Path.GetDirectoryName(soulPath);
             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
             await File.WriteAllTextAsync(soulPath, request.Personality);
 
-            // 2. Update .env (Tokens, Model, Permissions)
+            // 2. Update .env (Global Options)
             var envDict = new Dictionary<string, string>();
             if (File.Exists(envPath))
             {
@@ -139,7 +193,7 @@ class Program
                 }
             }
             
-            envDict["GEMINI_API_KEY"] = request.GeminiApiKey;
+            // Do NOT save the Gemini Key to .env anymore.
             envDict["TELEGRAM_BOT_TOKEN"] = request.TelegramToken;
             envDict["LLM_PROVIDER"] = request.AiModel;
             envDict["ALLOW_LOCAL_TOOLS"] = request.LocalPermissions ? "true" : "false";
@@ -147,7 +201,7 @@ class Program
             var newEnvLines = envDict.Select(kv => $"{kv.Key}={kv.Value}");
             await File.WriteAllLinesAsync(envPath, newEnvLines);
 
-            Console.WriteLine("[API] Configurations saved successfully. A restart might be required for changes to fully apply to singletons.");
+            Console.WriteLine("[API] Configurations saved successfully.");
             return Results.Ok(new { message = "Settings updated successfully" });
         });
 

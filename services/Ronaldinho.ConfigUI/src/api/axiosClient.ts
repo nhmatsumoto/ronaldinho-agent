@@ -12,11 +12,10 @@ const apiClient = axios.create({
 // Configure Request Interceptors
 apiClient.interceptors.request.use(
     (config) => {
-        // You could inject auth tokens here before the request is sent
-        // const token = localStorage.getItem('token');
-        // if (token) {
-        //   config.headers.Authorization = `Bearer ${token}`
-        // }
+        const token = localStorage.getItem('ronaldinho_auth_token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
         return config;
     },
     (error) => Promise.reject(error)
