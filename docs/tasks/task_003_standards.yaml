@@ -1,0 +1,14 @@
+task_id: task_003_standards
+title: Repository Standardization and Community Guidelines
+owner_agent: Orchestrator
+inputs:
+  - Requirement for professional open source repository standards
+dependencies:
+  - task_001_open_source
+acceptance_criteria:
+  - LICENSE file created (MIT)
+  - CONTRIBUTING.md created with clear guidelines
+  - .github templates created (ISSUE and PR)
+  - Walkthrough updated
+output_format: markdown and templates
+risk_level: Low
