@@ -5,7 +5,7 @@
 
 [Leia este documento em Português (PT-BR)](README_pt-br.md)
 
-Ronaldinho-Agent is an autonomous development ecosystem designed for high performance, security, and self-evolution. Built to operate as a background daemon, it manages missions and optimizes your workspace autonomously and deterministically, within a strictly local and fast environment.
+Ronaldinho-Agent is an autonomous development ecosystem designed for high performance, security, and self-evolution. Powered by a **.NET 9 NeuralCore** and a **React/Chakra UI Governance Interface**, it manages multi-model AI missions with built-in resilience and deterministic governance.
 
 ## 🌟 Our Vision: The Power of Community
 
@@ -15,17 +15,22 @@ Code alone reaches a limit without collective intelligence. By opening this AI a
 
 ## 🎯 Project Objectives
 
-- **Level 6 Autonomy**: The continuous capacity for self-starting, self-correction, and self-optimization without sacrificing execution rigor.
-- **Intelligent Multitasking**: High-speed simultaneous processing.
-- **Strict Security & Rules ("Unified Execution Doctrine")**: Operates based on a rigid framework of determinism and privacy (*Zero-Trust*). No unauthorized external calls. Mandatory transparency.
+- **Level 6 Autonomy**: The continuous capacity for self-starting, self-correction, and self-optimization.
+- **Multi-Model Gateway**: Native support for **Gemini 2.0**, **OpenAI (GPT-4o)**, and **Claude (Anthropic)**.
+- **Zero-Block Resilience**: Automatic fallback system that rotates models on rate limits (429 errors).
+- **Governance UI**: Modern dashboard for real-time configuration and API key management.
+- **Enterprise Security**: Authentication powered by **Keycloak** with identity federation.
+- **Strict Execution Rules**: Operates based on the "Unified Execution Doctrine" for absolute determinism.
 
 ---
 
 ## 🚀 Quick Start
-
 ### Prerequisites
-- Python 3.10+
-- Local permissions in your current folder
+
+- **.NET 9 SDK** (Core Engine)
+- **Node.js / Bun** (Governance UI)
+- **Docker & Docker Compose** (Full Stack Deployment)
+- **PowerShell 7+** (Automation Scripts)
 
 ### Installation
 
@@ -40,14 +45,18 @@ cp .env.example .env
 # Modify .env with your API Key (Never submit keys to public repositories!)
 ```
 
-### Initializing the Agent
-Run the standardized scripts (created using the `dev_scripts` policy and `.toolbox`):
-```bash
-# Via standard Daemon
-./run.bat
+### Quick Boot (Local)
 
-# Or, if using powershell:
+```powershell
+# Standard entry point (Launches NeuralCore + Smart Onboarding)
 ./start_neural.ps1
+```
+
+### Full Stack (Docker)
+
+```bash
+# Deploys Brain, UI, Keycloak, and Database
+docker compose up -d --build
 ```
 
 ---
@@ -56,12 +65,12 @@ Run the standardized scripts (created using the `dev_scripts` policy and `.toolb
 
 Just as brilliantly perceived with OpenClaw, we bet everything on contributions! From new `dev_scripts` to structural improvements in the *Orchestrator*:
 
-1.  **Fork** the repository.
-2.  Follow the crucial **Local Governance Rules** when creating your features.
-3.  If you identify recurring manual actions, create tools in `.toolbox` or `dev_scripts/`.
-4.  Work on your **Branch** (`git checkout -b feature/YourInnovation`).
-5.  Generate Local Tests with TOON validation and write logs.
-6.  Submit your **Pull Request** to the *main* / *master* branch.
+1. Fork the repository.
+2. Follow the crucial **Local Governance Rules** when creating your features.
+3. If you identify recurring manual actions, create tools in `.toolbox` or `dev_scripts/`.
+4. Work on your **Branch** (`git checkout -b feature/YourInnovation`).
+5. Generate Local Tests with TOON validation and write logs.
+6. Submit your **Pull Request** to the *main* / *master* branch.
 
 The community will analyze every submission. Be careful with key leaks or uncatalogued dependencies.
 

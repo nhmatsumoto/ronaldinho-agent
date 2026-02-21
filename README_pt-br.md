@@ -5,7 +5,7 @@
 
 [Read this document in English (EN)](README.md)
 
-Ronaldinho-Agent é um ecossistema autônomo de desenvolvimento projetado para altíssima performance, segurança e autoevolução. Construído para operar como um daemon em background, gerencia missões e otimiza sua área de trabalho de forma determinística, estritamente de maneira local e veloz.
+Ronaldinho-Agent é um ecossistema autônomo de desenvolvimento projetado para altíssima performance, segurança e autoevolução. Impulsionado por um **NeuralCore em .NET 9** e uma **Interface de Governança em React/Chakra UI**, gerencia missões de IA multi-modelo com resiliência nativa e governança determinística.
 
 ## 🌟 Nossa Visão: A Força da Comunidade
 
@@ -15,17 +15,23 @@ O código sozinho atinge um limite sem a inteligência coletiva. Ao abrirmos ess
 
 ## 🎯 Objetivos do Projeto
 
-- **Autonomia Nível 6**: A capacidade ininterrupta de auto-início, autocorreção e auto-otimização sem sacrificar o rigor nas execuções.
-- **Multitarefa Inteligente**: Processamento simultâneo e de alta velocidade.
-- **Segurança e Regras Stritas ("Unified Execution Doctrine")**: Operar com base num rígido framework de determinismo e privacidade (*Zero-Trust*). Nenhuma chamada externa não autorizada. Transparência obrigatória.
+- **Autonomia Nível 6**: A capacidade ininterrupta de auto-início, autocorreção e auto-otimização.
+- **Gateway Multi-Modelo**: Suporte nativo para **Gemini 2.0**, **OpenAI (GPT-4o)** e **Claude (Anthropic)**.
+- **Resiliência Zero-Block**: Sistema de fallback automático que rotaciona modelos em caso de limites de taxa (erros 429).
+- **Interface de Governança**: Dashboard moderno para configuração em tempo real e gestão de chaves de API.
+- **Segurança Corporativa**: Autenticação via **Keycloak** com suporte a federação de identidade.
+- **Regras Stritas de Execução**: Opera sob a "Unified Execution Doctrine" para determinismo absoluto.
 
 ---
 
 ## 🚀 Guia de Início Rápido
 
 ### Pré-requisitos
-- Python 3.10+
-- Permissões locais na sua pasta atual
+
+- **.NET 9 SDK** (Cérebro Core)
+- **Node.js / Bun** (Interface de Governança)
+- **Docker & Docker Compose** (Deploy Full Stack)
+- **PowerShell 7+** (Scripts de Automação)
 
 ### Instalação
 
@@ -40,14 +46,18 @@ cp .env.example .env
 # Modifique o .env com sua API Key (Nunca submeta chaves para repositórios públicos!)
 ```
 
-### Inicializando o Agente
-Execute os scripts padronizados (criados usando a política `dev_scripts` e `.toolbox`):
-```bash
-# Via Daemon padrão
-./run.bat
+### Início Rápido (Local)
 
-# Ou, se utilizou powershell:
+```powershell
+# Ponto de entrada unificado (Inicia o NeuralCore + Onboarding Inteligente)
 ./start_neural.ps1
+```
+
+### Stack Completa (Docker)
+
+```bash
+# Sobe o Cérebro, UI, Keycloak e Banco de Dados
+docker compose up -d --build
 ```
 
 ---
@@ -66,5 +76,7 @@ Assim como percebido brilhantemente com o OpenClaw, nós apostamos tudo nas cont
 A comunidade analisará cada submissão. Cuidado com o vazamento de chaves ou dependências não catalogadas.
 
 ---
+
 ## 📜 Licença
+
 Distribuído sob a Licença **MIT**. Veja o arquivo `LICENSE` para maiores detalhes.

@@ -22,10 +22,8 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      # Mount the UI code so local edits sync instantly
       - ./services/Ronaldinho.ConfigUI:/app
-      # Hide node_modules from the host to prevent cross-OS issues
-      - /app/node_modules
+      - ronaldinho_configui_node_modules:/app/node_modules
     env_file:
       - ./.env
     environment:
@@ -62,4 +60,5 @@ services:
 
 volumes:
   postgres_keycloak_data:
+  ronaldinho_configui_node_modules:
 
