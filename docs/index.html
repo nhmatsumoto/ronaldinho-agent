@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ronaldinho-Agent | Open Source Ecosystem</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --primary: #38bdf8;
+            --secondary: #818cf8;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(129, 140, 248, 0.15), transparent 25%);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            padding: 4rem 2rem;
+            width: 100%;
+            animation: fadeIn 1.5s ease;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin: 0;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        p.subtitle {
+            font-size: 1.25rem;
+            color: #94a3b8;
+            max-width: 600px;
+            margin: 1.5rem auto;
+        }
+
+        main {
+            width: 100%;
+            max-width: 1000px;
+            padding: 0 2rem 4rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            main {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .glass-card h2 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .glass-card ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .glass-card li {
+            margin-bottom: 0.8rem;
+            position: relative;
+            padding-left: 20px;
+            color: #cbd5e1;
+        }
+
+        .glass-card li::before {
+            content: "▹";
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 2rem;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Ronaldinho-Agent 🚀</h1>
+        <p class="subtitle">Um ecossistema autônomo de desenvolvimento projetado para altíssima performance, segurança local e autoevolução.</p>
+        <div class="actions" style="justify-content: center; margin-top: 2rem;">
+            <a href="https://github.com/SeuUsuario/Ronaldinho-Agent" class="btn">Acessar Repositório</a>
+            <a href="#doc-links" class="btn btn-outline">Explorar Documentação</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="glass-card">
+            <h2>🧠 Nossa Visão (Inspiração OpenClaw)</h2>
+            <p>Inspirado no crescimento orgânico de plataformas open source massivas como o OpenClaw, o Ronaldinho abre as portas para a inteligência coletiva.</p>
+            <p>Nenhuma IA atinge a perfeição trancafiada localmente. Ao publicarmos este modelo sob a Licença MIT, convidamos engenheiros a aprimorar nosso orquestrador determinístico.</p>
+        </div>
+
+        <div class="glass-card">
+            <h2>⚙️ Capacidades Nucleares</h2>
+            <ul>
+                <li><strong>Autonomia L6:</strong> Execução fluida de múltiplos _threads_ com total auto-observância.</li>
+                <li><strong>Zero-Trust:</strong> Operações estritas de segurança sob o modelo Local-Only Governance.</li>
+                <li><strong>Otimização TOON:</strong> Sumarização prévia à LLM garantindo economia e velocidade fenomenais.</li>
+                <li><strong>Daemon Background:</strong> Rode invisivelmente no seu OS enquanto as tarefas ganham vida.</li>
+            </ul>
+        </div>
+
+        <div class="glass-card full-width" id="doc-links">
+            <h2>📚 Links Rápidos da Documentação</h2>
+            <p style="color: #94a3b8; margin-bottom: 2rem;">Para maximizar a eficiência, criamos módulos de governança rígidos e documentação robusta:</p>
+            <div class="actions" style="justify-content: center;">
+                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/docs/architecture.md" class="btn btn-outline">Arquitetura Geral</a>
+                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/docs/security_model.md" class="btn btn-outline">Modelo Zero-Trust</a>
+                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/docs/emergent_governance.md" class="btn btn-outline">Governança Emergente</a>
+                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/README.md" class="btn">Visualizar README Original</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Desenvolvido com 🩵. Código licenciado sob MIT.</p>
+    </footer>
+
+</body>
+</html>

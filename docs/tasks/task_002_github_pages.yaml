@@ -1,0 +1,14 @@
+task_id: task_002_github_pages
+title: Setup and Configuration for GitHub Pages
+owner_agent: Orchestrator
+inputs:
+  - User request (Habilitar GitHub Pages, Criar Index Simples, Publicar)
+dependencies:
+  - task_001_open_source
+acceptance_criteria:
+  - TaskSpec properly defined
+  - docs/index.html gerado com design limpo, dark mode e glassmorphism
+  - Script dev_scripts/enable_gh_pages.ps1 criado para publicar configurando branch main e path /docs via gh CLI
+  - Operar inteiramente local sem acessos a APIs externas pelas instâncias do agente (acesso pelo script apenas e guiado pelo usuário)
+output_format: html and ps1 scripts
+risk_level: Low
