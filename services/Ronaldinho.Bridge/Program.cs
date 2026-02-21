@@ -2,8 +2,8 @@ using Hangfire;
 using Hangfire.Storage.SQLite;
 using Microsoft.Extensions.DependencyInjection;
 using Ronaldinho.Bridge;
-using Telegram.Bot;
 using System.Text.Json;
+using DotNetEnv;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -12,6 +12,14 @@ var baseDir = AppContext.BaseDirectory;
 while (!Directory.Exists(Path.Combine(baseDir, "ronaldinho")) && Path.GetDirectoryName(baseDir) != null)
 {
     baseDir = Path.GetDirectoryName(baseDir)!;
+}
+
+// Load Environment from root .env
+var envPath = Path.Combine(baseDir, ".env");
+if (File.Exists(envPath))
+{
+    DotNetEnv.Env.Load(envPath);
+    Console.WriteLine("[*] Environment loaded from root .env");
 }
 
 var secretsPath = Path.Combine(baseDir, "ronaldinho", "data", "secrets", "telegram.json");
@@ -26,9 +34,15 @@ if (File.Exists(secretsPath))
     }
 }
 
+// Fallback to Environment Variable (consistency with NeuralCore)
 if (string.IsNullOrEmpty(token))
 {
-    Console.WriteLine("CRITICAL: Telegram Token not found in ronaldinho/data/secrets/telegram.json");
+    token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN") ?? "";
+}
+
+if (string.IsNullOrEmpty(token))
+{
+    Console.WriteLine("CRITICAL: Telegram Token not found in ronaldinho/data/secrets/telegram.json OR Environment Variable.");
 }
 else
 {
