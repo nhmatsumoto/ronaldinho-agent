@@ -48,8 +48,14 @@ cp .env.example .env
 ### Quick Boot (Local)
 
 ```powershell
-# Standard entry point (Launches NeuralCore + Smart Onboarding)
+# Windows (PowerShell)
 ./start_neural.ps1
+```
+
+```bash
+# Linux / macOS (Bash)
+chmod +x start_neural.sh ./dev_scripts/*.sh
+./start_neural.sh
 ```
 
 ### Full Stack (Docker)

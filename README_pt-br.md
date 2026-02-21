@@ -49,8 +49,14 @@ cp .env.example .env
 ### Início Rápido (Local)
 
 ```powershell
-# Ponto de entrada unificado (Inicia o NeuralCore + Onboarding Inteligente)
+# Windows (PowerShell)
 ./start_neural.ps1
+```
+
+```bash
+# Linux / macOS (Bash)
+chmod +x start_neural.sh ./dev_scripts/*.sh
+./start_neural.sh
 ```
 
 ### Stack Completa (Docker)
