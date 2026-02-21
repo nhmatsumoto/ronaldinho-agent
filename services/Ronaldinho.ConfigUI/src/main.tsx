@@ -6,9 +6,9 @@ import { AuthProvider as OidcProvider } from 'react-oidc-context';
 import { AuthProvider as ConfigUIAuthProvider } from './contexts/AuthContext';
 
 const oidcConfig = {
-    authority: "http://localhost:8080/realms/ronaldinho",
-    client_id: "configui-client",
-    redirect_uri: "http://localhost:5173",
+    authority: import.meta.env.VITE_AUTH_AUTHORITY || "http://localhost:8080/realms/ronaldinho",
+    client_id: import.meta.env.VITE_AUTH_CLIENT_ID || "configui-client",
+    redirect_uri: import.meta.env.VITE_AUTH_REDIRECT_URI || window.location.origin,
 };
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

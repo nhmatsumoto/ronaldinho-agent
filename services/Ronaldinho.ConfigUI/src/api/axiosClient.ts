@@ -9,11 +9,14 @@ const apiClient = axios.create({
     timeout: 10000,
 });
 
+const authAuthority = import.meta.env.VITE_AUTH_AUTHORITY || "http://localhost:8080/realms/ronaldinho";
+const authClientId = import.meta.env.VITE_AUTH_CLIENT_ID || "configui-client";
+const storageKey = `oidc.user:${authAuthority}:${authClientId}`;
+
 // Configure Request Interceptors
 apiClient.interceptors.request.use(
     (config) => {
-        // react-oidc-context typically stores the user object in sessionStorage by default
-        const oidcStorage = sessionStorage.getItem(`oidc.user:http://localhost:8080/realms/ronaldinho:configui-client`);
+        const oidcStorage = sessionStorage.getItem(storageKey);
         if (oidcStorage) {
             try {
                 const user = JSON.parse(oidcStorage);

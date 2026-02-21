@@ -25,42 +25,35 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-// --- Helper CSS Classes for Premium Native Inputs ---
-const inputStyle = {
-    width: '100%',
-    padding: '14px',
-    borderRadius: '10px',
-    border: '1px solid #CBD5E0',
-    backgroundColor: '#F7FAFC',
-    fontSize: '16px',
-    outline: 'none',
-    transition: 'all 0.2s ease-in-out',
-    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+const glassStyle = {
+    background: 'rgba(255, 255, 255, 0.03)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '24px',
+    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
 };
 
-const inputErrorStyle = {
-    ...inputStyle,
-    border: '2px solid #E53E3E',
-    backgroundColor: '#FFF5F5',
+const inputStyle = {
+    width: '100%',
+    padding: '16px',
+    borderRadius: '14px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    color: 'white',
+    fontSize: '16px',
+    outline: 'none',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 };
 
 const labelStyle = {
     display: 'block',
     fontWeight: 700,
-    marginBottom: '8px',
-    color: '#2D3748',
-    fontSize: '15px',
-    letterSpacing: '0.3px',
-};
-
-const errorTextStyle = {
-    color: '#E53E3E',
-    fontSize: '13px',
-    marginTop: '6px',
-    fontWeight: 600,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
+    marginBottom: '10px',
+    color: '#f1c40f',
+    fontSize: '14px',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '1.5px',
 };
 
 function App() {
@@ -118,10 +111,10 @@ function App() {
     if (isLoading && !settings) {
         return (
             <ChakraProvider value={defaultSystem}>
-                <Center h="100vh" bg="gray.50">
-                    <VStack gap={4}>
-                        <Spinner size="xl" color="blue.500" />
-                        <Text color="gray.600" fontWeight="600" fontSize="lg">Conectando ao Ronaldinho Neural Core...</Text>
+                <Center h="100vh" bg="#0a0b14">
+                    <VStack gap={6}>
+                        <Spinner size="xl" thickness="4px" speed="0.65s" color="#f1c40f" />
+                        <Text color="white" fontWeight="800" fontSize="2xl" letterSpacing="widest">CONECTANDO AO CÉREBRO...</Text>
                     </VStack>
                 </Center>
             </ChakraProvider>
@@ -132,252 +125,191 @@ function App() {
         <ChakraProvider value={defaultSystem}>
             <Toaster position="top-right" />
 
-            <Box bg="gray.100" minH="100vh" py={12} fontFamily="system-ui, -apple-system, sans-serif">
-                <Container maxW="container.lg">
+            <Box
+                bg="#0a0b14"
+                minH="100vh"
+                py={12}
+                color="white"
+                backgroundImage="radial-gradient(circle at 50% -20%, #1a1b3a 0%, #0a0b14 60%)"
+            >
+                <Container maxW="container.xl">
 
-                    <Box textAlign="center" mb={6} position="relative">
-                        <Heading size="2xl" color="blue.800" letterSpacing="tight" fontWeight="800">Ronaldinho Governance</Heading>
-                        <Text color="gray.600" mt={3} fontSize="xl" fontWeight="500">Controle Operacional Central do Agente Neural</Text>
+                    <Flex justify="space-between" align="center" mb={12}>
+                        <VStack align="start" gap={1}>
+                            <Heading size="3xl" color="#f1c40f" letterSpacing="widest" fontWeight="900">RONALDINHO</Heading>
+                            <Text color="rgba(255, 255, 255, 0.5)" fontSize="sm" fontWeight="800" textTransform="uppercase" letterSpacing="3px">Neural Core Governance</Text>
+                        </VStack>
 
-                        <Flex position="absolute" top={0} right={0} align="center" gap={3} bg="white" p={2} borderRadius={10} boxShadow="sm" border="1px solid" borderColor="gray.200">
-                            {user?.picture && <img src={user.picture} alt="Profile" style={{ width: 32, height: 32, borderRadius: '50%' }} />}
-                            <Box textAlign="right" display={{ base: 'none', md: 'block' }}>
-                                <Text fontSize="xs" fontWeight="bold" color="blue.700">{user?.name}</Text>
-                                <Button size="xs" variant="ghost" colorScheme="red" h="auto" p={0} mt={0.5} onClick={logout}>Desconectar</Button>
+                        <Flex align="center" gap={4} p={3} {...glassStyle} borderRadius="99px">
+                            {user?.picture && <img src={user.picture} alt="Profile" style={{ width: 44, height: 44, borderRadius: '50%', border: '2px solid #f1c40f' }} />}
+                            <Box pr={4}>
+                                <Text fontSize="sm" fontWeight="900" color="white">{user?.name?.toUpperCase()}</Text>
+                                <Button size="xs" variant="link" color="#f1c40f" _hover={{ textDecoration: 'none', color: 'white' }} onClick={logout}>SIGNOUT</Button>
                             </Box>
                         </Flex>
-                    </Box>
+                    </Flex>
 
-                    <Grid templateColumns={{ base: "1fr", lg: "1fr 2fr" }} gap={8}>
+                    <Grid templateColumns={{ base: "1fr", lg: "1fr 2fr" }} gap={10}>
 
-                        {/* LEFT COLUMN: CURRENT STATE */}
-                        <Box>
-                            <Box p={6} borderWidth={1} borderRadius={16} boxShadow="md" bg="white" position="sticky" top="20px">
-                                <Heading size="md" mb={6} color="gray.800" borderBottom="2px solid" borderColor="blue.100" pb={3}>
-                                    Status Atual (Ativo)
-                                </Heading>
+                        {/* LEFT COLUMN: STATUS OVERVIEW */}
+                        <VStack gap={8} align="stretch">
+                            <Box p={8} {...glassStyle}>
+                                <Heading size="md" mb={8} color="#f1c40f" letterSpacing="2px" textTransform="uppercase">Status de Rede</Heading>
 
-                                <VStack align="stretch" gap={5}>
+                                <VStack align="stretch" gap={6}>
                                     <Box>
-                                        <Text fontSize="xs" fontWeight="700" color="gray.500" textTransform="uppercase" letterSpacing="wider">Engine Selecionada</Text>
-                                        <Text fontSize="md" fontWeight="600" color="blue.600">{settings?.aiModel.toUpperCase() || 'NÃO CONFIGURADO'}</Text>
-                                    </Box>
-
-                                    <Box>
-                                        <Text fontSize="xs" fontWeight="700" color="gray.500" textTransform="uppercase" letterSpacing="wider">Permissão Local (SuperToolbox)</Text>
-                                        <Flex align="center" gap={2} mt={1}>
-                                            <Box w={3} h={3} borderRadius="50%" bg={settings?.localPermissions ? "green.400" : "red.400"} />
-                                            <Text fontSize="sm" fontWeight="600" color={settings?.localPermissions ? "green.600" : "red.600"}>
-                                                {settings?.localPermissions ? 'HABILITADO (Mutável)' : 'BLOQUEADO (Apenas Leitura)'}
-                                            </Text>
+                                        <Text fontSize="10px" fontWeight="900" color="rgba(255, 255, 255, 0.4)" mb={2} letterSpacing="2px">ENGINE ATIVA</Text>
+                                        <Flex align="center" gap={3}>
+                                            <Box w={2} h={2} borderRadius="full" bg="#2ecc71" boxShadow="0 0 10px #2ecc71" />
+                                            <Text fontSize="xl" fontWeight="900" textShadow="0 0 10px rgba(241, 196, 15, 0.3)">{settings?.aiModel?.toUpperCase()}</Text>
                                         </Flex>
                                     </Box>
 
                                     <Box>
-                                        <Text fontSize="xs" fontWeight="700" color="gray.500" textTransform="uppercase" letterSpacing="wider">Resiliência (Anti-429)</Text>
-                                        <Flex align="center" gap={2} mt={1}>
-                                            <Box w={3} h={3} borderRadius="50%" bg={settings?.autoFallback ? "green.400" : "orange.400"} />
-                                            <Text fontSize="sm" fontWeight="600" color={settings?.autoFallback ? "green.600" : "orange.600"}>
-                                                {settings?.autoFallback ? 'AUTO-FALLBACK ATIVO' : 'MANUAL (Pode bloquear)'}
-                                            </Text>
-                                        </Flex>
-                                    </Box>
-
-                                    <Box>
-                                        <Text fontSize="xs" fontWeight="700" color="gray.500" textTransform="uppercase" letterSpacing="wider">API Keys Configúradas (Vault)</Text>
-                                        <VStack align="stretch" gap={1} mt={1}>
-                                            <Text fontSize="sm" fontWeight="600" color="gray.700">
-                                                Gemini: {settings?.geminiApiKey ? '✅ Salva' : '❌ Ausente'}
-                                            </Text>
-                                            <Text fontSize="sm" fontWeight="600" color="gray.700">
-                                                OpenAI: {settings?.openaiApiKey ? '✅ Salva' : '❌ Ausente'}
-                                            </Text>
-                                            <Text fontSize="sm" fontWeight="600" color="gray.700">
-                                                Claude: {settings?.anthropicApiKey ? '✅ Salva' : '❌ Ausente'}
-                                            </Text>
-                                            <Text fontSize="sm" fontWeight="600" color="gray.700">
-                                                Telegram: {settings?.telegramToken ? '✅ Salva' : '❌ Ausente'}
-                                            </Text>
-                                        </VStack>
-                                    </Box>
-
-                                    <Box>
-                                        <Text fontSize="xs" fontWeight="700" color="gray.500" textTransform="uppercase" letterSpacing="wider">Snapshot de Personalidade</Text>
-                                        <Text fontSize="sm" color="gray.600" lineClamp={4} fontStyle="italic" bg="gray.50" p={3} borderRadius={8} border="1px solid" borderColor="gray.200">
-                                            "{settings?.personality || 'Sem diretriz definida...'}"
+                                        <Text fontSize="10px" fontWeight="900" color="rgba(255, 255, 255, 0.4)" mb={2} letterSpacing="2px">SISTEMA DE RESILIÊNCIA</Text>
+                                        <Text fontSize="lg" fontWeight="800" color={settings?.autoFallback ? "#2ecc71" : "#e67e22"}>
+                                            {settings?.autoFallback ? 'PHENOMENAL FALLBACK ACTIVE' : 'MANUAL OVERRIDE'}
                                         </Text>
                                     </Box>
+
+                                    <Grid templateColumns="repeat(2, 1fr)" gap={4} pt={4}>
+                                        <Box p={4} borderRadius="16px" bg="rgba(255, 255, 255, 0.05)" border="1px solid rgba(255, 255, 255, 0.05)">
+                                            <Text fontSize="9px" fontWeight="900" color="rgba(255, 255, 255, 0.4)" mb={1}>GEMINI</Text>
+                                            <Text fontSize="xs" fontWeight="900" color={settings?.geminiApiKey ? "#2ecc71" : "#e74c3c"}>{settings?.geminiApiKey ? 'SYNCED' : 'OFFLINE'}</Text>
+                                        </Box>
+                                        <Box p={4} borderRadius="16px" bg="rgba(255, 255, 255, 0.05)" border="1px solid rgba(255, 255, 255, 0.05)">
+                                            <Text fontSize="9px" fontWeight="900" color="rgba(255, 255, 255, 0.4)" mb={1}>OPENAI</Text>
+                                            <Text fontSize="xs" fontWeight="900" color={settings?.openaiApiKey ? "#2ecc71" : "#e74c3c"}>{settings?.openaiApiKey ? 'SYNCED' : 'OFFLINE'}</Text>
+                                        </Box>
+                                        <Box p={4} borderRadius="16px" bg="rgba(255, 255, 255, 0.05)" border="1px solid rgba(255, 255, 255, 0.05)">
+                                            <Text fontSize="9px" fontWeight="900" color="rgba(255, 255, 255, 0.4)" mb={1}>CLAUDE</Text>
+                                            <Text fontSize="xs" fontWeight="900" color={settings?.anthropicApiKey ? "#2ecc71" : "#e74c3c"}>{settings?.anthropicApiKey ? 'SYNCED' : 'OFFLINE'}</Text>
+                                        </Box>
+                                        <Box p={4} borderRadius="16px" bg="rgba(255, 255, 255, 0.05)" border="1px solid rgba(255, 255, 255, 0.05)">
+                                            <Text fontSize="9px" fontWeight="900" color="rgba(255, 255, 255, 0.4)" mb={1}>TELEGRAM</Text>
+                                            <Text fontSize="xs" fontWeight="900" color={settings?.telegramToken ? "#2ecc71" : "#e74c3c"}>{settings?.telegramToken ? 'CONNECTED' : 'WAITING'}</Text>
+                                        </Box>
+                                    </Grid>
                                 </VStack>
                             </Box>
-                        </Box>
 
-                        {/* RIGHT COLUMN: CONFIG FORM */}
-                        <Box p={8} borderWidth={1} borderRadius={16} boxShadow="xl" bg="white">
+                            <Box p={8} {...glassStyle} borderLeft="4px solid #f1c40f">
+                                <Text fontSize="10px" fontWeight="900" color="#f1c40f" mb={4} letterSpacing="3px">CURRENT ARCHETYPE</Text>
+                                <Text fontSize="sm" color="rgba(255, 255, 255, 0.8)" lineClamp={5} fontStyle="italic" lineHeight="1.6">
+                                    "{settings?.personality || 'Waiting for core synchronization...'}"
+                                </Text>
+                            </Box>
+                        </VStack>
+
+                        {/* RIGHT COLUMN: CONTROL PANEL */}
+                        <Box p={10} {...glassStyle}>
                             <form onSubmit={handleSubmit(onSubmit)}>
-                                <VStack align="stretch" gap={10}>
+                                <VStack align="stretch" gap={12}>
 
-                                    {/* SECTION 1: MODEL */}
                                     <Box>
-                                        <Heading size="sm" mb={5} color="blue.700" textTransform="uppercase" letterSpacing="widest" fontWeight="800">
-                                            1. Roteamento de Cérebro (Brain)
-                                        </Heading>
-
-                                        <VStack align="stretch" gap={6}>
+                                        <Heading size="md" mb={8} color="#f1c40f" letterSpacing="2px" textTransform="uppercase">1. Neural Architecture</Heading>
+                                        <VStack align="stretch" gap={8}>
                                             <Box>
-                                                <label style={labelStyle}>Engine de IA Ativa (Padrão)</label>
+                                                <label style={labelStyle}>Mestre do Conhecimento (Engine)</label>
                                                 <select
-                                                    style={errors.aiModel ? inputErrorStyle : inputStyle}
+                                                    style={inputStyle}
                                                     {...register('aiModel')}
                                                 >
-                                                    <option value="gemini">Google Gemini 2.0 Flash</option>
-                                                    <option value="openai">OpenAI GPT-4o</option>
-                                                    <option value="claude">Anthropic Claude 3.5 Sonnet (Antigravity)</option>
+                                                    <option value="gemini" style={{ background: '#0a0b14' }}>GOOGLE GEMINI 2.0 FLASH</option>
+                                                    <option value="openai" style={{ background: '#0a0b14' }}>OPENAI GPT-4O (ULTRA)</option>
+                                                    <option value="claude" style={{ background: '#0a0b14' }}>ANTHROPIC CLAUDE 3.5 SONNET</option>
                                                 </select>
-                                                {errors.aiModel && <span style={errorTextStyle}>⚠️ {errors.aiModel.message}</span>}
                                             </Box>
 
-                                            <Grid templateColumns={{ base: "1fr", md: "1fr 1fr 1fr" }} gap={4}>
+                                            <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={6}>
                                                 <Box>
-                                                    <label style={labelStyle}>Google Gemini Key</label>
-                                                    <input
-                                                        type="password"
-                                                        style={errors.geminiApiKey ? inputErrorStyle : inputStyle}
-                                                        placeholder="AIza..."
-                                                        {...register('geminiApiKey')}
-                                                    />
-                                                    {errors.geminiApiKey && <span style={errorTextStyle}>⚠️ {errors.geminiApiKey.message}</span>}
+                                                    <label style={labelStyle}>Gemini Key</label>
+                                                    <input type="password" style={inputStyle} {...register('geminiApiKey')} />
                                                 </Box>
-
                                                 <Box>
                                                     <label style={labelStyle}>OpenAI Key</label>
-                                                    <input
-                                                        type="password"
-                                                        style={errors.openaiApiKey ? inputErrorStyle : inputStyle}
-                                                        placeholder="sk-..."
-                                                        {...register('openaiApiKey')}
-                                                    />
-                                                    {errors.openaiApiKey && <span style={errorTextStyle}>⚠️ {errors.openaiApiKey.message}</span>}
+                                                    <input type="password" style={inputStyle} {...register('openaiApiKey')} />
                                                 </Box>
-
-                                                <Box>
+                                                <Box gridColumn="span 2">
                                                     <label style={labelStyle}>Anthropic Key</label>
-                                                    <input
-                                                        type="password"
-                                                        style={errors.anthropicApiKey ? inputErrorStyle : inputStyle}
-                                                        placeholder="sk-ant-..."
-                                                        {...register('anthropicApiKey')}
-                                                    />
-                                                    {errors.anthropicApiKey && <span style={errorTextStyle}>⚠️ {errors.anthropicApiKey.message}</span>}
+                                                    <input type="password" style={inputStyle} {...register('anthropicApiKey')} />
                                                 </Box>
                                             </Grid>
                                         </VStack>
                                     </Box>
 
-                                    <Box borderBottom="1px solid" borderColor="gray.100" />
-
-                                    {/* SECTION 2: PERSONALITY */}
                                     <Box>
-                                        <Heading size="sm" mb={5} color="blue.700" textTransform="uppercase" letterSpacing="widest" fontWeight="800">
-                                            2. Identidade e Comportamento
-                                        </Heading>
-                                        <Box>
-                                            <label style={labelStyle}>Arquivo SOUL.md - Quem é o Ronaldinho?</label>
-                                            <textarea
-                                                style={{ ...(errors.personality ? inputErrorStyle : inputStyle), minHeight: '180px', fontFamily: 'monospace', lineHeight: 1.5 }}
-                                                placeholder="Defina o prompt sistêmico central do agente..."
-                                                {...register('personality')}
-                                            />
-                                            {errors.personality && <span style={errorTextStyle}>⚠️ {errors.personality.message}</span>}
-                                            <Text fontSize="xs" color="gray.500" mt={2}>
-                                                Esta será a principal diretriz de comportamento para todas as interações.
-                                            </Text>
-                                        </Box>
+                                        <Heading size="md" mb={8} color="#f1c40f" letterSpacing="2px" textTransform="uppercase">2. Módulo de Personalidade (SOUL)</Heading>
+                                        <textarea
+                                            style={{ ...inputStyle, minHeight: '160px', fontFamily: 'monospace' }}
+                                            {...register('personality')}
+                                        />
                                     </Box>
 
-                                    <Box borderBottom="1px solid" borderColor="gray.100" />
-
-                                    {/* SECTION 3: PERMISSIONS */}
                                     <Box>
-                                        <Heading size="sm" mb={5} color="blue.700" textTransform="uppercase" letterSpacing="widest" fontWeight="800">
-                                            3. Permissões de Host
-                                        </Heading>
-                                        <VStack align="stretch" gap={6}>
+                                        <Heading size="md" mb={8} color="#f1c40f" letterSpacing="2px" textTransform="uppercase">3. Protocolos de Segurança</Heading>
+                                        <VStack align="stretch" gap={8}>
                                             <Box>
-                                                <label style={labelStyle}>Telegram Bot Token (Ingresso de Rede)</label>
-                                                <input
-                                                    type="password"
-                                                    style={errors.telegramToken ? inputErrorStyle : inputStyle}
-                                                    placeholder="123456789:ABCdef..."
-                                                    {...register('telegramToken')}
-                                                />
-                                                {errors.telegramToken && <span style={errorTextStyle}>⚠️ {errors.telegramToken.message}</span>}
+                                                <label style={labelStyle}>Telegram Bot Gateway</label>
+                                                <input type="password" style={inputStyle} {...register('telegramToken')} />
                                             </Box>
 
-                                            <Flex bg={settings?.autoFallback ? "green.50" : "orange.50"} p={5} borderRadius="12px" borderWidth="1px" borderColor={settings?.autoFallback ? "green.200" : "orange.200"} alignItems="center">
-                                                <Controller
-                                                    name="autoFallback"
-                                                    control={control}
-                                                    render={({ field }) => (
-                                                        <input
-                                                            type="checkbox"
-                                                            id="autoFallback"
-                                                            style={{ width: '28px', height: '28px', cursor: 'pointer', accentColor: '#38A169' }}
-                                                            checked={field.value}
-                                                            onChange={(e) => field.onChange(e.target.checked)}
-                                                        />
-                                                    )}
-                                                />
-                                                <Box ml={4}>
-                                                    <label htmlFor="autoFallback" style={{ ...labelStyle, marginBottom: 0, color: '#2F855A', fontSize: '16px' }}>
-                                                        Resiliência Automática (Anti-429 Fallback)
-                                                    </label>
-                                                    <Text fontSize="sm" color="gray.600" mt={1}>
-                                                        Se ativado, o sistema alternará automaticamente entre Gemini, OpenAI e Claude caso um deles atinja o limite de taxa.
-                                                    </Text>
-                                                </Box>
-                                            </Flex>
+                                            <Flex gap={8}>
+                                                <Flex align="center" gap={4} p={4} borderRadius="16px" bg="rgba(241, 196, 15, 0.05)" border="1px solid rgba(241, 196, 15, 0.1)" flex={1}>
+                                                    <Controller
+                                                        name="autoFallback"
+                                                        control={control}
+                                                        render={({ field }) => (
+                                                            <input
+                                                                type="checkbox"
+                                                                style={{ width: '22px', height: '22px', accentColor: '#f1c40f' }}
+                                                                checked={field.value}
+                                                                onChange={(e) => field.onChange(e.target.checked)}
+                                                            />
+                                                        )}
+                                                    />
+                                                    <Box>
+                                                        <Text fontWeight="800" fontSize="xs" color="#f1c40f">PHENO FALLBACK</Text>
+                                                        <Text fontSize="10px" color="rgba(255, 255, 255, 0.5)">Resiliência Anti-429</Text>
+                                                    </Box>
+                                                </Flex>
 
-                                            <Flex bg={errors.localPermissions ? "red.50" : "blue.50"} p={5} borderRadius="12px" borderWidth="1px" borderColor={errors.localPermissions ? "red.200" : "blue.200"} alignItems="center">
-                                                <Controller
-                                                    name="localPermissions"
-                                                    control={control}
-                                                    render={({ field }) => (
-                                                        <input
-                                                            type="checkbox"
-                                                            id="localPermissions"
-                                                            style={{ width: '28px', height: '28px', cursor: 'pointer', accentColor: '#3182ce' }}
-                                                            checked={field.value}
-                                                            onChange={(e) => field.onChange(e.target.checked)}
-                                                        />
-                                                    )}
-                                                />
-                                                <Box ml={4}>
-                                                    <label htmlFor="localPermissions" style={{ ...labelStyle, marginBottom: 0, color: '#2B6CB0', fontSize: '16px' }}>
-                                                        Autorizar Mutações no Disco (SuperToolbox)
-                                                    </label>
-                                                    <Text fontSize="sm" color="gray.600" mt={1}>
-                                                        Se marcado, o agente poderá editar arquivos, executar comandos Bash e realizar commits na pasta do projeto via `mcp`.
-                                                    </Text>
-                                                </Box>
+                                                <Flex align="center" gap={4} p={4} borderRadius="16px" bg="rgba(46, 204, 113, 0.05)" border="1px solid rgba(46, 204, 113, 0.1)" flex={1}>
+                                                    <Controller
+                                                        name="localPermissions"
+                                                        control={control}
+                                                        render={({ field }) => (
+                                                            <input
+                                                                type="checkbox"
+                                                                style={{ width: '22px', height: '22px', accentColor: '#2ecc71' }}
+                                                                checked={field.value}
+                                                                onChange={(e) => field.onChange(e.target.checked)}
+                                                            />
+                                                        )}
+                                                    />
+                                                    <Box>
+                                                        <Text fontWeight="800" fontSize="xs" color="#2ecc71">LOCAL ACCESS</Text>
+                                                        <Text fontSize="10px" color="rgba(255, 255, 255, 0.5)">Escrita em Disco</Text>
+                                                    </Box>
+                                                </Flex>
                                             </Flex>
                                         </VStack>
                                     </Box>
 
                                     <Button
-                                        colorScheme="blue"
-                                        size="lg"
-                                        h="64px"
+                                        bg="#f1c40f"
+                                        color="#0a0b14"
+                                        size="xl"
+                                        h="70px"
                                         fontSize="lg"
-                                        fontWeight="bold"
-                                        mt={4}
-                                        type="submit"
-                                        boxShadow="xl"
-                                        _hover={{ transform: 'translateY(-2px)', boxShadow: '2xl' }}
-                                        _active={{ transform: 'translateY(1px)' }}
+                                        fontWeight="900"
+                                        letterSpacing="4px"
+                                        _hover={{ bg: 'white', transform: 'scale(1.02)' }}
+                                        _active={{ transform: 'scale(0.98)' }}
                                         loading={isSubmitting || isLoading}
-                                        loadingText="Processando Mutação..."
+                                        type="submit"
                                     >
-                                        GRAVAR CONFIGURAÇÕES NO NÚCLEO
+                                        SYNC COGNITION
                                     </Button>
                                 </VStack>
                             </form>
@@ -388,6 +320,4 @@ function App() {
         </ChakraProvider>
     );
 }
-
 export default App;
-

@@ -2,6 +2,15 @@ import { Box, Center, Heading, Text, VStack, Button } from '@chakra-ui/react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
+const glassStyle = {
+    background: 'rgba(255, 255, 255, 0.03)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '24px',
+    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+};
+
 export const LoginScreen = () => {
     const { login } = useAuth();
 
@@ -15,32 +24,44 @@ export const LoginScreen = () => {
     };
 
     return (
-        <Center h="100vh" bg="gray.100" fontFamily="system-ui, -apple-system, sans-serif">
-            <Box p={10} rounded="xl" bg="white" boxShadow="2xl" maxW="450px" w="full" textAlign="center">
-                <VStack gap={6}>
-                    <Box>
-                        <Heading size="xl" color="blue.800" letterSpacing="tight" fontWeight="900" mb={2}>
-                            Identificação Neural
+        <Center
+            h="100vh"
+            bg="#0a0b14"
+            backgroundImage="radial-gradient(circle at 50% 50%, #1a1b3a 0%, #0a0b14 100%)"
+            fontFamily="'Inter', system-ui, -apple-system, sans-serif"
+        >
+            <Box p={12} {...glassStyle} maxW="480px" w="full" textAlign="center">
+                <VStack gap={8}>
+                    <VStack gap={2}>
+                        <Heading size="3xl" color="#f1c40f" letterSpacing="4px" fontWeight="900">
+                            PHENOMENAL
                         </Heading>
-                        <Text color="gray.500" fontSize="md" fontWeight="500">
-                            Apenas operadores autorizados podem modificar o sistema nervoso do Ronaldinho.
+                        <Text color="rgba(255, 255, 255, 0.5)" fontSize="xs" fontWeight="800" letterSpacing="3px">
+                            IDENTIFICAÇÃO NEURAL
                         </Text>
-                    </Box>
+                    </VStack>
 
-                    <Box w="full" bg="gray.50" p={6} borderRadius="lg" border="1px dashed" borderColor="gray.300">
-                        <Button
-                            colorScheme="blue"
-                            size="lg"
-                            w="full"
-                            onClick={handleLogin}
-                            boxShadow="md"
-                        >
-                            Entrar com Keycloak
-                        </Button>
-                    </Box>
+                    <Text color="rgba(255, 255, 255, 0.7)" fontSize="md" fontWeight="500" lineHeight="1.6">
+                        Apenas operadores autorizados podem modificar o sistema nervoso do Ronaldinho.
+                    </Text>
 
-                    <Text fontSize="xs" color="gray.400" mt={4}>
-                        Autenticação auditada por sessão corporativa.
+                    <Button
+                        bg="#f1c40f"
+                        color="#0a0b14"
+                        size="xl"
+                        w="full"
+                        h="65px"
+                        onClick={handleLogin}
+                        fontWeight="900"
+                        letterSpacing="2px"
+                        _hover={{ bg: 'white', transform: 'scale(1.02)' }}
+                        _active={{ transform: 'scale(0.98)' }}
+                    >
+                        ENTRAR COM KEYCLOAK
+                    </Button>
+
+                    <Text fontSize="10px" color="rgba(255, 255, 255, 0.3)" textTransform="uppercase" letterSpacing="2px">
+                        Security Layer: OIDC / RS256
                     </Text>
                 </VStack>
             </Box>

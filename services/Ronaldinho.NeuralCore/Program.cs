@@ -85,18 +85,20 @@ class Program
         });
 
         // --- KEYCLOAK OIDC AUTHENTICATION ---
+        string authAuthority = builder.Configuration["AUTH_AUTHORITY"] ?? "http://localhost:8080/realms/ronaldinho";
+        string authAudience = builder.Configuration["AUTH_AUDIENCE"] ?? "account";
+
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.Authority = "http://localhost:8080/realms/ronaldinho";
-                // Disable HTTPS requirement for local development with Keycloak
+                options.Authority = authAuthority;
                 options.RequireHttpsMetadata = false; 
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateAudience = true,
-                    ValidAudience = "account", // Keycloak default or map to "configui-client" if explicitly configured
+                    ValidAudiences = new[] { authAudience, "configui-client" },
                     ValidateIssuer = true,
-                    ValidIssuer = "http://localhost:8080/realms/ronaldinho"
+                    ValidIssuer = authAuthority
                 };
             });
         
