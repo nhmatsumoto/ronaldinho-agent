@@ -1,0 +1,13 @@
+task_id: task_001_open_source
+title: Preparação para Publicação Open Source
+owner_agent: Orchestrator
+inputs:
+  - Instruções do usuário (Criar Repositório, Gerar README, Adição de Imagens, Referência OpenClaw, Divulgação)
+dependencies: []
+acceptance_criteria:
+  - README gerado com imagens inspiradoras, contexto do OpenClaw e instruções
+  - Modelo de anúncio LinkedIn gerado
+  - Script automático em dev_scripts para inicialização do repositório gerado
+  - Processo estritamente documentado sem acessar internet ou APIs externas
+output_format: markdown and ps1 scripts
+risk_level: Low

@@ -11,7 +11,8 @@ using Ronaldinho.NeuralCore.Services.Strategies;
 using Ronaldinho.NeuralCore.Services.MCP.Core;
 using Ronaldinho.NeuralCore.Services.MCP.Agents;
 using Ronaldinho.NeuralCore.Services;
-using Google.Apis.Auth;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using DotNetEnv;
 using System.Text.Json;
 
@@ -65,6 +66,24 @@ class Program
                 });
         });
 
+        // --- KEYCLOAK OIDC AUTHENTICATION ---
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.Authority = "http://localhost:8080/realms/ronaldinho";
+                // Disable HTTPS requirement for local development with Keycloak
+                options.RequireHttpsMetadata = false; 
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateAudience = true,
+                    ValidAudience = "account", // Keycloak default or map to "configui-client" if explicitly configured
+                    ValidateIssuer = true,
+                    ValidIssuer = "http://localhost:8080/realms/ronaldinho"
+                };
+            });
+        
+        builder.Services.AddAuthorization();
+
         // Add Security Services Early
         builder.Services.AddDataProtection();
         builder.Services.AddSingleton<ILocalKeyVault, LocalKeyVault>();
@@ -78,10 +97,6 @@ class Program
         if (earlyVault.GetGlobalKey("ANTHROPIC") is string ak) builder.Configuration["ANTHROPIC_API_KEY"] = ak;
 
         // 5. Initialize Core Services (singleton-like instantiations)
-        var tokenStorage = new Services.Auth.TokenStorageService(rootPath);
-        var googleAuth = new Services.Auth.GoogleAuthService(builder.Configuration, tokenStorage);
-        var authSkill = new Services.Auth.AuthSkill(googleAuth);
-        
         var fileSystemSkill = new Services.SuperToolbox.FileSystemSkill(rootPath);
         var textProcessingSkill = new Services.SuperToolbox.TextProcessingSkill();
         var logAnalyzerSkill = new Services.SuperToolbox.LogAnalyzerSkill(rootPath);
@@ -110,46 +125,32 @@ class Program
 
         // 9. Initialize Master Brain (NeuralOrchestrator)
         var orchestrator = new NeuralOrchestrator(
-            builder.Configuration, soul, rootPath, authSkill, fileSystemSkill, textProcessingSkill, logAnalyzerSkill, codebaseDiffSkill, sessionRouter, memoryStore, messageBus);
+            builder.Configuration, soul, rootPath, null, fileSystemSkill, textProcessingSkill, logAnalyzerSkill, codebaseDiffSkill, sessionRouter, memoryStore, messageBus);
 
         // Build the ASP.NET Core Application
         var app = builder.Build();
 
         app.UseCors("AllowFrontend");
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         // --- API ROUTES ---
         
-        // --- AUTH MIDDLEWARE HELPER ---
-        async Task<GoogleJsonWebSignature.Payload?> ValidateGoogleToken(HttpContext context)
-        {
-            var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-            if (authHeader == null || !authHeader.StartsWith("Bearer ")) return null;
-            
-            var token = authHeader.Substring("Bearer ".Length).Trim();
-            try
-            {
-                return await GoogleJsonWebSignature.ValidateAsync(token);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
         // --- API ROUTES ---
         
         app.MapGet("/api/settings", async (HttpContext ctx) => 
         {
-            var payload = await ValidateGoogleToken(ctx);
-            if (payload == null) return Results.Unauthorized();
-
             var config = app.Services.GetRequiredService<IConfiguration>();
             var vault = app.Services.GetRequiredService<ILocalKeyVault>();
             
             var currentSoul = File.Exists(soulPath) ? await File.ReadAllTextAsync(soulPath) : "";
             
-            // Check if key exists in vault to return a placeholder indicator (boolean essentially, but typed as string for UI compatibility)
-            var hasGeminiKey = vault.GetKey(payload.Subject, "GEMINI") != null ? "VAULT_LOCKED_KEY" : "";
+            // Extract the Keycloak Subject (User ID) from the authenticated principal
+            var userSub = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userSub)) return Results.Unauthorized();
+            
+            // Check if key exists in vault to return a placeholder indicator
+            var hasGeminiKey = vault.GetKey(userSub, "GEMINI") != null ? "VAULT_LOCKED_KEY" : "";
             
             return Results.Ok(new AgentSettingsDto(
                 GeminiApiKey: hasGeminiKey,
@@ -158,23 +159,23 @@ class Program
                 Personality: currentSoul,
                 LocalPermissions: config["ALLOW_LOCAL_TOOLS"] == "true"
             ));
-        });
+        }).RequireAuthorization();
 
         app.MapPost("/api/settings", async (HttpContext ctx, [FromBody] AgentSettingsDto request) =>
         {
-            var payload = await ValidateGoogleToken(ctx);
-            if (payload == null) return Results.Unauthorized();
+            var userSub = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userSub)) return Results.Unauthorized();
 
-            Console.WriteLine($"[API] Saving new configurations for user: {payload.Email}...");
+            Console.WriteLine($"[API] Saving new configurations for user ID: {userSub}...");
             
             // 0. Key Vault Savings
             var vault = app.Services.GetRequiredService<ILocalKeyVault>();
             if (!string.IsNullOrEmpty(request.GeminiApiKey) && request.GeminiApiKey != "VAULT_LOCKED_KEY")
             {
-                 vault.SaveKey(payload.Subject, "GEMINI", request.GeminiApiKey);
+                 vault.SaveKey(userSub, "GEMINI", request.GeminiApiKey);
                  Console.WriteLine("[Security] Gemini API Key encrypted and saved to LocalKeyVault.");
                  // Important: update live config so it takes effect immediately without full restart if possible
-                 config["GEMINI_API_KEY"] = request.GeminiApiKey;
+                 app.Configuration["GEMINI_API_KEY"] = request.GeminiApiKey;
             }
 
             // 1. Update SOUL.md (Personality)

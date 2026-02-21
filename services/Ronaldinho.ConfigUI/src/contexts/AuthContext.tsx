@@ -1,17 +1,16 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { jwtDecode } from 'jwt-decode';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { useAuth as useOidcAuth } from 'react-oidc-context';
 
 export interface User {
     email: string;
     name: string;
-    picture: string;
     sub: string;
 }
 
 interface AuthContextType {
     user: User | null;
     token: string | null;
-    login: (token: string) => void;
+    login: () => void;
     logout: () => void;
     isAuthenticated: boolean;
 }
@@ -19,35 +18,26 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [token, setToken] = useState<string | null>(localStorage.getItem('ronaldinho_auth_token'));
-    const [user, setUser] = useState<User | null>(null);
+    const auth = useOidcAuth();
 
-    useEffect(() => {
-        if (token) {
-            try {
-                const decodedUser = jwtDecode<User>(token);
-                setUser(decodedUser);
-                localStorage.setItem('ronaldinho_auth_token', token);
-            } catch (error) {
-                console.error("Invalid token:", error);
-                logout();
-            }
-        } else {
-            setUser(null);
-            localStorage.removeItem('ronaldinho_auth_token');
-        }
-    }, [token]);
+    const user: User | null = auth.user?.profile ? {
+        email: auth.user.profile.email as string || '',
+        name: auth.user.profile.name as string || '',
+        sub: auth.user.profile.sub as string || ''
+    } : null;
 
-    const login = (newToken: string) => {
-        setToken(newToken);
+    const token = auth.user?.access_token || null;
+
+    const login = () => {
+        auth.signinRedirect();
     };
 
     const logout = () => {
-        setToken(null);
+        auth.signoutRedirect();
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user }}>
+        <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: auth.isAuthenticated }}>
             {children}
         </AuthContext.Provider>
     );

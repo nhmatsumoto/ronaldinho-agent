@@ -12,9 +12,17 @@ const apiClient = axios.create({
 // Configure Request Interceptors
 apiClient.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('ronaldinho_auth_token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        // react-oidc-context typically stores the user object in sessionStorage by default
+        const oidcStorage = sessionStorage.getItem(`oidc.user:http://localhost:8080/realms/ronaldinho:configui-client`);
+        if (oidcStorage) {
+            try {
+                const user = JSON.parse(oidcStorage);
+                if (user && user.access_token) {
+                    config.headers.Authorization = `Bearer ${user.access_token}`;
+                }
+            } catch (e) {
+                console.error("Failed to parse OIDC session storage token", e);
+            }
         }
         return config;
     },

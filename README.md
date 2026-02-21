@@ -1,71 +1,68 @@
 # Ronaldinho-Agent 🚀 (Open Source Edition)
 
-Ronaldinho-Agent is an autonomous development ecosystem designed for high performance, security, and self-evolution. Built to operate as a background daemon, it manages missions and optimizes your workspace autonomously.
+<div align="center">
+  <img src="docs/open_source_collaboration.png" alt="Open Source Collaboration" width="800"/>
+</div>
 
-## 🌟 Capabilities
+Ronaldinho-Agent é um ecossistema autônomo de desenvolvimento projetado para altíssima performance, segurança e autoevolução. Construído para operar como um daemon em background, gerencia missões e otimiza sua área de trabalho de forma determinística, estritamente de maneira local e veloz.
 
-- **L6 Autonomy**: Self-starting, self-correcting, and self-optimizing.
-- **Multitasking Core**: Processes multiple missions simultaneously via the Task Parallel Library.
-- **Unified Gemini CLI**: A single entry point for all agent operations.
-- **Antigravity Ready**: Optimized for the next-generation agentic programming environment.
-- **Security-First**: Integrated `SecurityGuard` to protect keys and sanitize logs.
+## 🌟 Nossa Visão: A Força da Comunidade
 
----
+Inspirado no fenomenal crescimento de plataformas de sucesso global como o **OpenClaw** — cujo potencial técnico e governança atingiram excelência impulsionados pelo trabalho colaborativo e orgânico da comunidade —, o Ronaldinho nasce para ser mais do que apenas um assistente, um ecossistema vivo! 
+O código sozinho atinge um limite sem a inteligência coletiva. Ao abrirmos esse agente de IA para Open Source, damos as boas-vindas a engenheiros, entusiastas e visionários de todo o mundo. A revolução autônoma é colaborativa.
 
-## 🧠 How Ronaldinho Works
+## 🎯 Objetivos do Projeto
 
-Ronaldinho is more than just a chatbot; it's a **state-driven orchestration engine**. Here is how it operates:
-
-1.  **State Observation**: The agent constantly watches the `ronaldinho/config/mission_store.toon` file. Any mission added there becomes a goal for the agent.
-2.  **Autonomous Execution**: When a mission is detected, the **Orquestrador** delegates the work to a specialized **Skill** (standardized Python modules).
-3.  **Audit & Evolution**: Every action is logged in JSONL format. A background **Self-Audit loop** analyzes these logs to identify errors and performance bottlenecks, which may trigger new optimization missions automatically.
-4.  **Zero-Trust Security**: Interaction with sensitive data is gated by the `SecurityGuard`. **Crucially, Ronaldinho never stores or publishes private keys**; they remain in your control at all times.
-
-For a deeper dive into these processes, see our [Internal Documentation](docs/architecture.md).
+- **Autonomia Nível 6**: A capacidade ininterrupta de auto-início, autocorreção e auto-otimização sem sacrificar o rigor nas execuções.
+- **Multitarefa Inteligente**: Processamento simultâneo e de alta velocidade.
+- **Segurança e Regras Stritas ("Unified Execution Doctrine")**: Operar com base num rígido framework de determinismo e privacidade (*Zero-Trust*). Nenhuma chamada externa não autorizada. Transparência obrigatória.
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Guia de Início Rápido
 
-### 1. Credentials Setup
+### Pré-requisitos
+- Python 3.10+
+- Permissões locais na sua pasta atual
 
-Copy `.env.example` to `.env` and add your Gemini API Key:
+### Instalação
 
-```env
-GEMINI_API_KEY=your_key_here
+```bash
+# Clone o repositório
+git clone https://github.com/SeuUsuario/Ronaldinho-Agent.git
+cd Ronaldinho-Agent
+
+# Configure o ambiente
+cp .env.example .env
+
+# Modifique o .env com sua API Key (Nunca submeta chaves para repositórios públicos!)
 ```
 
-### 2. Choose Your Environment
+### Inicializando o Agente
+Execute os scripts padronizados (criados usando a política `dev_scripts` e `.toolbox`):
+```bash
+# Via Daemon padrão
+./run.bat
 
-#### 🪐 Antigravity (Recommended)
-...
-#### 🛠️ Internal Gemini CLI
-...
-
----
-
-## 🧪 Try it Out (Proofs)
-
-Validate Ronaldinho's capabilities immediately using our educational examples:
-
-- **Security Demo**: `python examples/security_demo.py`
-- **Monitoring Demo**: `python examples/monitoring_demo.py`
-- **Autonomy Demo**: `python examples/autonomy_demo.py`
-
-See the [Examples Guide](examples/README.md) for more details.
+# Ou, se utilizou powershell:
+./start_neural.ps1
+```
 
 ---
 
-## 🎮 Navigation & Documentation
+## 🤝 Como Contribuir e Ajudar o Ronaldinho a Crescer
 
-Learn more about Ronaldinho's internal mechanics:
+Assim como percebido brilhantemente com o OpenClaw, nós apostamos tudo nas contribuições! Desde novos scripts `dev_scripts` à melhorias estruturais no *Orquestrador*:
 
-- 📑 [Mission Lifecycle](docs/mission_lifecycle.md): How tasks are managed.
-- 🛡️ [Security & Privacy](docs/security_model.md): How your data is protected.
-- 🧬 [Autonomy & Self-Audit](docs/autonomy_audit.md): How the agent evolves.
-- 📈 [Emergent Governance](docs/emergent_governance.md): How the agent learns from you.
-- 🏗️ [Architecture](docs/architecture.md): The modular system design.
-- 🔌 [Integration Roadmap](docs/integration_roadmap.md): Plans for Slack, Telegram, Jira, and more.
+1. Realize um **Fork** do repositório.
+2. Siga as cruciais **Regras de Governança Local** ao criar suas features.
+3. Se você identificar ações manuais recorrentes, crie ferramentas em `.toolbox` ou `dev_scripts/`.
+4. Trabalhe na sua **Branch** (`git checkout -b feature/SuaInovacao`).
+5. Gere os Testes Locais com a validação do TOON e escreva logs.
+6. Envie o seu **Pull Request** para a *main* / *master*.
+  
+A comunidade analisará cada submissão. Cuidado com o vazamento de chaves ou dependências não catalogadas.
 
 ---
-*Ronaldinho-Agent: Where autonomy meets engineering mastery.*
+## 📜 Licença
+Distribuído sob a Licença **MIT**. Veja o arquivo `LICENSE` para maiores detalhes.

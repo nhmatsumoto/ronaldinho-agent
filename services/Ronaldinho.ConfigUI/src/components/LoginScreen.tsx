@@ -1,20 +1,17 @@
-import { Box, Center, Heading, Text, VStack } from '@chakra-ui/react';
-import { GoogleLogin } from '@react-oauth/google';
+import { Box, Center, Heading, Text, VStack, Button } from '@chakra-ui/react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
 export const LoginScreen = () => {
     const { login } = useAuth();
 
-    const handleSuccess = (credentialResponse: any) => {
-        if (credentialResponse.credential) {
-            login(credentialResponse.credential);
-            toast.success('Autenticação bem-sucedida!');
+    const handleLogin = () => {
+        try {
+            login();
+        } catch (error) {
+            toast.error('Falha ao redirecionar para o Keycloak.');
+            console.error(error);
         }
-    };
-
-    const handleError = () => {
-        toast.error('Falha na autenticação com o Google.');
     };
 
     return (
@@ -31,15 +28,15 @@ export const LoginScreen = () => {
                     </Box>
 
                     <Box w="full" bg="gray.50" p={6} borderRadius="lg" border="1px dashed" borderColor="gray.300">
-                        <GoogleLogin
-                            onSuccess={handleSuccess}
-                            onError={handleError}
-                            useOneTap
-                            width="100%"
-                            theme="outline"
-                            size="large"
-                            text="continue_with"
-                        />
+                        <Button
+                            colorScheme="blue"
+                            size="lg"
+                            w="full"
+                            onClick={handleLogin}
+                            boxShadow="md"
+                        >
+                            Entrar com Keycloak
+                        </Button>
                     </Box>
 
                     <Text fontSize="xs" color="gray.400" mt={4}>

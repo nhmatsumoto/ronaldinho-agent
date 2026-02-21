@@ -5,10 +5,10 @@ namespace Ronaldinho.NeuralCore.Core.Memory;
 
 public class SessionContext
 {
-    public string SessionId { get; set; }
-    public string PlatformId { get; set; }
-    public string ChannelId { get; set; }
-    public string UserId { get; set; }
+    public string SessionId { get; set; } = string.Empty;
+    public string PlatformId { get; set; } = string.Empty;
+    public string ChannelId { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
 }
 
 public class SessionRouter

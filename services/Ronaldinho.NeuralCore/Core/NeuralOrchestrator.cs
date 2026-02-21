@@ -25,7 +25,6 @@ public class NeuralOrchestrator
         IConfiguration configuration, 
         string soul, 
         string rootPath, 
-        Services.Auth.AuthSkill authSkill,
         Services.SuperToolbox.FileSystemSkill fileSystemSkill,
         Services.SuperToolbox.TextProcessingSkill textProcessingSkill,
         Services.SuperToolbox.LogAnalyzerSkill logAnalyzerSkill,
@@ -43,9 +42,7 @@ public class NeuralOrchestrator
         
         // 1. Register Resilience Services
         builder.Services.AddSingleton(configuration); // configuration is needed by KeyVaultService
-        builder.Services.AddSingleton<Services.Auth.KeyVaultService>();
-        builder.Services.AddSingleton<Services.Auth.QuotaTracker>();
-        builder.Services.AddTransient<Services.Auth.RotationHandler>();
+        builder.Services.AddSingleton<Ronaldinho.NeuralCore.Services.LocalKeyVault>();
 
         // 2. Select and Configure Strategy
         var strategy = LLMStrategyFactory.Create(configuration);
@@ -53,7 +50,6 @@ public class NeuralOrchestrator
 
         // 2. Register Native Plugins
         // Core skills always loaded
-        builder.Plugins.AddFromObject(authSkill, "auth");
         builder.Plugins.AddFromObject(new FindingsSkill(rootPath), "findings");
         
         // SuperToolbox Skills
