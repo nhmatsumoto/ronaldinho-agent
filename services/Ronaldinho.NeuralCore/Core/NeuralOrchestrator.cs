@@ -11,12 +11,20 @@ using System.Text.Json;
 
 namespace Ronaldinho.NeuralCore.Core;
 
+public class NeuralOrchestrator
+{
     private readonly IConfiguration _configuration;
     private readonly string _rootPath;
     private readonly Services.SuperToolbox.FileSystemSkill _fileSystemSkill;
     private readonly Services.SuperToolbox.TextProcessingSkill _textProcessingSkill;
     private readonly Services.SuperToolbox.LogAnalyzerSkill _logAnalyzerSkill;
     private readonly Services.SuperToolbox.CodebaseDiffSkill _codebaseDiffSkill;
+    private readonly Kernel _kernel;
+    private readonly string _soul;
+    private readonly IMessageBus _messageBus;
+
+    public Core.Memory.SessionRouter Router { get; }
+    public Core.Memory.MemoryStore Memory { get; }
 
     public NeuralOrchestrator(
         IConfiguration configuration, 
