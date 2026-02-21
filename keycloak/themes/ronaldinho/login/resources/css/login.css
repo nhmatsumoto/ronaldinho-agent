@@ -17,16 +17,18 @@ body {
     background: none;
 }
 
-#kc-content {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
-    padding: 40px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    max-width: 450px;
-    width: 90%;
+#kc-content,
+.pf-c-card {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 24px !important;
+    padding: 40px !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+    max-width: 500px !important;
+    width: 90% !important;
+    color: white !important;
 }
 
 h1#kc-page-title {
@@ -58,7 +60,8 @@ label {
     margin-bottom: 8px !important;
 }
 
-#kc-login {
+#kc-login,
+.pf-c-button.pf-m-primary {
     background: linear-gradient(90deg, #f1c40f 0%, #d4ac0d 100%) !important;
     border: none !important;
     color: #0f0c29 !important;
@@ -66,12 +69,15 @@ label {
     border-radius: 12px !important;
     padding: 14px !important;
     transition: transform 0.2s, box-shadow 0.2s !important;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    width: 100% !important;
+    cursor: pointer !important;
 }
 
-#kc-login:hover {
-    transform: translateY(-2px);
+#kc-login:hover,
+.pf-c-button.pf-m-primary:hover {
+    transform: translateY(-2px) !important;
     box-shadow: 0 10px 20px rgba(241, 196, 15, 0.3) !important;
 }
 
@@ -113,4 +119,31 @@ label {
 
 #kc-social-providers a:hover {
     background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Registration Specific Fixes */
+.pf-c-form__group-label {
+    margin-bottom: 8px !important;
+}
+
+.pf-c-form__label-text {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+#kc-register-form {
+    margin-top: 20px;
+}
+
+.pf-c-card__body {
+    background: transparent !important;
+}
+
+.pf-c-page__main {
+    background: transparent !important;
+}
+
+.login-pf-page .card-pf {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
