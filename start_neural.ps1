@@ -15,4 +15,11 @@ if (!(Test-Path $projectPath)) {
 }
 
 # Run the project
-dotnet run --project $projectPath
+Write-Host "🧠 Orchestrating NeuralCore and Bridge..." -ForegroundColor Green
+$neuralCorePath = "services/Ronaldinho.NeuralCore/Ronaldinho.NeuralCore.csproj"
+$bridgePath = "services/Ronaldinho.Bridge/Ronaldinho.Bridge.csproj"
+
+Start-Process dotnet -ArgumentList "run --project `"$neuralCorePath`"" -WindowStyle Normal
+Start-Process dotnet -ArgumentList "run --project `"$bridgePath`"" -WindowStyle Normal
+
+Write-Host "✅ Ronaldinho is ready (Hyper-Converged)." -ForegroundColor Cyan

@@ -12,13 +12,13 @@ This guide explains how to set up the Telegram Bridge to interact with Ronaldinh
 The easiest way to start everything is with a single command:
 
 ```powershell
-python gemini_cli.py start
+.\dev_scripts\start_ronaldinho.ps1
 ```
 
 This will automatically:
-- Start the **Telegram Bridge** (.NET) in the background.
-- Start the **Ronaldinho Agent Brain** (Python) in your terminal.
-- Properly shut down both services when you press **Ctrl+C**.
+
+- Start the **NeuralCore (Brain)** (.NET) in a new window.
+- Start the **Telegram Bridge** (.NET) in a separate background process.
 
 ## 3. Manual Startup (Optional)
 

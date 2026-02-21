@@ -12,20 +12,22 @@ Ronaldinho-Agent/
 │   ├── core/              # Main runner and orchestration logic
 │   ├── memory/            # Long-term knowledge and context snapshots
 │   ├── skills/            # Specialized Python tools (Security, Audit, Memory)
-│   └── team/              # Specialist agent definitions
+├── workspace/             # User data and session runtime
 ├── docs/                  # Technical documentation and process guides
 ├── logs/                  # System-level logs
-├── gemini_cli.py          # Unified entry point (CLI)
+├── start_neural.ps1       # Standard entry point (NeuralCore)
 └── README.md              # Project overview and quick start
 ```
 
 ## Key Components
 
-### 1. The Orquestrador (Core)
-The central brain that reads the `mission_store.toon` and delegates tasks to specialists. It ensures that all governance rules are followed.
+### 1. The NeuralCore (Orchestrator)
+
+The central brain (C#/.NET 9) that manages multi-agent coordination via Semantic Kernel. It orchestrates specialists and ensures governance rules are followed.
 
 ### 2. Specialized Skills
 Standardized Python modules that the agent can call to perform specific technical tasks:
+
 - **SecurityTool**: Handles encryption and scrubbing.
 - **MonitorTool**: Analyzes performance.
 - **MemoryTool**: Manage context and sync.

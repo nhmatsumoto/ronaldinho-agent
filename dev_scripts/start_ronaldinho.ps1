@@ -14,4 +14,17 @@ if (!(Get-Command python -ErrorAction SilentlyContinue)) {
 }
 
 Write-Host "🧠 Orchestrating Bridge and Brain..." -ForegroundColor Green
-python gemini_cli.py start
+
+# Use absolute paths relative to root
+$rootPath = Resolve-Path ".."
+$neuralCorePath = "$rootPath/services/Ronaldinho.NeuralCore/Ronaldinho.NeuralCore.csproj"
+$bridgePath = "$rootPath/services/Ronaldinho.Bridge/Ronaldinho.Bridge.csproj"
+
+# Start services in separate windows/jobs to allow parallel execution
+Write-Host "🚀 Launching NeuralCore..." -ForegroundColor Yellow
+Start-Process dotnet -ArgumentList "run --project `"$neuralCorePath`"" -WindowStyle Normal
+
+Write-Host "🚀 Launching Telegram Bridge..." -ForegroundColor Yellow
+Start-Process dotnet -ArgumentList "run --project `"$bridgePath`"" -WindowStyle Normal
+
+Write-Host "✅ Systems online. Ronaldinho is ready." -ForegroundColor Cyan
