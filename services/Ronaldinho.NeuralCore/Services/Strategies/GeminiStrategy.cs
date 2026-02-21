@@ -33,6 +33,16 @@ public class GeminiStrategy : ILLMStrategy
         };
 
         string apiKey = configuration["GEMINI_API_KEY"] ?? "placeholder"; 
+        
+        if (apiKey != "placeholder" && apiKey.Length > 8)
+        {
+            string maskedKey = $"{apiKey[..4]}...{apiKey[^4..]}";
+            Console.WriteLine($"[Strategy] Using API Key: {maskedKey}");
+        }
+        else
+        {
+            Console.WriteLine("[Strategy] WARNING: Using placeholder API Key (Check .env/Vault)");
+        }
 
         builder.AddGoogleAIGeminiChatCompletion(
             modelId: modelId,

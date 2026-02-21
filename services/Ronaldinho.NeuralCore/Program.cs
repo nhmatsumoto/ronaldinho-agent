@@ -18,7 +18,15 @@ using System.Text.Json;
 
 namespace Ronaldinho.NeuralCore;
 
-public record AgentSettingsDto(string GeminiApiKey, string TelegramToken, string AiModel, string Personality, bool LocalPermissions);
+public record AgentSettingsDto(
+    string GeminiApiKey, 
+    string OpenAIApiKey, 
+    string AnthropicApiKey,
+    string TelegramToken, 
+    string AiModel, 
+    string Personality, 
+    bool LocalPermissions,
+    bool AutoFallback);
 
 class Program
 {
@@ -41,6 +49,16 @@ class Program
         // Build Configuration
         // Important: Add environment variables so we can read from .env
         builder.Configuration.AddEnvironmentVariables();
+        
+        string geminiKey = builder.Configuration["GEMINI_API_KEY"] ?? "";
+        if (!string.IsNullOrEmpty(geminiKey))
+        {
+            Console.WriteLine($"[*] Gemini API Key loaded (starts with {geminiKey[..4]}).");
+        }
+        else
+        {
+            Console.WriteLine("[!] WARNING: GEMINI_API_KEY not found in configuration.");
+        }
         
         string telegramToken = builder.Configuration["TELEGRAM_BOT_TOKEN"] ?? "";
         
@@ -139,8 +157,6 @@ class Program
 
         // --- API ROUTES ---
         
-        // --- API ROUTES ---
-        
         app.MapGet("/api/settings", async (HttpContext ctx) => 
         {
             var config = app.Services.GetRequiredService<IConfiguration>();
@@ -148,19 +164,18 @@ class Program
             
             var currentSoul = File.Exists(soulPath) ? await File.ReadAllTextAsync(soulPath) : "";
             
-            // Extract the Keycloak Subject (User ID) from the authenticated principal
             var userSub = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userSub)) return Results.Unauthorized();
             
-            // Check if key exists in vault to return a placeholder indicator
-            var hasGeminiKey = vault.GetKey(userSub, "GEMINI") != null ? "VAULT_LOCKED_KEY" : "";
-            
             return Results.Ok(new AgentSettingsDto(
-                GeminiApiKey: hasGeminiKey,
+                GeminiApiKey: vault.GetKey(userSub, "GEMINI") != null ? "VAULT_LOCKED_KEY" : "",
+                OpenAIApiKey: vault.GetKey(userSub, "OPENAI") != null ? "VAULT_LOCKED_KEY" : "",
+                AnthropicApiKey: vault.GetKey(userSub, "ANTHROPIC") != null ? "VAULT_LOCKED_KEY" : "",
                 TelegramToken: config["TELEGRAM_BOT_TOKEN"] ?? "",
                 AiModel: config["LLM_PROVIDER"] ?? "gemini",
                 Personality: currentSoul,
-                LocalPermissions: config["ALLOW_LOCAL_TOOLS"] == "true"
+                LocalPermissions: config["ALLOW_LOCAL_TOOLS"] == "true",
+                AutoFallback: config["ENABLE_AUTO_FALLBACK"] == "true"
             ));
         }).RequireAuthorization();
 
@@ -171,22 +186,31 @@ class Program
 
             Console.WriteLine($"[API] Saving new configurations for user ID: {userSub}...");
             
-            // 0. Key Vault Savings
             var vault = app.Services.GetRequiredService<ILocalKeyVault>();
+            
+            // 0. Update Keys if provided and not just placeholder
             if (!string.IsNullOrEmpty(request.GeminiApiKey) && request.GeminiApiKey != "VAULT_LOCKED_KEY")
             {
                  vault.SaveKey(userSub, "GEMINI", request.GeminiApiKey);
-                 Console.WriteLine("[Security] Gemini API Key encrypted and saved to LocalKeyVault.");
-                 // Important: update live config so it takes effect immediately without full restart if possible
                  app.Configuration["GEMINI_API_KEY"] = request.GeminiApiKey;
             }
+            if (!string.IsNullOrEmpty(request.OpenAIApiKey) && request.OpenAIApiKey != "VAULT_LOCKED_KEY")
+            {
+                 vault.SaveKey(userSub, "OPENAI", request.OpenAIApiKey);
+                 app.Configuration["OPENAI_API_KEY"] = request.OpenAIApiKey;
+            }
+            if (!string.IsNullOrEmpty(request.AnthropicApiKey) && request.AnthropicApiKey != "VAULT_LOCKED_KEY")
+            {
+                 vault.SaveKey(userSub, "ANTHROPIC", request.AnthropicApiKey);
+                 app.Configuration["ANTHROPIC_API_KEY"] = request.AnthropicApiKey;
+            }
 
-            // 1. Update SOUL.md (Personality)
+            // 1. Update SOUL.md
             var dir = Path.GetDirectoryName(soulPath);
             if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
             await File.WriteAllTextAsync(soulPath, request.Personality);
 
-            // 2. Update .env (Global Options)
+            // 2. Update .env
             var envDict = new Dictionary<string, string>();
             if (File.Exists(envPath))
             {
@@ -197,10 +221,10 @@ class Program
                 }
             }
             
-            // Do NOT save the Gemini Key to .env anymore.
             envDict["TELEGRAM_BOT_TOKEN"] = request.TelegramToken;
             envDict["LLM_PROVIDER"] = request.AiModel;
             envDict["ALLOW_LOCAL_TOOLS"] = request.LocalPermissions ? "true" : "false";
+            envDict["ENABLE_AUTO_FALLBACK"] = request.AutoFallback ? "true" : "false";
 
             var newEnvLines = envDict.Select(kv => $"{kv.Key}={kv.Value}");
             await File.WriteAllLinesAsync(envPath, newEnvLines);

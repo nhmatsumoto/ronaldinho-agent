@@ -24,6 +24,16 @@ public class OpenAIStrategy : ILLMStrategy
         string modelId = configuration["OPENAI_MODEL_ID"] ?? "gpt-4o";
         string apiKey = configuration["OPENAI_API_KEY"] ?? "placeholder_key";
 
+        if (apiKey != "placeholder_key" && apiKey.Length > 8)
+        {
+            string maskedKey = $"{apiKey[..4]}...{apiKey[^4..]}";
+            Console.WriteLine($"[Strategy] Using OpenAI Key: {maskedKey}");
+        }
+        else
+        {
+            Console.WriteLine("[Strategy] WARNING: Using placeholder OpenAI Key (Check .env/Vault)");
+        }
+
         builder.AddOpenAIChatCompletion(
             modelId: modelId,
             apiKey: apiKey);

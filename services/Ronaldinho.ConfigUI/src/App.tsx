@@ -13,11 +13,14 @@ import { LoginScreen } from './components/LoginScreen';
 
 // Define the validation schema using Zod
 const schema = z.object({
-    geminiApiKey: z.string().min(1, 'A API Key é obrigatória para conectar ao provedor.'),
+    geminiApiKey: z.string().optional(),
+    openaiApiKey: z.string().optional(),
+    anthropicApiKey: z.string().optional(),
     telegramToken: z.string().min(1, 'O Token do Telegram é obrigatório para receber mensagens.'),
     aiModel: z.string().min(1, 'Você deve selecionar uma Engine de IA principal.'),
     personality: z.string().min(20, 'A personalidade base deve ser descritiva e ter pelo menos 20 caracteres.'),
     localPermissions: z.boolean(),
+    autoFallback: z.boolean(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -82,10 +85,13 @@ function App() {
         if (settings) {
             reset({
                 geminiApiKey: settings.geminiApiKey || '',
+                openaiApiKey: settings.openaiApiKey || '',
+                anthropicApiKey: settings.anthropicApiKey || '',
                 telegramToken: settings.telegramToken || '',
                 aiModel: settings.aiModel || 'gemini',
                 personality: settings.personality || 'MANDATO SUPREMO: Você é o Ronaldinho.',
                 localPermissions: settings.localPermissions || false,
+                autoFallback: settings.autoFallback ?? true,
             });
         }
     }, [settings, reset]);
@@ -168,12 +174,31 @@ function App() {
                                     </Box>
 
                                     <Box>
-                                        <Text fontSize="xs" fontWeight="700" color="gray.500" textTransform="uppercase" letterSpacing="wider">API Keys Configúradas</Text>
-                                        <Text fontSize="sm" fontWeight="600" color="gray.700">
-                                            LLM: {settings?.geminiApiKey ? '✅ Salva' : '❌ Ausente'}
-                                            <br />
-                                            Telegram: {settings?.telegramToken ? '✅ Salva' : '❌ Ausente'}
-                                        </Text>
+                                        <Text fontSize="xs" fontWeight="700" color="gray.500" textTransform="uppercase" letterSpacing="wider">Resiliência (Anti-429)</Text>
+                                        <Flex align="center" gap={2} mt={1}>
+                                            <Box w={3} h={3} borderRadius="50%" bg={settings?.autoFallback ? "green.400" : "orange.400"} />
+                                            <Text fontSize="sm" fontWeight="600" color={settings?.autoFallback ? "green.600" : "orange.600"}>
+                                                {settings?.autoFallback ? 'AUTO-FALLBACK ATIVO' : 'MANUAL (Pode bloquear)'}
+                                            </Text>
+                                        </Flex>
+                                    </Box>
+
+                                    <Box>
+                                        <Text fontSize="xs" fontWeight="700" color="gray.500" textTransform="uppercase" letterSpacing="wider">API Keys Configúradas (Vault)</Text>
+                                        <VStack align="stretch" gap={1} mt={1}>
+                                            <Text fontSize="sm" fontWeight="600" color="gray.700">
+                                                Gemini: {settings?.geminiApiKey ? '✅ Salva' : '❌ Ausente'}
+                                            </Text>
+                                            <Text fontSize="sm" fontWeight="600" color="gray.700">
+                                                OpenAI: {settings?.openaiApiKey ? '✅ Salva' : '❌ Ausente'}
+                                            </Text>
+                                            <Text fontSize="sm" fontWeight="600" color="gray.700">
+                                                Claude: {settings?.anthropicApiKey ? '✅ Salva' : '❌ Ausente'}
+                                            </Text>
+                                            <Text fontSize="sm" fontWeight="600" color="gray.700">
+                                                Telegram: {settings?.telegramToken ? '✅ Salva' : '❌ Ausente'}
+                                            </Text>
+                                        </VStack>
                                     </Box>
 
                                     <Box>
@@ -197,31 +222,55 @@ function App() {
                                             1. Roteamento de Cérebro (Brain)
                                         </Heading>
 
-                                        <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={6}>
+                                        <VStack align="stretch" gap={6}>
                                             <Box>
-                                                <label style={labelStyle}>Engine de IA Principal</label>
+                                                <label style={labelStyle}>Engine de IA Ativa (Padrão)</label>
                                                 <select
                                                     style={errors.aiModel ? inputErrorStyle : inputStyle}
                                                     {...register('aiModel')}
                                                 >
                                                     <option value="gemini">Google Gemini 2.0 Flash</option>
                                                     <option value="openai">OpenAI GPT-4o</option>
-                                                    <option value="claude">Anthropic Claude 3.5 Sonnet</option>
+                                                    <option value="claude">Anthropic Claude 3.5 Sonnet (Antigravity)</option>
                                                 </select>
                                                 {errors.aiModel && <span style={errorTextStyle}>⚠️ {errors.aiModel.message}</span>}
                                             </Box>
 
-                                            <Box>
-                                                <label style={labelStyle}>Chave Privada (API Key)</label>
-                                                <input
-                                                    type="password"
-                                                    style={errors.geminiApiKey ? inputErrorStyle : inputStyle}
-                                                    placeholder="Insira a API Key..."
-                                                    {...register('geminiApiKey')}
-                                                />
-                                                {errors.geminiApiKey && <span style={errorTextStyle}>⚠️ {errors.geminiApiKey.message}</span>}
-                                            </Box>
-                                        </Grid>
+                                            <Grid templateColumns={{ base: "1fr", md: "1fr 1fr 1fr" }} gap={4}>
+                                                <Box>
+                                                    <label style={labelStyle}>Google Gemini Key</label>
+                                                    <input
+                                                        type="password"
+                                                        style={errors.geminiApiKey ? inputErrorStyle : inputStyle}
+                                                        placeholder="AIza..."
+                                                        {...register('geminiApiKey')}
+                                                    />
+                                                    {errors.geminiApiKey && <span style={errorTextStyle}>⚠️ {errors.geminiApiKey.message}</span>}
+                                                </Box>
+
+                                                <Box>
+                                                    <label style={labelStyle}>OpenAI Key</label>
+                                                    <input
+                                                        type="password"
+                                                        style={errors.openaiApiKey ? inputErrorStyle : inputStyle}
+                                                        placeholder="sk-..."
+                                                        {...register('openaiApiKey')}
+                                                    />
+                                                    {errors.openaiApiKey && <span style={errorTextStyle}>⚠️ {errors.openaiApiKey.message}</span>}
+                                                </Box>
+
+                                                <Box>
+                                                    <label style={labelStyle}>Anthropic Key</label>
+                                                    <input
+                                                        type="password"
+                                                        style={errors.anthropicApiKey ? inputErrorStyle : inputStyle}
+                                                        placeholder="sk-ant-..."
+                                                        {...register('anthropicApiKey')}
+                                                    />
+                                                    {errors.anthropicApiKey && <span style={errorTextStyle}>⚠️ {errors.anthropicApiKey.message}</span>}
+                                                </Box>
+                                            </Grid>
+                                        </VStack>
                                     </Box>
 
                                     <Box borderBottom="1px solid" borderColor="gray.100" />
@@ -263,6 +312,30 @@ function App() {
                                                 />
                                                 {errors.telegramToken && <span style={errorTextStyle}>⚠️ {errors.telegramToken.message}</span>}
                                             </Box>
+
+                                            <Flex bg={settings?.autoFallback ? "green.50" : "orange.50"} p={5} borderRadius="12px" borderWidth="1px" borderColor={settings?.autoFallback ? "green.200" : "orange.200"} alignItems="center">
+                                                <Controller
+                                                    name="autoFallback"
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <input
+                                                            type="checkbox"
+                                                            id="autoFallback"
+                                                            style={{ width: '28px', height: '28px', cursor: 'pointer', accentColor: '#38A169' }}
+                                                            checked={field.value}
+                                                            onChange={(e) => field.onChange(e.target.checked)}
+                                                        />
+                                                    )}
+                                                />
+                                                <Box ml={4}>
+                                                    <label htmlFor="autoFallback" style={{ ...labelStyle, marginBottom: 0, color: '#2F855A', fontSize: '16px' }}>
+                                                        Resiliência Automática (Anti-429 Fallback)
+                                                    </label>
+                                                    <Text fontSize="sm" color="gray.600" mt={1}>
+                                                        Se ativado, o sistema alternará automaticamente entre Gemini, OpenAI e Claude caso um deles atinja o limite de taxa.
+                                                    </Text>
+                                                </Box>
+                                            </Flex>
 
                                             <Flex bg={errors.localPermissions ? "red.50" : "blue.50"} p={5} borderRadius="12px" borderWidth="1px" borderColor={errors.localPermissions ? "red.200" : "blue.200"} alignItems="center">
                                                 <Controller

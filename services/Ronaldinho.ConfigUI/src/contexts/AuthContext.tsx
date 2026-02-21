@@ -5,6 +5,7 @@ export interface User {
     email: string;
     name: string;
     sub: string;
+    picture?: string;
 }
 
 interface AuthContextType {
@@ -23,7 +24,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const user: User | null = auth.user?.profile ? {
         email: auth.user.profile.email as string || '',
         name: auth.user.profile.name as string || '',
-        sub: auth.user.profile.sub as string || ''
+        sub: auth.user.profile.sub as string || '',
+        picture: auth.user.profile.picture as string || undefined
     } : null;
 
     const token = auth.user?.access_token || null;

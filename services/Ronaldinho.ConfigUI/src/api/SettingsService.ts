@@ -2,11 +2,14 @@ import apiClient from './axiosClient';
 
 // Type definitions for the agent configuration
 export interface AgentSettings {
-    geminiApiKey: string;
+    geminiApiKey?: string;
+    openaiApiKey?: string;
+    anthropicApiKey?: string;
     telegramToken: string;
     aiModel: string;
     personality: string;
     localPermissions: boolean;
+    autoFallback: boolean;
 }
 
 export const SettingsService = {
@@ -20,10 +23,13 @@ export const SettingsService = {
             console.warn('Backend unavailable, returning system mock settings.');
             return {
                 geminiApiKey: '',
+                openaiApiKey: '',
+                anthropicApiKey: '',
                 telegramToken: '',
                 aiModel: 'gemini',
                 personality: 'MANDATO SUPREMO: Você é o Ronaldinho.',
-                localPermissions: false
+                localPermissions: false,
+                autoFallback: true
             };
         }
     },
