@@ -25,6 +25,7 @@ Code alone reaches a limit without collective intelligence. By opening this AI a
 ---
 
 ## 🚀 Quick Start
+
 ### Prerequisites
 
 - **.NET 9 SDK** (Core Engine)
@@ -36,7 +37,7 @@ Code alone reaches a limit without collective intelligence. By opening this AI a
 
 ```bash
 # Clone the repository
-git clone https://github.com/SeuUsuario/Ronaldinho-Agent.git
+git clone https://github.com/nhmatsumoto/Ronaldinho-Agent.git
 cd Ronaldinho-Agent
 
 # Set up the environment
@@ -83,4 +84,5 @@ The community will analyze every submission. Be careful with key leaks or uncata
 ---
 
 ## 📜 License
+
 Distributed under the **MIT License**. See `LICENSE` for more details.

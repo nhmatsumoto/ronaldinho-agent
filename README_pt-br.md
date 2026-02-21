@@ -9,7 +9,7 @@ Ronaldinho-Agent é um ecossistema autônomo de desenvolvimento projetado para a
 
 ## 🌟 Nossa Visão: A Força da Comunidade
 
-Inspirado no fenomenal crescimento de plataformas de sucesso global como o **OpenClaw** — cujo potencial técnico e governança atingiram excelência impulsionados pelo trabalho colaborativo e orgânico da comunidade —, o Ronaldinho nasce para ser mais do que apenas um assistente, um ecossistema vivo! 
+Inspirado no fenomenal crescimento de plataformas de sucesso global como o **OpenClaw** — cujo potencial técnico e governança atingiram excelência impulsionados pelo trabalho colaborativo e orgânico da comunidade —, o Ronaldinho nasce para ser mais do que apenas um assistente, um ecossistema vivo!
 
 O código sozinho atinge um limite sem a inteligência coletiva. Ao abrirmos esse agente de IA para Open Source, damos as boas-vindas a engenheiros, entusiastas e visionários de todo o mundo. A revolução autônoma é colaborativa.
 
