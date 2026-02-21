@@ -5,9 +5,9 @@ namespace Ronaldinho.NeuralCore.Core.Memory;
 public class MemoryEntry
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
-    public string SessionId { get; set; }
-    public string Role { get; set; } // "user" or "assistant"
-    public string Content { get; set; }
+    public required string SessionId { get; set; }
+    public required string Role { get; set; } // "user" or "assistant"
+    public required string Content { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
 
@@ -52,7 +52,7 @@ public class MemoryStore
         var lines = await File.ReadAllLinesAsync(filePath);
         var entries = lines
             .Where(l => !string.IsNullOrWhiteSpace(l))
-            .Select(l => JsonSerializer.Deserialize<MemoryEntry>(l))
+            .Select(l => JsonSerializer.Deserialize<MemoryEntry>(l)!) // Explicitly tell compiler it won't be null after filter
             .Where(e => e != null)
             .ToList();
 

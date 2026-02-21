@@ -89,8 +89,11 @@ class Program
         builder.Services.AddSingleton<ILocalKeyVault, LocalKeyVault>();
         
         // Inject DB Vault Keys into IConfiguration
-        var earlyProvider = builder.Services.BuildServiceProvider();
-        var earlyVault = earlyProvider.GetRequiredService<ILocalKeyVault>();
+        // To avoid ASP0000 (BuildServiceProvider anti-pattern), we manually instantiate the KeyVault
+        // for the early bootstrap phase.
+        var dataProtectionProvider = Microsoft.AspNetCore.DataProtection.DataProtectionProvider.Create(
+            new DirectoryInfo(Path.Combine(rootPath, "ronaldinho", "data", "protection-keys")));
+        var earlyVault = new LocalKeyVault(dataProtectionProvider);
         
         if (earlyVault.GetGlobalKey("GEMINI") is string gk) builder.Configuration["GEMINI_API_KEY"] = gk;
         if (earlyVault.GetGlobalKey("OPENAI") is string ok) builder.Configuration["OPENAI_API_KEY"] = ok;
@@ -180,7 +183,7 @@ class Program
 
             // 1. Update SOUL.md (Personality)
             var dir = Path.GetDirectoryName(soulPath);
-            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
             await File.WriteAllTextAsync(soulPath, request.Personality);
 
             // 2. Update .env (Global Options)

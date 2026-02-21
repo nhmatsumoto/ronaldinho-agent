@@ -146,7 +146,12 @@ public class NeuralOrchestrator
         catch (Exception ex)
         {
             Console.WriteLine($"[Error] {ex}");
-            // Handle specific strategy errors if needed
+            
+            if (ex.ToString().Contains("429") || ex.Message.Contains("Too Many Requests"))
+            {
+                return "🛑 **Ronaldinho está sendo bloqueado por limites de taxa (429: Too Many Requests).**\n\nSua chave de API gratuita do Gemini atingiu o limite de requisições por minuto. Por favor, aguarde alguns instantes antes de tentar novamente ou considere fazer o upgrade para o tier 'Pay-as-you-go'.";
+            }
+
             return $"💥 Ronaldinho teve uma falha de coordenação multi-agente ({ex.GetType().Name}): {ex.Message}";
         }
     }
