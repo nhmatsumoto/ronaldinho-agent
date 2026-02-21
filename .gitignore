@@ -3,9 +3,12 @@
 *.env
 .env.*
 secrets/
+**/*/secrets/
+**/*/secure_tokens/
 
 # Ronaldinho Local Workspace
 workspace/
+ronaldinho/data/
 ronaldinho/audit/*.jsonl
 ronaldinho/memory/snapshots/*.json
 ronaldinho/reports/*.md

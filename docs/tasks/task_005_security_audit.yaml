@@ -1,0 +1,14 @@
+task_id: task_005_security_audit
+title: Security Audit for Open Source Readiness
+owner_agent: Orchestrator
+inputs:
+  - User request for security audit (exposição, chaves, arquivos sensíveis)
+dependencies:
+  - task_001_open_source
+acceptance_criteria:
+  - Comprehensive scan for hardcoded API keys and secrets completed
+  - All local machine paths and identifiers (e.g., "Hiroyuki") identified
+  - Sensitive files verified against .gitignore
+  - Final report with recommendations or fixes provided
+output_format: markdown and audit logs
+risk_level: High (prevents leak of credentials)
