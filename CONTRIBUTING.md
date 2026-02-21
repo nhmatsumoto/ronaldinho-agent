@@ -1,5 +1,10 @@
 # Contributing to Ronaldinho-Agent 🚀
 
+> [!IMPORTANT]
+> **Codename Disclaimer**: "Ronaldinho-Agent" is currently a project codename. No official brand or naming has been established yet.
+
+[Leia este guia em Português (PT-BR)](docs/CONTRIBUTING_pt-br.md)
+
 We're excited that you're interested in contributing to Ronaldinho-Agent! As an autonomous ecosystem built on strict governance and performance, we value high-quality, deterministic contributions.
 
 ## 🛠️ How to Contribute

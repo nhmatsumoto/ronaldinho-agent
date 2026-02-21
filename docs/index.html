@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +18,7 @@
         body {
             font-family: 'Inter', -apple-system, sans-serif;
             background-color: var(--bg-color);
-            background-image: 
+            background-image:
                 radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.15), transparent 25%),
                 radial-gradient(circle at 85% 30%, rgba(129, 140, 248, 0.15), transparent 25%);
             color: var(--text-color);
@@ -37,6 +38,28 @@
             animation: fadeIn 1.5s ease;
         }
 
+        .lang-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .lang-toggle a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        .lang-toggle a.active {
+            opacity: 1;
+            font-weight: bold;
+            border-bottom: 2px solid var(--primary);
+        }
+
         h1 {
             font-size: 3.5rem;
             margin: 0;
@@ -51,6 +74,17 @@
             color: #94a3b8;
             max-width: 600px;
             margin: 1.5rem auto;
+        }
+
+        .codename-disclaimer {
+            font-size: 0.85rem;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            margin-bottom: 2rem;
+            display: inline-block;
         }
 
         main {
@@ -81,7 +115,7 @@
         .glass-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            border-color: rgba(255,255,255,0.2);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .glass-card h2 {
@@ -152,8 +186,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         footer {
@@ -163,51 +204,138 @@
             color: #64748b;
             font-size: 0.9rem;
         }
-    </style>
-</head>
-<body>
 
-    <header>
+        [lang="pt"] {
+            display: none;
+        }
+    </style>
+    <script>
+        function toggleLang(lang) {
+            document.querySelectorAll('[lang="en"]').forEach(el => el.style.display = lang === 'en' ? 'block' : 'none');
+            document.querySelectorAll('[lang="pt"]').forEach(el => el.style.display = lang === 'pt' ? 'block' : 'none');
+
+            // Adjust specific flex containers that should remain flex
+            document.querySelectorAll('.actions').forEach(el => {
+                if (el.getAttribute('lang') === lang) el.style.display = 'flex';
+            });
+            document.querySelectorAll('header').forEach(el => {
+                if (el.getAttribute('lang') === lang) el.style.display = 'block';
+            });
+
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + lang).classList.add('active');
+        }
+    </script>
+</head>
+
+<body onload="toggleLang('en')">
+
+    <div class="lang-toggle">
+        <a href="#" id="btn-en" class="lang-btn active" onclick="toggleLang('en')">EN</a>
+        <a href="#" id="btn-pt" class="lang-btn" onclick="toggleLang('pt')">PT-BR</a>
+    </div>
+
+    <header lang="en">
+        <div class="codename-disclaimer">Codename: "Ronaldinho-Agent" is an experimental project name.</div>
         <h1>Ronaldinho-Agent 🚀</h1>
-        <p class="subtitle">Um ecossistema autônomo de desenvolvimento projetado para altíssima performance, segurança local e autoevolução.</p>
-        <div class="actions" style="justify-content: center; margin-top: 2rem;">
+        <p class="subtitle">An autonomous development ecosystem designed for high performance, local security, and
+            self-evolution.</p>
+        <div class="actions" style="justify-content: center; margin-top: 2rem;" lang="en">
+            <a href="https://github.com/SeuUsuario/Ronaldinho-Agent" class="btn">Access Repository</a>
+            <a href="#doc-links" class="btn btn-outline">Explore Documentation</a>
+        </div>
+    </header>
+
+    <header lang="pt">
+        <div class="codename-disclaimer">Codinome: "Ronaldinho-Agent" é um nome de projeto experimental.</div>
+        <h1>Ronaldinho-Agent 🚀</h1>
+        <p class="subtitle">Um ecossistema autônomo de desenvolvimento projetado para altíssima performance, segurança
+            local e autoevolução.</p>
+        <div class="actions" style="justify-content: center; margin-top: 2rem;" lang="pt">
             <a href="https://github.com/SeuUsuario/Ronaldinho-Agent" class="btn">Acessar Repositório</a>
             <a href="#doc-links" class="btn btn-outline">Explorar Documentação</a>
         </div>
     </header>
 
     <main>
-        <div class="glass-card">
-            <h2>🧠 Nossa Visão (Inspiração OpenClaw)</h2>
-            <p>Inspirado no crescimento orgânico de plataformas open source massivas como o OpenClaw, o Ronaldinho abre as portas para a inteligência coletiva.</p>
-            <p>Nenhuma IA atinge a perfeição trancafiada localmente. Ao publicarmos este modelo sob a Licença MIT, convidamos engenheiros a aprimorar nosso orquestrador determinístico.</p>
+        <div class="glass-card" lang="en">
+            <h2>🧠 Our Vision (OpenClaw Inspiration)</h2>
+            <p>Inspired by the organic growth of massive open-source platforms like OpenClaw, Ronaldinho opens the doors
+                to collective intelligence.</p>
+            <p>No AI reaches perfection locked locally. By publishing this project under the MIT License, we invite
+                engineers to enhance our deterministic orchestrator.</p>
         </div>
 
-        <div class="glass-card">
-            <h2>⚙️ Capacidades Nucleares</h2>
+        <div class="glass-card" lang="pt">
+            <h2>🧠 Nossa Visão (Inspiração OpenClaw)</h2>
+            <p>Inspirado no crescimento orgânico de plataformas open source massivas como o OpenClaw, o Ronaldinho abre
+                as portas para a inteligência coletiva.</p>
+            <p>Nenhuma IA atinge a perfeição trancafiada localmente. Ao abrirmos este projeto sob a Licença MIT,
+                convidamos engenheiros a aprimorar nosso orquestrador determinístico.</p>
+        </div>
+
+        <div class="glass-card" lang="en">
+            <h2>⚙️ Core Capabilities</h2>
             <ul>
-                <li><strong>Autonomia L6:</strong> Execução fluida de múltiplos _threads_ com total auto-observância.</li>
-                <li><strong>Zero-Trust:</strong> Operações estritas de segurança sob o modelo Local-Only Governance.</li>
-                <li><strong>Otimização TOON:</strong> Sumarização prévia à LLM garantindo economia e velocidade fenomenais.</li>
-                <li><strong>Daemon Background:</strong> Rode invisivelmente no seu OS enquanto as tarefas ganham vida.</li>
+                <li><strong>L6 Autonomy:</strong> Fluid execution of multiple threads with total self-observation.</li>
+                <li><strong>Zero-Trust:</strong> Strict security operations under the Local-Only Governance model.</li>
+                <li><strong>TOON Optimization:</strong> Context compression before LLM calls ensuring efficiency and
+                    speed.</li>
+                <li><strong>Background Daemon:</strong> Run invisibly on your OS while tasks come to life.</li>
             </ul>
         </div>
 
-        <div class="glass-card full-width" id="doc-links">
+        <div class="glass-card" lang="pt">
+            <h2>⚙️ Capacidades Nucleares</h2>
+            <ul>
+                <li><strong>Autonomia L6:</strong> Execução fluida de múltiplos threads com total auto-observância.</li>
+                <li><strong>Zero-Trust:</strong> Operações estritas de segurança sob o modelo Local-Only Governance.
+                </li>
+                <li><strong>Otimização TOON:</strong> Compressão de contexto pré-LLM garantindo economia e velocidade.
+                </li>
+                <li><strong>Daemon Background:</strong> Rode invisivelmente no seu OS enquanto as tarefas ganham vida.
+                </li>
+            </ul>
+        </div>
+
+        <div class="glass-card full-width" id="doc-links" lang="en">
+            <h2>📚 Quick Documentation Links</h2>
+            <p style="color: #94a3b8; margin-bottom: 2rem;">To maximize efficiency, we've created rigid governance
+                modules and robust documentation:</p>
+            <div class="actions" style="justify-content: center;" lang="en">
+                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/docs/architecture.md"
+                    class="btn btn-outline">Architecture</a>
+                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/docs/security_model.md"
+                    class="btn btn-outline">Zero-Trust Model</a>
+                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/docs/emergent_governance.md"
+                    class="btn btn-outline">Emergent Governance</a>
+                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/README.md" class="btn">View English
+                    README</a>
+            </div>
+        </div>
+
+        <div class="glass-card full-width" id="doc-links" lang="pt">
             <h2>📚 Links Rápidos da Documentação</h2>
-            <p style="color: #94a3b8; margin-bottom: 2rem;">Para maximizar a eficiência, criamos módulos de governança rígidos e documentação robusta:</p>
-            <div class="actions" style="justify-content: center;">
-                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/docs/architecture.md" class="btn btn-outline">Arquitetura Geral</a>
-                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/docs/security_model.md" class="btn btn-outline">Modelo Zero-Trust</a>
-                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/docs/emergent_governance.md" class="btn btn-outline">Governança Emergente</a>
-                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/README.md" class="btn">Visualizar README Original</a>
+            <p style="color: #94a3b8; margin-bottom: 2rem;">Para maximizar a eficiência, criamos módulos de governança
+                rígidos e documentação robusta:</p>
+            <div class="actions" style="justify-content: center;" lang="pt">
+                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/docs/architecture.md"
+                    class="btn btn-outline">Arquitetura</a>
+                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/docs/security_model.md"
+                    class="btn btn-outline">Modelo Zero-Trust</a>
+                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/docs/emergent_governance.md"
+                    class="btn btn-outline">Governança Emergente</a>
+                <a href="https://github.com/SeuUsuario/Ronaldinho-Agent/blob/main/README_pt-br.md" class="btn">Ver
+                    README em Português</a>
             </div>
         </div>
     </main>
 
     <footer>
-        <p>Desenvolvido com 🩵. Código licenciado sob MIT.</p>
+        <p lang="en">Built with 🩵. Code licensed under MIT.</p>
+        <p lang="pt">Desenvolvido com 🩵. Código licenciado sob MIT.</p>
     </footer>
 
 </body>
+
 </html>
