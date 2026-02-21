@@ -125,7 +125,7 @@ class Program
 
         // 9. Initialize Master Brain (NeuralOrchestrator)
         var orchestrator = new NeuralOrchestrator(
-            builder.Configuration, soul, rootPath, null, fileSystemSkill, textProcessingSkill, logAnalyzerSkill, codebaseDiffSkill, sessionRouter, memoryStore, messageBus);
+            builder.Configuration, soul, rootPath, fileSystemSkill, textProcessingSkill, logAnalyzerSkill, codebaseDiffSkill, sessionRouter, memoryStore, messageBus);
 
         // Build the ASP.NET Core Application
         var app = builder.Build();

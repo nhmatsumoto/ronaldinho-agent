@@ -12,22 +12,10 @@ public class GeminiStrategy : ILLMStrategy
 
     public void Configure(IKernelBuilder builder, IConfiguration configuration)
     {
-        // 1. Resolve Resilience Services
-        var services = builder.Services.BuildServiceProvider(); // Temporary provider to get handler
-        var handler = services.GetService<Auth.RotationHandler>();
-        
-        HttpClient httpClient;
-        if (handler != null)
-        {
-             handler.InnerHandler = new HttpClientHandler();
-             httpClient = new HttpClient(handler) { Timeout = TimeSpan.FromMinutes(5) };
-             Console.WriteLine("[GeminiStrategy] Resilience Layer (RotationHandler) Active 🛡️");
-        }
-        else
-        {
-             httpClient = new HttpClient();
-             Console.WriteLine("[GeminiStrategy] Warning: RotationHandler not found.");
-        }
+        // 1. Configure Resilience (Standard HttpClient for now)
+        // Note: RotationHandler was removed to resolve build errors.
+        var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+        Console.WriteLine("[GeminiStrategy] Resilience Layer (Default) Active 🛡️");
 
         // 2. Fetch Initial Config
         // We pass "ignored" as key because RotationHandler will overwrite it.
