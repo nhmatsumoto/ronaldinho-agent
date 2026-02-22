@@ -32,6 +32,7 @@ class Program
 {
     static async Task Main(string[] args)
     {
+        SDKInspector.Inspect();
         Console.WriteLine("⚽ RONALDINHO NEURAL CORE: MINIMAL API WEB SERVER STARTING ⚽");
 
         var builder = WebApplication.CreateBuilder(args);

@@ -1,4 +1,4 @@
-using Google.GenAI;
+using global::Google.GenAI;
 using Microsoft.Extensions.Configuration;
 
 namespace Ronaldinho.NeuralCore.Services.LLM;
@@ -8,7 +8,7 @@ namespace Ronaldinho.NeuralCore.Services.LLM;
 /// </summary>
 public class NativeGeminiClient
 {
-    private readonly GenerativeModel _model;
+    private readonly object _model; // Using object temporarily to find the right type
     private readonly string _apiKey;
 
     public NativeGeminiClient(IConfiguration configuration)
@@ -16,8 +16,9 @@ public class NativeGeminiClient
         _apiKey = configuration["GEMINI_API_KEY"] ?? throw new InvalidOperationException("GEMINI_API_KEY not found in configuration.");
         string modelId = configuration["GEMINI_MODEL_ID"] ?? "gemini-2.0-flash";
         
-        var client = new GoogleAIClient(_apiKey);
-        _model = client.Models.GenerativeModel(modelId);
+        // var client = new global::Google.GenAI.Client(_apiKey);
+        // _model = client.Models.GenerativeModel(modelId);
+        _model = new object();
     }
 
     /// <summary>
@@ -28,8 +29,9 @@ public class NativeGeminiClient
     {
         try 
         {
-            var response = await _model.GenerateContentAsync(prompt);
-            return response.Text();
+            // var response = await _model.GenerateContentAsync(prompt);
+            // return response.Text();
+            return "SDK Diagnostic Mode";
         }
         catch (Exception ex)
         {

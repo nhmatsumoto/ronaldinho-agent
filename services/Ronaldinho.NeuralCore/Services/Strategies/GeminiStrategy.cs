@@ -53,8 +53,8 @@ public class GeminiStrategy : ILLMStrategy
 
         // 3. Register Native Client for specialized tasks (Demonstration)
         // This allows other services to resolve the official Google.GenAI client
-        builder.Services.AddSingleton(new GoogleAIClient(apiKey));
+        // builder.Services.AddSingleton(new global::Google.GenAI.Client(apiKey));
         
-        Console.WriteLine($"[Strategy] Configured Gemini ({modelId}) and Native SDK ⚽");
+        Console.WriteLine($"[Strategy] Configured Gemini ({modelId}) (Native SDK Pending Diagnostic) ⚽");
     }
 }
