@@ -3,6 +3,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.Extensions.Configuration;
 using Microsoft.SemanticKernel.Connectors.Google;
 using Microsoft.Extensions.DependencyInjection;
+using Google.GenAI;
 
 namespace Ronaldinho.NeuralCore.Services.Strategies;
 
@@ -50,6 +51,10 @@ public class GeminiStrategy : ILLMStrategy
             apiVersion: GoogleAIVersion.V1_Beta,
             httpClient: httpClient);
 
-        Console.WriteLine($"[Strategy] Configured Gemini ({modelId})");
+        // 3. Register Native Client for specialized tasks (Demonstration)
+        // This allows other services to resolve the official Google.GenAI client
+        builder.Services.AddSingleton(new GoogleAIClient(apiKey));
+        
+        Console.WriteLine($"[Strategy] Configured Gemini ({modelId}) and Native SDK ⚽");
     }
 }
