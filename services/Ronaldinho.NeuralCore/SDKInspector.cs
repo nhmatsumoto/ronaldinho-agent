@@ -17,7 +17,8 @@ namespace Ronaldinho.NeuralCore
                 Console.WriteLine("Constructors:");
                 foreach (var ctor in type.GetConstructors())
                 {
-                    Console.WriteLine($" - {ctor}");
+                    var pars = string.Join(", ", ctor.GetParameters().Select(p => $"{p.ParameterType.Name} {p.Name}"));
+                    Console.WriteLine($" - {ctor.DeclaringType.Name}({pars})");
                 }
 
                 Console.WriteLine("Properties:");
@@ -31,10 +32,32 @@ namespace Ronaldinho.NeuralCore
                 {
                     var modelsType = modelsProp.PropertyType;
                     Console.WriteLine($"Models Type: {modelsType.FullName}");
-                    Console.WriteLine("Models Methods:");
-                    foreach (var method in modelsType.GetMethods())
+                    
+                    var genMethod = modelsType.GetMethods().FirstOrDefault(m => m.Name == "GenerateContentAsync" && m.GetParameters().Length == 4);
+                    if (genMethod != null)
                     {
-                        Console.WriteLine($" - {method.ReturnType.Name} {method.Name}({string.Join(", ", method.GetParameters().Select(p => p.ParameterType.Name))})");
+                        var responseType = genMethod.ReturnType.GenericTypeArguments[0];
+                        Console.WriteLine($"Response Type: {responseType.FullName}");
+                        var candidateType = responseType.GetProperty("Candidates").PropertyType.GenericTypeArguments[0];
+                        Console.WriteLine($"Candidate Type: {candidateType.FullName}");
+                        foreach (var prop in candidateType.GetProperties())
+                        {
+                            Console.WriteLine($" - {prop.PropertyType.Name} {prop.Name}");
+                        }
+                        
+                        var contentType = candidateType.GetProperty("Content").PropertyType;
+                        Console.WriteLine($"Content Type: {contentType.FullName}");
+                        foreach (var prop in contentType.GetProperties())
+                        {
+                            Console.WriteLine($" - {prop.PropertyType.Name} {prop.Name}");
+                        }
+
+                        var partType = contentType.GetProperty("Parts").PropertyType.GenericTypeArguments[0];
+                        Console.WriteLine($"Part Type: {partType.FullName}");
+                        foreach (var prop in partType.GetProperties())
+                        {
+                            Console.WriteLine($" - {prop.PropertyType.Name} {prop.Name}");
+                        }
                     }
                 }
             }
