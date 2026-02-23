@@ -1,8 +1,13 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy csproj and restore
+# Copy all csproj files to allow proper restore
 COPY ["services/Ronaldinho.NeuralCore/Ronaldinho.NeuralCore.csproj", "services/Ronaldinho.NeuralCore/"]
+COPY ["services/Ronaldinho.Contracts/Ronaldinho.Contracts.csproj", "services/Ronaldinho.Contracts/"]
+COPY ["services/Ronaldinho.Blockchain/Ronaldinho.Blockchain.csproj", "services/Ronaldinho.Blockchain/"]
+COPY ["services/Ronaldinho.MemoryDiff/Ronaldinho.MemoryDiff.csproj", "services/Ronaldinho.MemoryDiff/"]
+COPY ["services/Ronaldinho.P2P/Ronaldinho.P2P.csproj", "services/Ronaldinho.P2P/"]
+
 RUN dotnet restore "services/Ronaldinho.NeuralCore/Ronaldinho.NeuralCore.csproj"
 
 # Copy full source and build
@@ -15,7 +20,7 @@ FROM build AS publish
 RUN dotnet publish "Ronaldinho.NeuralCore.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Final Image
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 

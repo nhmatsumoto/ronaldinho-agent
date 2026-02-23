@@ -6,19 +6,24 @@ namespace Ronaldinho.NeuralCore.Services;
 public class LocalKeyVault : ILocalKeyVault
 {
     private readonly IDataProtector _protector;
-    private readonly string _vaultPath = "brain/Security/vault.json";
+    private readonly string _vaultPath;
 
-    public LocalKeyVault(IDataProtectionProvider provider)
+    public LocalKeyVault(IDataProtectionProvider provider, string dataRoot)
     {
         _protector = provider.CreateProtector("Ronaldinho.NeuralCore.LocalKeyVault");
-        Directory.CreateDirectory(Path.GetDirectoryName(_vaultPath)!);
+        _vaultPath = Path.Combine(dataRoot, "data", "vault.json");
+
+        var dir = Path.GetDirectoryName(_vaultPath);
+        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
+        Console.WriteLine($"[Security] LocalKeyVault initialized at: {_vaultPath}");
     }
 
     public void SaveKey(string userId, string provider, string apiKey)
     {
         var data = LoadVault();
         if (!data.ContainsKey(userId)) data[userId] = new Dictionary<string, string>();
-        
+
         string encryptedKey = _protector.Protect(apiKey);
         data[userId][provider] = encryptedKey;
 

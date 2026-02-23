@@ -33,9 +33,10 @@ namespace Ronaldinho.P2P
         /// <summary>
         /// Connects to a remote peer using a signaling URL.
         /// </summary>
-        public async Task ConnectAsync(string signalingUrl, string remotePeerId)
+        public async Task ConnectAsync(string signalingUrl, string localPeerId, string remotePeerId, bool isInitiator)
         {
-            _logger.LogInformation("Initiating WebRTC connection to {RemotePeerId} via {Url}", remotePeerId, signalingUrl);
+            _logger.LogInformation("Initiating WebRTC connection: Local={Local} Remote={Remote} via {Url} (Initiator: {IsInitiator})",
+                localPeerId, remotePeerId, signalingUrl, isInitiator);
 
             _peerConnection = new RTCPeerConnection();
 
@@ -54,17 +55,24 @@ namespace Ronaldinho.P2P
                 }
             };
 
-            // Create Offer
-            var offer = _peerConnection.createOffer();
-            await _peerConnection.setLocalDescription(offer);
+            if (isInitiator)
+            {
+                // Create Offer
+                var offer = _peerConnection.createOffer();
+                await _peerConnection.setLocalDescription(offer);
 
-            // Send Offer via signaling
-            await SendSignalingMessage(signalingUrl, remotePeerId, "offer", offer.sdp);
+                // Send Offer via signaling
+                await SendSignalingMessage(signalingUrl, remotePeerId, "offer", offer.sdp);
 
-            _logger.LogInformation("Offer sent to {RemotePeerId}. Waiting for answer...", remotePeerId);
+                _logger.LogInformation("Offer sent to {RemotePeerId}. Waiting for answer...", remotePeerId);
+            }
+            else
+            {
+                _logger.LogInformation("Waiting for offer from {RemotePeerId}...", remotePeerId);
+            }
 
             // Start listening for signaling responses (polling for simplicity in this version)
-            _ = PollSignalingAsync(signalingUrl, remotePeerId);
+            _ = PollSignalingAsync(signalingUrl, localPeerId, remotePeerId);
         }
 
         private async Task SendSignalingMessage(string url, string targetId, string type, string data)
@@ -81,13 +89,13 @@ namespace Ronaldinho.P2P
             }
         }
 
-        private async Task PollSignalingAsync(string url, string peerId)
+        private async Task PollSignalingAsync(string url, string localPeerId, string remotePeerId)
         {
             while (!_cts.Token.IsCancellationRequested)
             {
                 try
                 {
-                    var response = await _httpClient.GetStringAsync($"{url}/receive?peerId={peerId}");
+                    var response = await _httpClient.GetStringAsync($"{url}/receive?peerId={localPeerId}");
                     if (!string.IsNullOrEmpty(response))
                     {
                         var messages = JsonSerializer.Deserialize<SignalingMessage[]>(response);
@@ -95,7 +103,7 @@ namespace Ronaldinho.P2P
                         {
                             foreach (var msg in messages)
                             {
-                                await HandleSignalingMessage(msg);
+                                await HandleSignalingMessage(url, remotePeerId, msg);
                             }
                         }
                     }
@@ -108,12 +116,19 @@ namespace Ronaldinho.P2P
             }
         }
 
-        private async Task HandleSignalingMessage(SignalingMessage msg)
+        private async Task HandleSignalingMessage(string url, string remotePeerId, SignalingMessage msg)
         {
             if (_peerConnection == null) return;
 
             switch (msg.Type)
             {
+                case "offer":
+                    _logger.LogInformation("Received offer from peer. Creating answer...");
+                    _peerConnection.setRemoteDescription(new RTCSessionDescriptionInit { type = RTCSdpType.offer, sdp = msg.Data });
+                    var answer = _peerConnection.createAnswer();
+                    await _peerConnection.setLocalDescription(answer);
+                    await SendSignalingMessage(url, remotePeerId, "answer", answer.sdp);
+                    break;
                 case "answer":
                     _logger.LogInformation("Received answer from peer.");
                     _peerConnection.setRemoteDescription(new RTCSessionDescriptionInit { type = RTCSdpType.answer, sdp = msg.Data });

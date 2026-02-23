@@ -21,23 +21,35 @@ public class LLMStrategyFactory
     public static List<ILLMStrategy> GetFallbackChain(IConfiguration configuration)
     {
         var chain = new List<ILLMStrategy>();
-        
-        // 1. Current preferred
-        chain.Add(Create(configuration));
 
-        // 2. Add others if keys exist
-        if (!string.IsNullOrEmpty(configuration["OPENAI_API_KEY"]) && configuration["LLM_PROVIDER"] != "openai")
-            chain.Add(new OpenAIStrategy());
-
-        if (!string.IsNullOrEmpty(configuration["ANTHROPIC_API_KEY"]) && configuration["LLM_PROVIDER"] != "claude")
-            chain.Add(new ClaudeStrategy());
-
-        if (!string.IsNullOrEmpty(configuration["OPENROUTER_API_KEY"]) && configuration["LLM_PROVIDER"] != "openrouter")
-            chain.Add(new OpenRouterStrategy());
-
-        if (configuration["LLM_PROVIDER"] != "gemini")
+        // Add all providers that have keys configured
+        if (!string.IsNullOrEmpty(configuration["GEMINI_API_KEY"]))
             chain.Add(new GeminiStrategy());
 
+        if (!string.IsNullOrEmpty(configuration["OPENAI_API_KEY"]))
+            chain.Add(new OpenAIStrategy());
+
+        if (!string.IsNullOrEmpty(configuration["ANTHROPIC_API_KEY"]))
+            chain.Add(new ClaudeStrategy());
+
+        if (!string.IsNullOrEmpty(configuration["NVIDIA_API_KEY"]))
+            chain.Add(new NvidiaStrategy());
+
+        // Ensure the preferred one is FIRST if it's in the list
+        string preferred = configuration["LLM_PROVIDER"]?.ToLower() ?? "gemini";
+        var preferredStrategy = chain.FirstOrDefault(s => s.ProviderName.ToLower() == preferred);
+
+        if (preferredStrategy != null)
+        {
+            chain.Remove(preferredStrategy);
+            chain.Insert(0, preferredStrategy);
+        }
+
+        // Default to Gemini if nothing else is available
+        if (chain.Count == 0)
+            chain.Add(new GeminiStrategy());
+
+        Console.WriteLine($"[Resilience] Final Fallback Chain: {string.Join(" -> ", chain.Select(s => s.ProviderName))}");
         return chain;
     }
 }

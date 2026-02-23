@@ -5,9 +5,12 @@ echo "⚽ Starting Ronaldinho Neural Core (Hyper-Converged)..."
 # Check for .NET
 if ! command -v dotnet &> /dev/null
 then
-    echo "❌ .NET SDK not found. Please install .NET 9."
+    echo "❌ .NET SDK not found. Please install .NET 9+ (or newer)."
     exit 1
 fi
+
+# Allow net9.0 apps to run on newer installed runtimes (for example .NET 10).
+export DOTNET_ROLL_FORWARD=Major
 
 PROJECT_PATH="services/Ronaldinho.NeuralCore/Ronaldinho.NeuralCore.csproj"
 
