@@ -1,7 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Ronaldinho.Contracts;
 
 namespace Ronaldinho.NeuralCore.Gateway;
 
@@ -23,17 +22,17 @@ public class GatewayRegistry
     {
         Console.WriteLine($"[Registry] Starting {_gateways.Count} Gateways...");
         var tasks = new List<Task>();
-        
+
         foreach (var gateway in _gateways)
         {
-            var task = gateway.StartAsync(cancellationToken).ContinueWith(t => 
+            var task = gateway.StartAsync(cancellationToken).ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {
                     Console.WriteLine($"[Registry] Gateway {gateway.Name} encountered a fatal error: {t.Exception?.GetBaseException().Message}");
                 }
             }, TaskContinuationOptions.ExecuteSynchronously);
-            
+
             tasks.Add(task);
         }
 
@@ -44,7 +43,7 @@ public class GatewayRegistry
     {
         Console.WriteLine($"[Registry] Stopping all Gateways...");
         var tasks = new List<Task>();
-        
+
         foreach (var gateway in _gateways)
         {
             tasks.Add(gateway.StopAsync(cancellationToken));

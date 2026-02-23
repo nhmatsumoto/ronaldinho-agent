@@ -13,7 +13,7 @@ services:
       - ./logs:/logs
     restart: unless-stopped
 
-  ronaldinho-configui:
+  ronaldinho-config-ui:
     build:
       context: services/Ronaldinho.ConfigUI
       dockerfile: Dockerfile
