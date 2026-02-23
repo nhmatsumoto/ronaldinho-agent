@@ -9,6 +9,7 @@ export interface AgentSettings {
     nvidiaModelId?: string;
     telegramToken: string;
     aiModel: string;
+    openRouterModelId?: string;
     personality: string;
     localPermissions: boolean;
     autoFallback: boolean;

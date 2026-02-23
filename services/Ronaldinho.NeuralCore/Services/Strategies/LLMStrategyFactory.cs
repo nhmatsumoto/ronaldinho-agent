@@ -12,6 +12,7 @@ public class LLMStrategyFactory
         {
             "openai" => new OpenAIStrategy(),
             "claude" => new ClaudeStrategy(),
+            "openrouter" => new OpenRouterStrategy(),
             "gemini" => new GeminiStrategy(),
             _ => new GeminiStrategy() // Default
         };
