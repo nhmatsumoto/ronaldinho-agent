@@ -13,8 +13,9 @@ public class LLMStrategyFactory
             "openai" => new OpenAIStrategy(),
             "claude" => new ClaudeStrategy(),
             "openrouter" => new OpenRouterStrategy(),
+            "nvidia" => new NvidiaStrategy(),
             "gemini" => new GeminiStrategy(),
-            _ => new GeminiStrategy() // Default
+            _ => new GeminiStrategy()
         };
     }
 
@@ -22,22 +23,23 @@ public class LLMStrategyFactory
     {
         var chain = new List<ILLMStrategy>();
 
-        // Add all providers that have keys configured
-        if (!string.IsNullOrEmpty(configuration["GEMINI_API_KEY"]))
+        if (ProviderConfigurationValidator.IsValidSecret(configuration["GEMINI_API_KEY"]))
             chain.Add(new GeminiStrategy());
 
-        if (!string.IsNullOrEmpty(configuration["OPENAI_API_KEY"]))
+        if (ProviderConfigurationValidator.IsValidSecret(configuration["OPENAI_API_KEY"]))
             chain.Add(new OpenAIStrategy());
 
-        if (!string.IsNullOrEmpty(configuration["ANTHROPIC_API_KEY"]))
+        if (ProviderConfigurationValidator.IsValidSecret(configuration["ANTHROPIC_API_KEY"]))
             chain.Add(new ClaudeStrategy());
 
-        if (!string.IsNullOrEmpty(configuration["NVIDIA_API_KEY"]))
+        if (ProviderConfigurationValidator.IsValidSecret(configuration["NVIDIA_API_KEY"]))
             chain.Add(new NvidiaStrategy());
 
-        // Ensure the preferred one is FIRST if it's in the list
+        if (ProviderConfigurationValidator.IsValidSecret(configuration["OPENROUTER_API_KEY"]))
+            chain.Add(new OpenRouterStrategy());
+
         string preferred = configuration["LLM_PROVIDER"]?.ToLower() ?? "gemini";
-        var preferredStrategy = chain.FirstOrDefault(s => s.ProviderName.ToLower() == preferred);
+        var preferredStrategy = chain.FirstOrDefault(s => s.ProviderName.Equals(preferred, StringComparison.OrdinalIgnoreCase));
 
         if (preferredStrategy != null)
         {
@@ -45,11 +47,7 @@ public class LLMStrategyFactory
             chain.Insert(0, preferredStrategy);
         }
 
-        // Default to Gemini if nothing else is available
-        if (chain.Count == 0)
-            chain.Add(new GeminiStrategy());
-
-        Console.WriteLine($"[Resilience] Final Fallback Chain: {string.Join(" -> ", chain.Select(s => s.ProviderName))}");
+        Console.WriteLine($"[Resilience] Final Fallback Chain: {(chain.Count == 0 ? "<empty>" : string.Join(" -> ", chain.Select(s => s.ProviderName)))}");
         return chain;
     }
 }

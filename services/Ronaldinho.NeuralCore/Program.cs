@@ -132,6 +132,12 @@ class Program
         if (earlyVault.GetGlobalKey("ANTHROPIC") is string ak) builder.Configuration["ANTHROPIC_API_KEY"] = ak;
         if (earlyVault.GetGlobalKey("NVIDIA") is string nk) builder.Configuration["NVIDIA_API_KEY"] = nk;
 
+        // Refresh runtime key views after vault injection
+        geminiKey = builder.Configuration["GEMINI_API_KEY"] ?? string.Empty;
+        openAIKey = builder.Configuration["OPENAI_API_KEY"] ?? string.Empty;
+        anthropicKey = builder.Configuration["ANTHROPIC_API_KEY"] ?? string.Empty;
+        nvidiaKey = builder.Configuration["NVIDIA_API_KEY"] ?? string.Empty;
+
         // 5. Initialize Core Services (singleton-like instantiations)
         var fileSystemSkill = new Services.SuperToolbox.FileSystemSkill(rootPath);
         var textProcessingSkill = new Services.SuperToolbox.TextProcessingSkill();
@@ -147,13 +153,20 @@ class Program
 
         // ======= MULTI-MODEL LLM STRATEGY BINDING =======
         Console.WriteLine("[MCP] Booting CodeSpecialistAgent with ClaudeStrategy...");
-        var claudeStrategy = new ClaudeStrategy();
-        var codeBuilder = Kernel.CreateBuilder();
-        claudeStrategy.Configure(codeBuilder, builder.Configuration);
-        var codeAgent = new CodeSpecialistAgent(messageBus, codeBuilder.Build());
+        if (ProviderConfigurationValidator.IsValidSecret(builder.Configuration["ANTHROPIC_API_KEY"]))
+        {
+            var claudeStrategy = new ClaudeStrategy();
+            var codeBuilder = Kernel.CreateBuilder();
+            claudeStrategy.Configure(codeBuilder, builder.Configuration);
+            _ = new CodeSpecialistAgent(messageBus, codeBuilder.Build());
+        }
+        else
+        {
+            Console.WriteLine("[MCP] Anthropic key not configured. CodeSpecialistAgent will stay offline.");
+        }
 
         Console.WriteLine("[MCP] Booting ResearcherAgent with OpenAIStrategy...");
-        if (!string.IsNullOrWhiteSpace(openAIKey))
+        if (ProviderConfigurationValidator.IsValidSecret(openAIKey))
         {
             var openAIStrategy = new OpenAIStrategy();
             var researchBuilder = Kernel.CreateBuilder();
@@ -165,8 +178,11 @@ class Program
             Console.WriteLine("[MCP] OpenAI key not configured. ResearcherAgent will stay offline.");
         }
 
+        Console.WriteLine("[MCP] Booting ConfigurationSpecialistAgent...");
+        _ = new ConfigurationSpecialistAgent(messageBus, builder.Configuration);
+
         Console.WriteLine("[MCP] Booting SecuritySpecialistAgent with NvidiaStrategy...");
-        if (!string.IsNullOrEmpty(nvidiaKey))
+        if (ProviderConfigurationValidator.IsValidSecret(nvidiaKey))
         {
             var nvidiaStrategy = new NvidiaStrategy();
             var securityBuilder = Kernel.CreateBuilder();
@@ -251,6 +267,19 @@ class Program
             ));
         }).RequireAuthorization();
 
+        app.MapGet("/api/providers/diagnostics", (HttpContext ctx) =>
+        {
+            var userSub = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userSub)) return Results.Unauthorized();
+
+            var diagnostics = ProviderConfigurationValidator.GetDiagnostics(app.Configuration);
+            return Results.Ok(new
+            {
+                preferred = app.Configuration["LLM_PROVIDER"] ?? "gemini",
+                providers = diagnostics
+            });
+        }).RequireAuthorization();
+
         app.MapPost("/api/settings", async (HttpContext ctx, [FromBody] AgentSettingsDto request) =>
         {
             var userSub = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -261,25 +290,29 @@ class Program
             var vault = app.Services.GetRequiredService<ILocalKeyVault>();
 
             // 0. Update Keys if provided and not just placeholder
-            if (!string.IsNullOrEmpty(request.GeminiApiKey) && request.GeminiApiKey != "VAULT_LOCKED_KEY")
+            if (!string.IsNullOrWhiteSpace(request.GeminiApiKey) && request.GeminiApiKey != "VAULT_LOCKED_KEY")
             {
-                vault.SaveKey(userSub, "GEMINI", request.GeminiApiKey);
-                app.Configuration["GEMINI_API_KEY"] = request.GeminiApiKey;
+                var normalized = request.GeminiApiKey.Trim();
+                vault.SaveKey(userSub, "GEMINI", normalized);
+                app.Configuration["GEMINI_API_KEY"] = normalized;
             }
-            if (!string.IsNullOrEmpty(request.OpenAIApiKey) && request.OpenAIApiKey != "VAULT_LOCKED_KEY")
+            if (!string.IsNullOrWhiteSpace(request.OpenAIApiKey) && request.OpenAIApiKey != "VAULT_LOCKED_KEY")
             {
-                vault.SaveKey(userSub, "OPENAI", request.OpenAIApiKey);
-                app.Configuration["OPENAI_API_KEY"] = request.OpenAIApiKey;
+                var normalized = request.OpenAIApiKey.Trim();
+                vault.SaveKey(userSub, "OPENAI", normalized);
+                app.Configuration["OPENAI_API_KEY"] = normalized;
             }
-            if (!string.IsNullOrEmpty(request.AnthropicApiKey) && request.AnthropicApiKey != "VAULT_LOCKED_KEY")
+            if (!string.IsNullOrWhiteSpace(request.AnthropicApiKey) && request.AnthropicApiKey != "VAULT_LOCKED_KEY")
             {
-                vault.SaveKey(userSub, "ANTHROPIC", request.AnthropicApiKey);
-                app.Configuration["ANTHROPIC_API_KEY"] = request.AnthropicApiKey;
+                var normalized = request.AnthropicApiKey.Trim();
+                vault.SaveKey(userSub, "ANTHROPIC", normalized);
+                app.Configuration["ANTHROPIC_API_KEY"] = normalized;
             }
-            if (!string.IsNullOrEmpty(request.NvidiaApiKey) && request.NvidiaApiKey != "VAULT_LOCKED_KEY")
+            if (!string.IsNullOrWhiteSpace(request.NvidiaApiKey) && request.NvidiaApiKey != "VAULT_LOCKED_KEY")
             {
-                vault.SaveKey(userSub, "NVIDIA", request.NvidiaApiKey);
-                app.Configuration["NVIDIA_API_KEY"] = request.NvidiaApiKey;
+                var normalized = request.NvidiaApiKey.Trim();
+                vault.SaveKey(userSub, "NVIDIA", normalized);
+                app.Configuration["NVIDIA_API_KEY"] = normalized;
             }
 
             // 1. Update SOUL.md
@@ -301,6 +334,7 @@ class Program
             envDict["TELEGRAM_BOT_TOKEN"] = request.TelegramToken;
             envDict["LLM_PROVIDER"] = request.AiModel;
             envDict["NVIDIA_MODEL_ID"] = request.NvidiaModelId;
+            envDict["OPENROUTER_MODEL_ID"] = request.OpenRouterModelId;
             envDict["ALLOW_LOCAL_TOOLS"] = request.LocalPermissions ? "true" : "false";
             envDict["ENABLE_AUTO_FALLBACK"] = request.AutoFallback ? "true" : "false";
             envDict["ENABLE_SIMULTANEOUS_LLM"] = request.SimultaneousLlm ? "true" : "false";
