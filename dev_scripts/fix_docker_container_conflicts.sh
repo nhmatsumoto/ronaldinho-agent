@@ -3,6 +3,7 @@ set -euo pipefail
 
 CONFLICTING_NAMES=(
   ronaldinho_configui
+  ronaldinho_config_ui
   ronaldinho_neuralcore
   ronaldinho_postgres_keycloak
   ronaldinho_keycloak

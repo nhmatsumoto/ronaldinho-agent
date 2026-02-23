@@ -272,7 +272,7 @@ dotnet --version
 ### ConfigUI authentication issues
 Verify Keycloak realm/client and all `AUTH_*` / `VITE_AUTH_*` variables.
 
-### Docker container name conflict (`/ronaldinho_configui` already in use)
+### Docker container name conflict (`/ronaldinho_configui` or `/ronaldinho_config_ui` already in use)
 This usually means you still have legacy containers created when fixed `container_name` values were used. Remove them and start again:
 
 ```bash
