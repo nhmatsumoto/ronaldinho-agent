@@ -59,7 +59,10 @@ public class NeuralOrchestrator : IMessageProcessor
         _memoryDiff = memoryDiff;
         _blockchain = blockchain;
 
-        _kernel = BuildKernel(LLMStrategyFactory.Create(configuration));
+        var bootstrapStrategies = LLMStrategyFactory.GetFallbackChain(configuration);
+        _kernel = bootstrapStrategies.Count > 0
+            ? BuildKernel(bootstrapStrategies[0])
+            : Kernel.CreateBuilder().Build();
     }
 
     private Kernel BuildKernel(ILLMStrategy strategy)
@@ -116,6 +119,17 @@ public class NeuralOrchestrator : IMessageProcessor
             mcpContext = $"\n\nRELATÓRIO DO AGENTE PESQUISADOR:\n{data}";
         }
 
+        if (input.Contains("diagnóstico", StringComparison.OrdinalIgnoreCase) || input.Contains("diagnostico", StringComparison.OrdinalIgnoreCase) || input.Contains("provider", StringComparison.OrdinalIgnoreCase))
+        {
+            var mcpMsg = new McpMessage { Sender = "orchestrator", TargetTopic = "configops", ReplyTo = "orchestrator_reply_" + context.SessionId, CorrelationId = context.SessionId, TaskDescription = input };
+            await _messageBus.PublishAsync(mcpMsg);
+            var reply = await _messageBus.WaitForReplyAsync(mcpMsg.ReplyTo, TimeSpan.FromSeconds(30));
+
+            var toon = ToonSerializer.Deserialize(reply.Payload);
+            var data = toon.ContainsKey("Data") ? toon["Data"] : reply.Payload;
+            mcpContext += $"\n\nRELATÓRIO DO AGENTE DE CONFIGURAÇÃO:\n{data}";
+        }
+
         // Security check for sensitive keywords
         if (input.Contains("segurança", StringComparison.OrdinalIgnoreCase) || input.Contains("vulnerabilidade", StringComparison.OrdinalIgnoreCase) || input.Contains("api key", StringComparison.OrdinalIgnoreCase))
         {
@@ -154,6 +168,11 @@ public class NeuralOrchestrator : IMessageProcessor
     private async Task<string> InvokeWithFallbackAsync(string prompt)
     {
         var strategies = LLMStrategyFactory.GetFallbackChain(_configuration);
+        if (strategies.Count == 0)
+        {
+            return "⚠️ Nenhum provedor de IA válido está configurado no momento. Configure uma chave válida no ConfigUI e tente novamente.";
+        }
+
         var settings = new PromptExecutionSettings();
         bool autoFallback = _configuration["ENABLE_AUTO_FALLBACK"] == "true";
         bool simultaneousMode = _configuration["ENABLE_SIMULTANEOUS_LLM"] == "true";

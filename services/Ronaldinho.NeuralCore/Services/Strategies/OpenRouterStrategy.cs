@@ -15,17 +15,18 @@ public class OpenRouterStrategy : ILLMStrategy
 
     public void Configure(IKernelBuilder builder, IConfiguration configuration)
     {
-        string apiKey = configuration["OPENROUTER_API_KEY"] ?? "placeholder_key";
+        string apiKey = ProviderConfigurationValidator.NormalizeSecret(configuration["OPENROUTER_API_KEY"]);
         string modelId = configuration["OPENROUTER_MODEL_ID"] ?? "qwen/qwen3-coder:free";
 
-        if (apiKey != "placeholder_key" && apiKey.Length > 8)
+        if (!ProviderConfigurationValidator.IsValidSecret(apiKey))
+        {
+            throw new InvalidOperationException("OPENROUTER_API_KEY ausente, inválida ou placeholder.");
+        }
+
+        if (apiKey.Length > 8)
         {
             string maskedKey = $"{apiKey[..4]}...{apiKey[^4..]}";
             Console.WriteLine($"[Strategy] Using OpenRouter Key: {maskedKey}");
-        }
-        else
-        {
-            Console.WriteLine("[Strategy] WARNING: Using placeholder OpenRouter Key (Check .env/Vault)");
         }
 
         builder.Services.AddKeyedSingleton<IChatCompletionService>(
