@@ -60,6 +60,11 @@ public class InMemoryMessageBus : IMessageBus
         Console.WriteLine($"[MCP Bus] Agent subscribed to Topic: '{topic}'");
     }
 
+    public bool HasSubscribers(string topic)
+    {
+        return _subscribers.TryGetValue(topic, out var handlers) && handlers.Count > 0;
+    }
+
     public async Task<McpMessage> WaitForReplyAsync(string correlationTopic, TimeSpan timeout)
     {
         var tcs = new TaskCompletionSource<McpMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
