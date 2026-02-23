@@ -1,0 +1,12 @@
+fastapi
+pydantic
+pydantic-settings
+uvicorn
+httpx
+pydantic-ai
+openai
+google-generativeai
+anthropic
+aiohttp
+rich
+python-telegram-bot
