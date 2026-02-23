@@ -13,8 +13,6 @@ services:
       - ./.env:/.env:ro
       - ./ronaldinho:/ronaldinho
       - ./logs:/logs
-    depends_on:
-      - keycloak
     restart: unless-stopped
 
   ronaldinho-bridge:
@@ -29,56 +27,3 @@ services:
     depends_on:
       - ronaldinho-neuralcore
     restart: unless-stopped
-
-  ronaldinho-config-ui:
-    build:
-      context: services/ui
-      dockerfile: Dockerfile
-    container_name: ronaldinho_config_ui
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./services/ui:/app
-      - ronaldinho_configui_node_modules:/app/node_modules
-    env_file:
-      - ./.env
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - ronaldinho-neuralcore
-      - keycloak
-    restart: unless-stopped
-
-  postgres_keycloak:
-    image: postgres:15
-    container_name: postgres_keycloak
-    volumes:
-      - postgres_keycloak_data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: ${DB_NAME:-keycloak}
-      POSTGRES_USER: ${DB_USER:-keycloak}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
-    restart: unless-stopped
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:24.0.4
-    container_name: keycloak
-    command: start-dev
-    environment:
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres_keycloak:5432/${DB_NAME:-keycloak}
-      KC_DB_USERNAME: ${DB_USER:-keycloak}
-      KC_DB_PASSWORD: ${DB_PASSWORD:-password}
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
-    volumes:
-      - ./keycloak/themes:/opt/keycloak/themes
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres_keycloak
-    restart: unless-stopped
-
-volumes:
-  postgres_keycloak_data:
-  ronaldinho_configui_node_modules:

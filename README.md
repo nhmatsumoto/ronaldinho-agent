@@ -1,152 +1,90 @@
-# Ronaldinho-Agent 🚀 (Python Edition)
+# Ronaldinho-Agent 🚀 (Background Edition)
 
 > [!IMPORTANT]
-> **Pivô para Python**: O projeto migrou de .NET/C# para um ecossistema **100% Python**. Esta mudança foi estratégica para permitir uma integração nativa com ferramentas agentic avançadas (terminal, editor) e aproveitar o ecossistema de IA em rápida evolução.
+> **Pure Background Service**: Ronaldinho has pivoted to a 100% background agentic service. Management is performed via Telegram or direct configuration in `.env`. The web-based UI and Keycloak have been removed for maximum efficiency.
 
-Ronaldinho-Agent é um ecossistema de engenharia autônoma composto por:
+Ronaldinho-Agent is an autonomous engineering ecosystem composed of:
 
-- **Python NeuralCore**: O cérebro orquestrador (FastAPI + PydanticAI).
-- **Python Bridge**: Integração com Telegram.
-- **ConfigUI**: Interface de governança em React.
+- **Python NeuralCore**: The self-evolving brain (FastAPI + PydanticAI).
+- **Universal Model Integration**: Dynamic switching between Gemini, NVIDIA, OpenAI, Anthropic, and Groq.
+- **Python Bridge**: Telegram integration and event processing.
+- **Signaling Server**: P2P coordination and discovery.
 
-## 🧠 Arquitetura e Fluxo de Agente
+## 🧠 Manus Architecture (Cloud Cycle)
 
-O Ronaldinho agora opera com um loop de raciocínio que permite o uso de ferramentas do sistema de forma autônoma.
+Ronaldinho operates on a direct, autonomous loop focused on real environment action.
 
 ```mermaid
 graph TD
-    User([Usuário]) --> Bridge[Bridge Telegram]
-    Bridge --> Core[NeuralCore Python]
+    User([User]) --> Bridge[Telegram Bridge]
+    Bridge --> Core[Python NeuralCore]
 
-    subgraph "Reasoning Loop (PydanticAI)"
-        Core --> Planner[Planejamento]
-        Planner --> Tools{Chamada de Ferramentas}
-        Tools --> Terminal[Execução de Shell]
-        Tools --> Editor[Edição de Código]
-        Terminal --> Result[Resultado da Ação]
+    subgraph "Manus Cycle (Real Environment)"
+        Core --> Planner[Planning]
+        Planner --> Tools{Tool Calling}
+        Tools --> Terminal[Shell Execution]
+        Tools --> Editor[Code Editing]
+        Terminal --> Result[Live Result & STDERR]
         Editor --> Result
         Result --> Core
     end
 
-    Core --> FinalResp([Resposta Final])
+    Core --> FinalResp([Status Update])
     FinalResp --> Bridge
 ```
 
-## 💾 Memória Evolutiva (Git-Backed)
+## 💾 Evolutionary Memory (Git-Backed)
 
-O conhecimento do Ronaldinho não é apenas salvo; ele **evolui**. Inspirado no sistema de controle de versão Git, cada aprendizado significativo ou mudança de estado é registrado como um commit imutável.
-
-- **Rastreabilidade**: Todo o histórico de "pensamentos" e ajustes de personalidade pode ser auditado.
-- **Rollback de Conhecimento**: Capacidade de retornar a estados anteriores de consciência em caso de "alucinações" persistentes.
+Learning is preserved as versioned commits.
 
 ```mermaid
 gitGraph
-    commit id: "Personalidade Base"
-    commit id: "Aprendizado: FastAPI"
-    branch feature/autonomia
-    checkout feature/autonomia
-    commit id: "Ferramenta: Terminal"
-    commit id: "Ferramenta: Editor"
+    commit id: "Initial Personality"
+    commit id: "Tool Implementation"
+    branch background-pivot
+    checkout background-pivot
+    commit id: "Cleanup: UI Removal"
+    commit id: "Cleanup: Auth Removal"
     checkout main
-    merge feature/autonomia
-    commit id: "Ronaldinho Fenomenal v2"
-```
-
-## ⛓️ Inteligência Distribuída & Blockchain
-
-O Ronaldinho não está sozinho. O projeto visa criar uma rede de agentes descentralizada onde o conhecimento é validado e compartilhado via **Blockchain**.
-
-- **Consenso de Conhecimento**: Agentes em diferentes nós validam informações antes de integrá-las à memória coletiva.
-- **D-AI (Decentralized AI)**: Uma infraestrutura onde o poder de processamento e o conhecimento são distribuídos, eliminando pontos únicos de falha.
-
-```mermaid
-graph LR
-    subgraph "Nó 1 (Brasil)"
-        A1[Agente A] <--> L1[(Local Ledger)]
-    end
-    subgraph "Nó 2 (Japão)"
-        A2[Agente B] <--> L2[(Local Ledger)]
-    end
-    subgraph "Nó 3 (Europa)"
-        A3[Agente C] <--> L3[(Local Ledger)]
-    end
-
-    L1 <--> BC{Blockchain Network}
-    L2 <--> BC
-    L3 <--> BC
-
-    BC -- "Sincronização de Conhecimento" --> L1
-    BC -- "Sincronização de Conhecimento" --> L2
-    BC -- "Sincronização de Conhecimento" --> L3
-```
-
-## 🌐 Componentes do Ecossistema
-
-O sistema é modular e utiliza protocolos modernos para garantir resiliência e autonomia.
-
-```mermaid
-graph LR
-    subgraph Services
-        NC[NeuralCore]
-        B[Bridge]
-        UI[ConfigUI]
-    end
-
-    subgraph Infrastructure
-        D[Docker Compose]
-        K[Keycloak Auth]
-        S[Signaling Server]
-    end
-
-    NC <--> B
-    NC <--> UI
-    UI <--> K
-    NC <--> S
-    D -.-> NC
-    D -.-> B
-    D -.-> UI
+    merge background-pivot
+    commit id: "Ronaldinho Fenomenal v3"
 ```
 
 ## 🛠️ Quick Local Start
 
-### 1. Pré-requisitos
+### 1. Prerequisites
 
 - **Python 3.10+**
-- **Node.js 18+**
-- **Docker**
+- **Docker** (optional for background services)
 
-### 2. Configuração
+### 2. Configure Environment
 
-Crie o arquivo `.env` na raiz baseado no exemplo.
+Create a `.env` file in the root based on the provided examples.
 
-### 3. Lançamento Unificado
-
-O projeto utiliza um script central para subir todos os serviços:
+### 3. Setup and Launch
 
 ```bash
+# Set up virtual environment and install dependencies
+python3 -m venv venv
+source venv/bin/activate
+pip install -r services/core/requirements.txt python-telegram-bot pydantic-settings pydantic-ai fastapi uvicorn httpx
+
+# Launch Ronaldinho in background
 chmod +x start_ronaldinho.sh
 ./start_ronaldinho.sh
 ```
 
-## 🐳 Stack Docker
-
-Para um ambiente isolado e completo:
-
-```bash
-docker compose up -d --build
-```
-
-## 📂 Estrutura do Repositório
+## 📂 Repository Structure
 
 ```text
 .
 ├── services/
-│   ├── core/                # IA, Orquestração e Ferramentas (FastAPI)
-│   ├── bridge/              # Bridge Telegram (Python)
-│   └── ui/                  # Interface de Governança (React)
-├── ronaldinho/              # Soul & Configurações
-├── docker-compose.yml       # Stack Unificada
-└── start_ronaldinho.sh      # Launcher Unificado
+│   ├── core/                # Brain & Manus Tools (FastAPI)
+│   └── bridge/              # Telegram Bridge (Python)
+├── ronaldinho/              # Soul & Personality
+├── logs/                    # Service logs (core.log, bridge.log, etc.)
+├── docker-compose.yml       # Simplified Headless Stack
+└── start_ronaldinho.sh      # Unified Background Launcher
 ```
 
 License: **MIT**

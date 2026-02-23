@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ronaldinho Web Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="glass-container">
+      <header>
+        <div class="logo">
+          <span class="ball-icon">🏀</span>
+          <h1>Ronaldinho <span>Core</span></h1>
+        </div>
+        <div class="status-badge" id="core-status">
+          <span class="status-dot"></span> Core Offline
+        </div>
+      </header>
+
+      <main class="chat-area" id="chat-messages">
+        <div class="message system">
+          <p>
+            Bem-vindo ao Ronaldinho Web Dashboard. O cérebro está pronto para o
+            drible!
+          </p>
+        </div>
+      </main>
+
+      <footer>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="user-input"
+            placeholder="Escreva sua mensagem aqui..."
+            autocomplete="off"
+          />
+          <button id="send-btn">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path
+                fill="currentColor"
+                d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
