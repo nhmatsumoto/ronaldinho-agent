@@ -15,31 +15,12 @@ export interface AgentSettings {
 export const SettingsService = {
     // Uses interceptor-enabled axios instance to fetch agent config
     getSettings: async (): Promise<AgentSettings> => {
-        try {
-            const response = await apiClient.get<AgentSettings>('/settings');
-            return response.data;
-        } catch (error) {
-            // Provide fallback for development/UI design when backend isn't ready
-            console.warn('Backend unavailable, returning system mock settings.');
-            return {
-                geminiApiKey: '',
-                openaiApiKey: '',
-                anthropicApiKey: '',
-                telegramToken: '',
-                aiModel: 'gemini',
-                personality: 'MANDATO SUPREMO: Você é o Ronaldinho.',
-                localPermissions: false,
-                autoFallback: true
-            };
-        }
+        const response = await apiClient.get<AgentSettings>('/settings');
+        return response.data;
     },
 
     // Uses interceptor-enabled axios instance to push config updates
     updateSettings: async (settings: AgentSettings): Promise<void> => {
-        try {
-            await apiClient.post('/settings', settings);
-        } catch (error) {
-            console.warn('Backend unavailable, faking successful save.', settings);
-        }
+        await apiClient.post('/settings', settings);
     }
 };
