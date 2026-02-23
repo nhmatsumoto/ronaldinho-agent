@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ronaldinho.Bridge;
 using System.Text.Json;
 using DotNetEnv;
+using Telegram.Bot;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -40,20 +41,27 @@ if (string.IsNullOrEmpty(token))
     token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN") ?? "";
 }
 
-if (string.IsNullOrEmpty(token))
+var hasTelegramToken = !string.IsNullOrWhiteSpace(token);
+
+if (!hasTelegramToken)
 {
     Console.WriteLine("CRITICAL: Telegram Token not found in ronaldinho/data/secrets/telegram.json OR Environment Variable.");
+    Console.WriteLine("[!] Bridge will run without Telegram polling until a token is configured.");
 }
 else
 {
     Console.WriteLine($"[*] Root Directory discovered: {baseDir}");
-    Console.WriteLine($"[*] Telegram Token loaded successfully.");
+    Console.WriteLine("[*] Telegram Token loaded successfully.");
 }
 
 // 2. Configure Services
-builder.Services.AddSingleton<ITelegramBotClient>(new TelegramBotClient(token));
+if (hasTelegramToken)
+{
+    builder.Services.AddSingleton<ITelegramBotClient>(new TelegramBotClient(token));
+    builder.Services.AddTransient<TelegramJob>();
+}
+
 builder.Services.AddSingleton<IExchangeService, ExchangeService>();
-builder.Services.AddTransient<TelegramJob>();
 
 // 3. Configure Hangfire
 var dbDir = Path.Combine(baseDir, "ronaldinho", "data");
@@ -74,11 +82,22 @@ var host = builder.Build();
 using (var scope = host.Services.CreateScope())
 {
     var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
-    recurringJobManager.AddOrUpdate<TelegramJob>(
-        "telegram-polling",
-        job => job.ExecuteAsync(),
-        "*/1 * * * * *" // Every 1 second
-    );
+
+    if (hasTelegramToken)
+    {
+        recurringJobManager.AddOrUpdate<TelegramJob>(
+            "telegram-polling",
+            job => job.ExecuteAsync(),
+            "*/1 * * * * *" // Every 1 second
+        );
+
+        Console.WriteLine("[*] Telegram polling job scheduled.");
+    }
+    else
+    {
+        recurringJobManager.RemoveIfExists("telegram-polling");
+        Console.WriteLine("[!] Telegram polling job not scheduled (missing token).");
+    }
 }
 
 host.Run();
