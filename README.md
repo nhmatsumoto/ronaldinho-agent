@@ -272,6 +272,14 @@ dotnet --version
 ### ConfigUI authentication issues
 Verify Keycloak realm/client and all `AUTH_*` / `VITE_AUTH_*` variables.
 
+### Docker container name conflict (`/ronaldinho_configui` already in use)
+This usually means you still have legacy containers created when fixed `container_name` values were used. Remove them and start again:
+
+```bash
+./dev_scripts/fix_docker_container_conflicts.sh
+docker compose up -d --build
+```
+
 ### Bridge not sending Telegram messages
 Check `TELEGRAM_BOT_TOKEN` and token source in local secrets/environment.
 
