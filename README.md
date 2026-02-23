@@ -1,113 +1,115 @@
 # Ronaldinho-Agent 🚀 (Open Source Edition)
 
 > [!IMPORTANT]
-> **Codename disclaimer**: "Ronaldinho-Agent" is currently a project codename and not a final product brand.
+> **Aviso de codinome**: "Ronaldinho-Agent" é um codinome de projeto. Ainda não há naming oficial de produto.
 
-- [Português (PT-BR)](README_pt-br.md)
-- [日本語 (JA)](README_ja.md)
+[Versão PT-BR anterior](README_pt-br.md)
 
-Ronaldinho-Agent is an autonomous engineering ecosystem composed of:
-- a **.NET 9 NeuralCore** API/orchestrator,
-- a **.NET Bridge worker** for Telegram integration,
-- a **React + Vite + Chakra UI ConfigUI**,
-- and **Keycloak + Postgres** for OIDC authentication.
+O **Ronaldinho-Agent** é um ecossistema de agente autônomo com:
+- **NeuralCore em .NET 9** (orquestração e API),
+- **Bridge worker** para integração com Telegram,
+- **ConfigUI em React + Vite + Chakra UI** para governança,
+- **Keycloak + Postgres** para autenticação OIDC no fluxo de configuração.
 
-This README is the primary (English) project guide for understanding, running, and developing the platform.
-
----
-
-## Table of Contents
-
-- [1. Architecture](#1-architecture)
-- [2. Repository structure](#2-repository-structure)
-- [3. Prerequisites](#3-prerequisites)
-- [4. Environment variables (`.env`)](#4-environment-variables-env)
-- [5. Run modes](#5-run-modes)
-  - [5.1 Quick local start](#51-quick-local-start)
-  - [5.2 Service-by-service local run](#52-service-by-service-local-run)
-  - [5.3 Full stack with Docker](#53-full-stack-with-docker)
-- [6. API and authentication](#6-api-and-authentication)
-- [7. Development workflow](#7-development-workflow)
-- [8. Utility scripts](#8-utility-scripts)
-- [9. Security notes](#9-security-notes)
-- [10. Troubleshooting](#10-troubleshooting)
-- [11. Additional docs](#11-additional-docs)
-- [12. Contributing and license](#12-contributing-and-license)
+Este README foi estruturado para você conseguir: **entender arquitetura**, **rodar localmente**, **subir com Docker**, e **desenvolver/contribuir** com segurança.
 
 ---
 
-## 1. Architecture
+## 📚 Sumário
 
-### Core components
-
-1. **NeuralCore** (`services/Ronaldinho.NeuralCore`)
-   - Main API/orchestration runtime (`http://localhost:5000`).
-   - Loads root `.env` and local vault values.
-   - Protects settings endpoints with JWT/OIDC.
-
-2. **Bridge** (`services/Ronaldinho.Bridge`)
-   - Telegram integration worker.
-   - Reads Telegram token from local secrets or environment.
-   - **Recent behavior**: if no token is present, Bridge still starts safely and skips Telegram polling job registration.
-
-3. **ConfigUI** (`services/Ronaldinho.ConfigUI`)
-   - Frontend governance interface (`http://localhost:5173` in dev).
-   - OIDC login against Keycloak.
-   - **Recent behavior**: settings fetch runs only after authentication; API errors are no longer silently replaced with fake/mock success.
-
-4. **Keycloak + Postgres** (docker-compose)
-   - Identity provider and persistence layer for auth.
+- [1) Visão geral da arquitetura](#1-visão-geral-da-arquitetura)
+- [2) Estrutura do repositório](#2-estrutura-do-repositório)
+- [3) Pré-requisitos](#3-pré-requisitos)
+- [4) Configuração de ambiente (.env)](#4-configuração-de-ambiente-env)
+- [5) Como executar](#5-como-executar)
+  - [5.1 Execução local rápida](#51-execução-local-rápida)
+  - [5.2 Execução manual por serviço (dev)](#52-execução-manual-por-serviço-dev)
+  - [5.3 Execução full stack com Docker](#53-execução-full-stack-com-docker)
+- [6) API e autenticação](#6-api-e-autenticação)
+- [7) Desenvolvimento](#7-desenvolvimento)
+- [8) Scripts utilitários](#8-scripts-utilitários)
+- [9) Segurança e boas práticas](#9-segurança-e-boas-práticas)
+- [10) Troubleshooting](#10-troubleshooting)
+- [11) Documentação complementar](#11-documentação-complementar)
+- [12) Contribuição e licença](#12-contribuição-e-licença)
 
 ---
 
-## 2. Repository structure
+## 1) Visão geral da arquitetura
+
+### Componentes principais
+
+1. **NeuralCore (`services/Ronaldinho.NeuralCore`)**
+   - API HTTP (porta `5000`) e cérebro de orquestração.
+   - Carrega variáveis de ambiente de um arquivo `.env` na raiz.
+   - Aplica autenticação JWT/OIDC com Keycloak para endpoints protegidos.
+
+2. **Bridge (`services/Ronaldinho.Bridge`)**
+   - Worker .NET que conecta o runtime ao Telegram.
+   - Lê token do Telegram do vault local ou variável de ambiente.
+
+3. **ConfigUI (`services/Ronaldinho.ConfigUI`)**
+   - Frontend React/Vite (porta `5173` em desenvolvimento).
+   - Faz login via OIDC (Keycloak) e persiste configurações no backend.
+
+4. **Keycloak + Postgres (via Docker Compose)**
+   - Camada de identidade/autorização para a UI e API.
+
+### Fluxo simplificado
+
+- Você sobe o NeuralCore.
+- Se o ambiente ainda não estiver configurado (sem token/chaves), a UI é usada para setup inicial.
+- Após configuração, o bridge pode iniciar e processar mensagens Telegram.
+
+---
+
+## 2) Estrutura do repositório
 
 ```text
 .
 ├── services/
-│   ├── Ronaldinho.NeuralCore/   # .NET 9 core API and orchestration
-│   ├── Ronaldinho.Bridge/       # .NET 9 Telegram bridge worker
-│   └── Ronaldinho.ConfigUI/     # React/Vite governance UI
+│   ├── Ronaldinho.NeuralCore/   # API e orquestração principal (.NET 9)
+│   ├── Ronaldinho.Bridge/       # Worker/integração Telegram (.NET 9)
+│   └── Ronaldinho.ConfigUI/     # Frontend de governança (React + Vite)
 ├── ronaldinho/
-│   ├── config/                  # SOUL.md and runtime configs
-│   └── data/                    # local vault and runtime data
-├── dev_scripts/                 # local helper scripts
-├── scripts/                     # Keycloak and IdP helper scripts
-├── docs/                        # architecture/security/roadmap docs
-├── docker-compose.yml           # development stack
-├── docker-compose.prod.yml      # production stack
-├── README.md                    # primary docs (English)
-├── README_pt-br.md              # Portuguese docs
-└── README_ja.md                 # Japanese docs
+│   ├── config/                  # SOUL.md e configs comportamentais
+│   └── data/                    # vault local/artefatos de segurança
+├── dev_scripts/                 # scripts utilitários para dev/start
+├── scripts/                     # scripts de configuração Keycloak/IDP
+├── docs/                        # documentação técnica e funcional
+├── docker-compose.yml           # stack de desenvolvimento
+├── docker-compose.prod.yml      # stack de produção
+├── start_neural.sh              # bootstrap Linux/macOS
+└── start_neural.ps1             # bootstrap Windows
 ```
 
 ---
 
-## 3. Prerequisites
+## 3) Pré-requisitos
 
-### Local development
+### Para desenvolvimento local
 
 - **.NET SDK 9.0**
-- **Node.js 18+** (npm)
-- **PowerShell 7+** (for `.ps1` scripts)
+- **Node.js 18+** (npm) *ou* Bun (opcional)
+- **PowerShell 7+** (se usar scripts `.ps1`)
 - **Git**
 
-### Containerized stack
+### Para stack completa
 
 - **Docker**
 - **Docker Compose**
 
 ---
 
-## 4. Environment variables (`.env`)
+## 4) Configuração de ambiente (.env)
 
 > [!WARNING]
-> The repository currently does **not** include a `.env.example`; create `.env` manually at the repository root.
+> Atualmente o repositório **não inclui `.env.example`**. Crie manualmente um arquivo `.env` na raiz.
 
-Suggested baseline:
+Exemplo mínimo sugerido:
 
 ```env
-# LLM + Telegram
+# LLM e Telegram
 GEMINI_API_KEY=
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
@@ -124,9 +126,8 @@ AUTH_AUDIENCE=account
 VITE_AUTH_AUTHORITY=http://localhost:8080/realms/ronaldinho
 VITE_AUTH_CLIENT_ID=configui-client
 VITE_AUTH_REDIRECT_URI=http://localhost:5173
-VITE_API_BASE_URL=http://localhost:5000/api
 
-# Keycloak DB / admin (docker-compose)
+# Banco do Keycloak (Docker)
 DB_NAME=keycloak
 DB_USER=keycloak
 DB_PASSWORD=password
@@ -135,16 +136,17 @@ KEYCLOAK_ADMIN_PASSWORD=admin
 KC_HOSTNAME=localhost
 ```
 
-Notes:
-- NeuralCore can start without `TELEGRAM_BOT_TOKEN` to allow initial setup via ConfigUI.
-- Bridge now safely avoids scheduling Telegram polling when no token is configured.
-- Never commit real secrets.
+### Observações
+
+- Para rodar setup inicial pela UI, o backend pode subir mesmo sem `TELEGRAM_BOT_TOKEN`.
+- O `start_neural` considera “configurado” quando há token Telegram e ao menos 1 chave de LLM válida.
+- Nunca commite secrets reais no Git.
 
 ---
 
-## 5. Run modes
+## 5) Como executar
 
-## 5.1 Quick local start
+## 5.1 Execução local rápida
 
 ### Linux/macOS
 
@@ -159,7 +161,13 @@ chmod +x start_neural.sh ./dev_scripts/*.sh
 ./start_neural.ps1
 ```
 
-## 5.2 Service-by-service local run
+Esse bootstrap:
+- inicia o **NeuralCore**,
+- verifica se ambiente está configurado,
+- se estiver, inicia o **Bridge**,
+- se não estiver, sobe a **ConfigUI** para setup inicial.
+
+## 5.2 Execução manual por serviço (dev)
 
 ### Terminal 1 — NeuralCore
 
@@ -167,7 +175,7 @@ chmod +x start_neural.sh ./dev_scripts/*.sh
 dotnet run --project services/Ronaldinho.NeuralCore/Ronaldinho.NeuralCore.csproj
 ```
 
-### Terminal 2 — Bridge (optional)
+### Terminal 2 — Bridge (opcional)
 
 ```bash
 dotnet run --project services/Ronaldinho.Bridge/Ronaldinho.Bridge.csproj
@@ -181,18 +189,24 @@ npm install
 npm run dev
 ```
 
-Local endpoints:
-- NeuralCore API: `http://localhost:5000`
+Acessos locais:
+- API NeuralCore: `http://localhost:5000`
 - ConfigUI: `http://localhost:5173`
-- Keycloak: `http://localhost:8080`
+- Keycloak (se via Docker): `http://localhost:8080`
 
-## 5.3 Full stack with Docker
+## 5.3 Execução full stack com Docker
 
 ```bash
 docker compose up -d --build
 ```
 
-Production compose:
+Serviços incluídos no compose de desenvolvimento:
+- `ronaldinho-neuralcore`
+- `ronaldinho-configui`
+- `postgres_keycloak`
+- `keycloak`
+
+Para produção:
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
@@ -200,87 +214,105 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 ---
 
-## 6. API and authentication
+## 6) API e autenticação
 
-Main protected routes in NeuralCore:
-- `GET /api/settings`
-- `POST /api/settings`
+### Endpoints principais
 
-OIDC/JWT settings are controlled by:
+- `GET /api/settings` (protegido por autenticação)
+- `POST /api/settings` (protegido por autenticação)
+
+O backend usa JWT Bearer com autoridade/audience baseados em:
 - `AUTH_AUTHORITY`
 - `AUTH_AUDIENCE`
-- `VITE_AUTH_AUTHORITY`
-- `VITE_AUTH_CLIENT_ID`
-- `VITE_AUTH_REDIRECT_URI`
+
+A UI usa variáveis `VITE_AUTH_*` para login OIDC no Keycloak.
 
 ---
 
-## 7. Development workflow
+## 7) Desenvolvimento
 
-Recommended local checks:
+### Build/check rápido
+
+#### Backend
 
 ```bash
-# Backend
 dotnet build services/Ronaldinho.NeuralCore/Ronaldinho.NeuralCore.csproj
 dotnet build services/Ronaldinho.Bridge/Ronaldinho.Bridge.csproj
+```
 
-# Frontend
+#### Frontend
+
+```bash
 cd services/Ronaldinho.ConfigUI
 npm run lint
 npm run build
 ```
 
-Workflow:
-1. Create a feature/fix branch.
-2. Keep commits focused.
-3. Run checks locally.
-4. Open PR with clear impact and validation notes.
+### Fluxo recomendado
+
+1. Crie uma branch de feature/fix.
+2. Faça mudanças pequenas e com contexto claro.
+3. Rode build/lint local antes de abrir PR.
+4. Evite dependências não catalogadas e exposição de segredos.
 
 ---
 
-## 8. Utility scripts
+## 8) Scripts utilitários
 
-`dev_scripts/` includes helper scripts for startup, local UI launch, and operational utilities.
+### `dev_scripts/`
 
-`scripts/` includes Keycloak setup helpers:
-- `setup_keycloak.sh`
-- `add_google_idp.sh`
-- `add_github_idp.sh`
+- `start_ui.sh` / `start_ui.ps1`: sobe apenas a ConfigUI.
+- `start_ronaldinho.sh` / `start_ronaldinho.ps1`: wrappers de inicialização.
+- `kill_ronaldinho.ps1`: auxilia encerramento no Windows.
+- `fix_docker_registry.ps1`, `reset_keycloak_admin.ps1`, etc.: manutenção operacional.
+
+### `scripts/`
+
+- `setup_keycloak.sh`: cria realm/client/user iniciais no Keycloak.
+- `add_google_idp.sh`: registra Google como IdP no realm.
+- `add_github_idp.sh`: registra GitHub como IdP no realm.
 
 > [!NOTE]
-> Review script defaults before production use.
+> Alguns scripts assumem credenciais padrão específicas; revise antes de usar em ambientes reais.
 
 ---
 
-## 9. Security notes
+## 9) Segurança e boas práticas
 
-- Do not commit `.env`, API keys, tokens, or sensitive logs.
-- Review `SECURITY.md` and `docs/security_model.md`.
-- Sanitize screenshots/log excerpts before sharing.
+- Não versione `.env`, tokens, segredos ou dumps sensíveis.
+- Revise `SECURITY.md` e `docs/security_model.md`.
+- Em PRs, remova dados sensíveis de logs e screenshots.
+- Prefira credenciais específicas de ambiente, com rotação periódica.
 
 ---
 
-## 10. Troubleshooting
+## 10) Troubleshooting
 
-### `dotnet: command not found`
-Install .NET 9 SDK and verify:
+### “.NET SDK not found”
+Instale .NET 9 e confirme:
 
 ```bash
 dotnet --version
 ```
 
-### ConfigUI authentication issues
-Verify Keycloak realm/client and all `AUTH_*` / `VITE_AUTH_*` variables.
+### “Project file not found”
+Rode comandos na raiz do repositório (`/workspace/ronaldinho-agent`).
 
-### Bridge not sending Telegram messages
-Check `TELEGRAM_BOT_TOKEN` and token source in local secrets/environment.
+### UI não sobe em `:5173`
+Entre em `services/Ronaldinho.ConfigUI`, instale dependências e rode `npm run dev`.
 
-### Frontend lint/install conflicts
-Use a clean install (`rm -rf node_modules package-lock.json && npm install`) and validate package versions.
+### Erro de autenticação OIDC
+Verifique:
+- realm/client no Keycloak,
+- `AUTH_AUTHORITY`, `AUTH_AUDIENCE`,
+- `VITE_AUTH_AUTHORITY`, `VITE_AUTH_CLIENT_ID`, `VITE_AUTH_REDIRECT_URI`.
+
+### Bridge não conecta no Telegram
+Confirme `TELEGRAM_BOT_TOKEN` e se o token foi salvo corretamente via UI/vault.
 
 ---
 
-## 11. Additional docs
+## 11) Documentação complementar
 
 - `docs/architecture.md`
 - `docs/security_model.md`
@@ -290,12 +322,12 @@ Use a clean install (`rm -rf node_modules package-lock.json && npm install`) and
 
 ---
 
-## 12. Contributing and license
+## 12) Contribuição e licença
 
-Contributions are welcome.
+Contribuições são bem-vindas via PR.
 
-Read before contributing:
+Antes de contribuir, leia:
 - `CONTRIBUTING.md`
 - `SECURITY.md`
 
-License: **MIT** (`LICENSE`).
+Licença: **MIT** (`LICENSE`).

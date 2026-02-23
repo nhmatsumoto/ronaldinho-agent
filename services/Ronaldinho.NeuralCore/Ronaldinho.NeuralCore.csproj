@@ -26,5 +26,12 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Ronaldinho.Contracts\Ronaldinho.Contracts.csproj" />
+    <ProjectReference Include="..\Ronaldinho.Blockchain\Ronaldinho.Blockchain.csproj" />
+    <ProjectReference Include="..\Ronaldinho.MemoryDiff\Ronaldinho.MemoryDiff.csproj" />
+    <ProjectReference Include="..\Ronaldinho.P2P\Ronaldinho.P2P.csproj" />
+  </ItemGroup>
+
 </Project>
 
