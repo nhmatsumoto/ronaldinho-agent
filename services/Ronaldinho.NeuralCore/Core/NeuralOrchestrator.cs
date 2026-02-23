@@ -8,10 +8,14 @@ using Ronaldinho.NeuralCore.Services.Strategies; // Added for Strategy
 using Ronaldinho.NeuralCore.Services.Skills; // Added for SkillLoader, FindingsSkill
 using Ronaldinho.NeuralCore.Services.MCP.Core; // Added for MCP Protocol
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Ronaldinho.Contracts;
+using Ronaldinho.Blockchain;
 
 namespace Ronaldinho.NeuralCore.Core;
 
-public class NeuralOrchestrator
+public class NeuralOrchestrator : IMessageProcessor
 {
     private readonly IConfiguration _configuration;
     private readonly string _rootPath;
@@ -22,21 +26,25 @@ public class NeuralOrchestrator
     private readonly Kernel _kernel;
     private readonly string _soul;
     private readonly IMessageBus _messageBus;
+    private readonly Ronaldinho.MemoryDiff.MemoryDiffService? _memoryDiff;
+    private readonly Chain? _blockchain;
 
     public Core.Memory.SessionRouter Router { get; }
     public Core.Memory.MemoryStore Memory { get; }
 
     public NeuralOrchestrator(
-        IConfiguration configuration, 
-        string soul, 
-        string rootPath, 
+        IConfiguration configuration,
+        string soul,
+        string rootPath,
         Services.SuperToolbox.FileSystemSkill fileSystemSkill,
         Services.SuperToolbox.TextProcessingSkill textProcessingSkill,
         Services.SuperToolbox.LogAnalyzerSkill logAnalyzerSkill,
         Services.SuperToolbox.CodebaseDiffSkill codebaseDiffSkill,
-        Core.Memory.SessionRouter router,
-        Core.Memory.MemoryStore memory,
-        IMessageBus messageBus)
+        Memory.SessionRouter router,
+        Memory.MemoryStore memory,
+        IMessageBus messageBus,
+        Ronaldinho.MemoryDiff.MemoryDiffService? memoryDiff = null,
+        Chain? blockchain = null)
     {
         _configuration = configuration;
         _soul = soul;
@@ -48,7 +56,9 @@ public class NeuralOrchestrator
         Router = router;
         Memory = memory;
         _messageBus = messageBus;
-        
+        _memoryDiff = memoryDiff;
+        _blockchain = blockchain;
+
         _kernel = BuildKernel(LLMStrategyFactory.Create(configuration));
     }
 
@@ -69,8 +79,14 @@ public class NeuralOrchestrator
         var kernel = builder.Build();
         new SkillLoader(kernel, _rootPath).LoadSkills();
         kernel.Plugins.AddFromObject(new Skills.RoslynEvolutionSkill(kernel, _rootPath), "evolution");
-        
+
         return kernel;
+    }
+
+    public async Task<string> ProcessAsync(string platform, string channelId, string userId, string input)
+    {
+        var context = Router.Route(platform, channelId, userId);
+        return await ProcessMessageAsync(context, input);
     }
 
     public async Task<string> ProcessMessageAsync(Core.Memory.SessionContext context, string input)
@@ -119,19 +135,46 @@ public class NeuralOrchestrator
 
     private async Task<string> InvokeWithFallbackAsync(string prompt)
     {
-        var chain = LLMStrategyFactory.GetFallbackChain(_configuration);
+        var strategies = LLMStrategyFactory.GetFallbackChain(_configuration);
         var settings = new PromptExecutionSettings();
         bool autoFallback = _configuration["ENABLE_AUTO_FALLBACK"] == "true";
 
-        foreach (var strategy in chain)
+        foreach (var strategy in strategies)
         {
             try
             {
                 Console.WriteLine($"[Resilience] Attempting reasoning with {strategy.ProviderName}...");
-                var currentKernel = strategy.ProviderName == chain[0].ProviderName ? _kernel : BuildKernel(strategy);
-                
+                var currentKernel = strategy.ProviderName == strategies[0].ProviderName ? _kernel : BuildKernel(strategy);
+
                 var response = await currentKernel.InvokePromptAsync(prompt, new KernelArguments(settings));
-                return response.ToString();
+                var result = response.ToString();
+
+                // Post-processing: Memory Snapshotting & Blockchain Ledger
+                try
+                {
+                    if (_memoryDiff is not null)
+                    {
+                        var commitId = _memoryDiff.SaveCommit(new { LastResponse = result });
+                        Console.WriteLine($"[NeuralCore] Memory snapshot saved: {commitId}");
+                    }
+
+                    if (_blockchain is not null && result.Contains("FINDING:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var tx = new KnowledgeTransaction
+                        {
+                            Data = result,
+                            Author = strategy.ProviderName
+                        };
+                        _blockchain.AddBlock(new[] { tx });
+                        Console.WriteLine("[NeuralCore] Significant finding recorded to blockchain.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[NeuralCore] Post-processing error: {ex.Message}");
+                }
+
+                return result;
             }
             catch (Exception ex) when (ex.ToString().Contains("429") || ex.Message.Contains("Too Many Requests"))
             {
@@ -140,18 +183,17 @@ public class NeuralOrchestrator
                     Console.WriteLine("[Resilience] 429 detected but Auto-Fallback is DISABLED.");
                     throw;
                 }
-                
+
                 Console.WriteLine($"[Resilience] {strategy.ProviderName} rate limited (429). Rotating to next provider...");
                 continue;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[Error] {ex.GetType().Name} in {strategy.ProviderName}: {ex.Message}");
-                if (strategy == chain.Last()) throw; 
+                if (strategy == strategies.Last()) throw;
             }
         }
 
         return "🛑 **Ronaldinho está temporariamente fora de combate.** Todos os modelos configurados atingiram o limite de taxa. Por favor, aguarde alguns minutos.";
     }
 }
-

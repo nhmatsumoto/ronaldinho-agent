@@ -15,16 +15,18 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using DotNetEnv;
 using System.Text.Json;
+using Ronaldinho.Blockchain;
+using Ronaldinho.P2P;
 
 namespace Ronaldinho.NeuralCore;
 
 public record AgentSettingsDto(
-    string GeminiApiKey, 
-    string OpenAIApiKey, 
+    string GeminiApiKey,
+    string OpenAIApiKey,
     string AnthropicApiKey,
-    string TelegramToken, 
-    string AiModel, 
-    string Personality, 
+    string TelegramToken,
+    string AiModel,
+    string Personality,
     bool LocalPermissions,
     bool AutoFallback);
 
@@ -39,17 +41,17 @@ class Program
         // 1. Load Environment (Root .env)
         var rootPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
         var envPath = Path.Combine(rootPath, ".env");
-        
+
         if (File.Exists(envPath))
         {
             Env.Load(envPath);
             Console.WriteLine("[System] Environment loaded from root .env");
         }
-        
+
         // Build Configuration
         // Important: Add environment variables so we can read from .env
         builder.Configuration.AddEnvironmentVariables();
-        
+
         string geminiKey = builder.Configuration["GEMINI_API_KEY"] ?? "";
         if (!string.IsNullOrEmpty(geminiKey))
         {
@@ -59,9 +61,9 @@ class Program
         {
             Console.WriteLine("[!] WARNING: GEMINI_API_KEY not found in configuration.");
         }
-        
+
         string telegramToken = builder.Configuration["TELEGRAM_BOT_TOKEN"] ?? "";
-        
+
         if (string.IsNullOrEmpty(telegramToken))
         {
             Console.WriteLine("❌ CRITICAL: Missing TELEGRAM_BOT_TOKEN");
@@ -92,7 +94,7 @@ class Program
             .AddJwtBearer(options =>
             {
                 options.Authority = authAuthority;
-                options.RequireHttpsMetadata = false; 
+                options.RequireHttpsMetadata = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateAudience = true,
@@ -101,20 +103,20 @@ class Program
                     ValidIssuer = authAuthority
                 };
             });
-        
+
         builder.Services.AddAuthorization();
 
         // Add Security Services Early
         builder.Services.AddDataProtection();
         builder.Services.AddSingleton<ILocalKeyVault, LocalKeyVault>();
-        
+
         // Inject DB Vault Keys into IConfiguration
         // To avoid ASP0000 (BuildServiceProvider anti-pattern), we manually instantiate the KeyVault
         // for the early bootstrap phase.
         var dataProtectionProvider = Microsoft.AspNetCore.DataProtection.DataProtectionProvider.Create(
             new DirectoryInfo(Path.Combine(rootPath, "ronaldinho", "data", "protection-keys")));
         var earlyVault = new LocalKeyVault(dataProtectionProvider);
-        
+
         if (earlyVault.GetGlobalKey("GEMINI") is string gk) builder.Configuration["GEMINI_API_KEY"] = gk;
         if (earlyVault.GetGlobalKey("OPENAI") is string ok) builder.Configuration["OPENAI_API_KEY"] = ok;
         if (earlyVault.GetGlobalKey("ANTHROPIC") is string ak) builder.Configuration["ANTHROPIC_API_KEY"] = ak;
@@ -131,7 +133,7 @@ class Program
         // 8. Initialize Multi-Agent Coordination Protocol (MCP)
         Console.WriteLine("[System] Initializing Multi-Agent Coordination Protocol (MCP)...");
         var messageBus = new InMemoryMessageBus();
-        
+
         // ======= MULTI-MODEL LLM STRATEGY BINDING =======
         Console.WriteLine("[MCP] Booting CodeSpecialistAgent with ClaudeStrategy...");
         var claudeStrategy = new ClaudeStrategy();
@@ -155,8 +157,26 @@ class Program
         // ===============================================
 
         // 9. Initialize Master Brain (NeuralOrchestrator)
+        var memDiffService = new Ronaldinho.MemoryDiff.MemoryDiffService(Path.Combine(rootPath, "ronaldinho", "data", "memorydiff"));
+        var loggerFactory = builder.Services.BuildServiceProvider().GetRequiredService<ILoggerFactory>();
+        var blockchainLogger = loggerFactory.CreateLogger<Chain>();
+        var blockchain = new Chain(Path.Combine(rootPath, "ronaldinho", "data", "chain.db"), blockchainLogger);
+
         var orchestrator = new NeuralOrchestrator(
-            builder.Configuration, soul, rootPath, fileSystemSkill, textProcessingSkill, logAnalyzerSkill, codebaseDiffSkill, sessionRouter, memoryStore, messageBus);
+            builder.Configuration, soul, rootPath, fileSystemSkill, textProcessingSkill, logAnalyzerSkill, codebaseDiffSkill, sessionRouter, memoryStore, messageBus, memDiffService, blockchain);
+
+        // Wire Blockchain to P2P relay
+        var p2pGateway = new P2PGateway(
+            builder.Configuration["P2P_SIGNALING"] ?? "http://localhost:3000",
+            builder.Configuration["P2P_REMOTE_ID"] ?? "peer-b",
+            orchestrator,
+            builder.Services.BuildServiceProvider().GetRequiredService<ILoggerFactory>());
+
+        blockchain.OnBlockAdded += async block =>
+        {
+            var json = JsonSerializer.Serialize(block);
+            await p2pGateway.SendAsync("all", "blockchain_sync", json);
+        };
 
         // Build the ASP.NET Core Application
         var app = builder.Build();
@@ -166,17 +186,17 @@ class Program
         app.UseAuthorization();
 
         // --- API ROUTES ---
-        
-        app.MapGet("/api/settings", async (HttpContext ctx) => 
+
+        app.MapGet("/api/settings", async (HttpContext ctx) =>
         {
             var config = app.Services.GetRequiredService<IConfiguration>();
             var vault = app.Services.GetRequiredService<ILocalKeyVault>();
-            
+
             var currentSoul = File.Exists(soulPath) ? await File.ReadAllTextAsync(soulPath) : "";
-            
+
             var userSub = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userSub)) return Results.Unauthorized();
-            
+
             return Results.Ok(new AgentSettingsDto(
                 GeminiApiKey: vault.GetKey(userSub, "GEMINI") != null ? "VAULT_LOCKED_KEY" : "",
                 OpenAIApiKey: vault.GetKey(userSub, "OPENAI") != null ? "VAULT_LOCKED_KEY" : "",
@@ -195,24 +215,24 @@ class Program
             if (string.IsNullOrEmpty(userSub)) return Results.Unauthorized();
 
             Console.WriteLine($"[API] Saving new configurations for user ID: {userSub}...");
-            
+
             var vault = app.Services.GetRequiredService<ILocalKeyVault>();
-            
+
             // 0. Update Keys if provided and not just placeholder
             if (!string.IsNullOrEmpty(request.GeminiApiKey) && request.GeminiApiKey != "VAULT_LOCKED_KEY")
             {
-                 vault.SaveKey(userSub, "GEMINI", request.GeminiApiKey);
-                 app.Configuration["GEMINI_API_KEY"] = request.GeminiApiKey;
+                vault.SaveKey(userSub, "GEMINI", request.GeminiApiKey);
+                app.Configuration["GEMINI_API_KEY"] = request.GeminiApiKey;
             }
             if (!string.IsNullOrEmpty(request.OpenAIApiKey) && request.OpenAIApiKey != "VAULT_LOCKED_KEY")
             {
-                 vault.SaveKey(userSub, "OPENAI", request.OpenAIApiKey);
-                 app.Configuration["OPENAI_API_KEY"] = request.OpenAIApiKey;
+                vault.SaveKey(userSub, "OPENAI", request.OpenAIApiKey);
+                app.Configuration["OPENAI_API_KEY"] = request.OpenAIApiKey;
             }
             if (!string.IsNullOrEmpty(request.AnthropicApiKey) && request.AnthropicApiKey != "VAULT_LOCKED_KEY")
             {
-                 vault.SaveKey(userSub, "ANTHROPIC", request.AnthropicApiKey);
-                 app.Configuration["ANTHROPIC_API_KEY"] = request.AnthropicApiKey;
+                vault.SaveKey(userSub, "ANTHROPIC", request.AnthropicApiKey);
+                app.Configuration["ANTHROPIC_API_KEY"] = request.AnthropicApiKey;
             }
 
             // 1. Update SOUL.md
@@ -230,7 +250,7 @@ class Program
                     if (parts.Length == 2) envDict[parts[0]] = parts[1];
                 }
             }
-            
+
             envDict["TELEGRAM_BOT_TOKEN"] = request.TelegramToken;
             envDict["LLM_PROVIDER"] = request.AiModel;
             envDict["ALLOW_LOCAL_TOOLS"] = request.LocalPermissions ? "true" : "false";
@@ -244,15 +264,16 @@ class Program
         });
 
         // --- STARTUP BACKGROUND SERVICES ---
-        
+
         var registry = new GatewayRegistry();
         if (!string.IsNullOrEmpty(telegramToken))
         {
             registry.AddGateway(new TelegramGateway(telegramToken, orchestrator));
         }
-        
+        registry.AddGateway(p2pGateway);
+
         var cronEngine = new Ronaldinho.NeuralCore.Core.Automation.CronMissionEngine(rootPath, orchestrator, builder.Configuration);
-        
+
         var cts = new CancellationTokenSource();
         // Fire and forget the background tasks
         _ = cronEngine.StartAsync(cts.Token);
@@ -262,7 +283,7 @@ class Program
         app.Urls.Add("http://*:5000");
 
         Console.WriteLine("[System] Listening for API requests on http://*:5000...");
-        
+
         // This blocks the main thread and runs the HTTP server
         await app.RunAsync(cts.Token);
     }
