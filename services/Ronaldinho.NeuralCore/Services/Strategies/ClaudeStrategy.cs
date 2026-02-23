@@ -16,18 +16,19 @@ public class ClaudeStrategy : ILLMStrategy
 
     public void Configure(IKernelBuilder builder, IConfiguration configuration)
     {
-        string apiKey = configuration["ANTHROPIC_API_KEY"] ?? "placeholder_key";
-            
+        string apiKey = ProviderConfigurationValidator.NormalizeSecret(configuration["ANTHROPIC_API_KEY"]);
+
         string modelId = configuration["CLAUDE_MODEL_ID"] ?? "claude-3-5-sonnet-20240620";
 
-        if (apiKey != "placeholder_key" && apiKey.Length > 8)
+        if (!ProviderConfigurationValidator.IsValidSecret(apiKey))
+        {
+            throw new InvalidOperationException("ANTHROPIC_API_KEY ausente, inválida ou placeholder.");
+        }
+
+        if (apiKey.Length > 8)
         {
             string maskedKey = $"{apiKey[..4]}...{apiKey[^4..]}";
             Console.WriteLine($"[Strategy] Using Anthropic Key: {maskedKey}");
-        }
-        else
-        {
-            Console.WriteLine("[Strategy] WARNING: Using placeholder Anthropic Key (Check .env/Vault)");
         }
 
         // Register Custom Claude Service

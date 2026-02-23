@@ -22,4 +22,9 @@ public interface IMessageBus
     /// Subscribes for a single message matching a correlation ID (useful for RPC/Request-Reply logic).
     /// </summary>
     Task<McpMessage> WaitForReplyAsync(string correlationTopic, TimeSpan timeout);
+
+    /// <summary>
+    /// Returns true when at least one handler is subscribed for a topic.
+    /// </summary>
+    bool HasSubscribers(string topic);
 }

@@ -2,8 +2,6 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using System.Threading;
-using System.Threading.Tasks;
 using Ronaldinho.NeuralCore.Core;
 using Ronaldinho.Contracts;
 
@@ -46,7 +44,7 @@ public class TelegramGateway : IGateway
     public Task StopAsync(CancellationToken cancellationToken = default)
     {
         _cts?.Cancel();
-        Console.WriteLine($"[Gateway] Stopped listening for Telegram.");
+        Console.WriteLine("[Gateway] Stopped listening for Telegram.");
         return Task.CompletedTask;
     }
 
@@ -59,22 +57,16 @@ public class TelegramGateway : IGateway
 
             var chatId = message.Chat.Id;
 
-            // Indicate typing
             await botClient.SendChatActionAsync(chatId, ChatAction.Typing, cancellationToken: cancellationToken);
 
-            // Process via Neural Core (Injecting Context & Memory)
             var context = _orchestrator.Router.Route("Telegram", chatId.ToString(), message.From?.Id.ToString() ?? "Unknown");
 
-            // 1. Save user's fresh input to memory
             await _orchestrator.Memory.SaveMemoryAsync(context.SessionId, "user", messageText);
 
-            // 2. Process via AI
             var response = await _orchestrator.ProcessMessageAsync(context, messageText);
 
-            // 3. Save AI's response to memory
             await _orchestrator.Memory.SaveMemoryAsync(context.SessionId, "assistant", response);
 
-            // Send response
             await botClient.SendTextMessageAsync(
                 chatId: chatId,
                 text: response,
@@ -82,24 +74,47 @@ public class TelegramGateway : IGateway
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Gateway] Unhandled Exception: {ex.Message}");
+            var correlationId = Guid.NewGuid().ToString("N")[..8];
+            Console.WriteLine($"[Gateway] Error [{correlationId}] {ex.GetType().Name}: {ex.Message}");
+            Console.WriteLine($"[Gateway] Trace [{correlationId}] {ex.StackTrace}");
+
             if (update.Message != null)
             {
                 try
                 {
                     await botClient.SendTextMessageAsync(
                         chatId: update.Message.Chat.Id,
-                        text: $"🚨 Falha de operação na infraestrutura HTTP (Google API / Modelos?): {ex.Message}",
+                        text: BuildUserMessage(ex, correlationId),
                         cancellationToken: cancellationToken);
                 }
-                catch { /* Ignore inner send errors */ }
+                catch
+                {
+                    // ignore inner send errors
+                }
             }
         }
     }
 
+    private static string BuildUserMessage(Exception ex, string correlationId)
+    {
+        var message = ex.Message.ToLowerInvariant();
+
+        if (message.Contains("apikey") || message.Contains("api key") || message.Contains("invalidoperationexception"))
+        {
+            return $"⚠️ O agente está com configuração de provedor inválida no momento. Tente novamente em instantes. Código: {correlationId}";
+        }
+
+        if (message.Contains("429") || message.Contains("too many requests") || message.Contains("quota"))
+        {
+            return $"⚠️ O serviço de IA atingiu limite temporário. Tente novamente em alguns segundos. Código: {correlationId}";
+        }
+
+        return $"🚨 Ocorreu uma falha temporária no processamento. Tente novamente. Código: {correlationId}";
+    }
+
     private Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
-        Console.WriteLine($"[Gateway] Error: {exception.Message}");
+        Console.WriteLine($"[Gateway] Polling error: {exception.Message}");
         return Task.CompletedTask;
     }
 }

@@ -59,7 +59,10 @@ public class NeuralOrchestrator : IMessageProcessor
         _memoryDiff = memoryDiff;
         _blockchain = blockchain;
 
-        _kernel = BuildKernel(LLMStrategyFactory.Create(configuration));
+        var bootstrapStrategies = LLMStrategyFactory.GetFallbackChain(configuration);
+        _kernel = bootstrapStrategies.Count > 0
+            ? BuildKernel(bootstrapStrategies[0])
+            : Kernel.CreateBuilder().Build();
     }
 
     private Kernel BuildKernel(ILLMStrategy strategy)
@@ -89,6 +92,42 @@ public class NeuralOrchestrator : IMessageProcessor
         return await ProcessMessageAsync(context, input);
     }
 
+    private async Task<string> QuerySpecialistAsync(string topic, string label, string sessionId, string input, int timeoutSeconds = 20)
+    {
+        if (!_messageBus.HasSubscribers(topic))
+        {
+            return $"\n\n{label} indisponível no momento (sem agentes online).";
+        }
+
+        try
+        {
+            var replyTopic = "orchestrator_reply_" + sessionId + "_" + topic;
+            var mcpMsg = new McpMessage
+            {
+                Sender = "orchestrator",
+                TargetTopic = topic,
+                ReplyTo = replyTopic,
+                CorrelationId = sessionId,
+                TaskDescription = input
+            };
+
+            await _messageBus.PublishAsync(mcpMsg);
+            var reply = await _messageBus.WaitForReplyAsync(replyTopic, TimeSpan.FromSeconds(timeoutSeconds));
+
+            var toon = ToonSerializer.Deserialize(reply.Payload);
+            var data = toon.ContainsKey("Data") ? toon["Data"] : reply.Payload;
+            return $"\n\n{label}:\n{data}";
+        }
+        catch (TimeoutException)
+        {
+            return $"\n\n{label} não respondeu a tempo.";
+        }
+        catch (Exception ex)
+        {
+            return $"\n\n{label} indisponível ({ex.GetType().Name}).";
+        }
+    }
+
     public async Task<string> ProcessMessageAsync(Core.Memory.SessionContext context, string input)
     {
         Console.WriteLine($"[NeuralCore] Reasoning for {context.UserId} on {context.PlatformId} (Session: {context.SessionId})");
@@ -97,35 +136,21 @@ public class NeuralOrchestrator : IMessageProcessor
 
         if (input.Contains("código", StringComparison.OrdinalIgnoreCase) || input.Contains("refatorar", StringComparison.OrdinalIgnoreCase))
         {
-            var mcpMsg = new McpMessage { Sender = "orchestrator", TargetTopic = "coder", ReplyTo = "orchestrator_reply_" + context.SessionId, CorrelationId = context.SessionId, TaskDescription = input };
-            await _messageBus.PublishAsync(mcpMsg);
-            var reply = await _messageBus.WaitForReplyAsync(mcpMsg.ReplyTo, TimeSpan.FromSeconds(30));
-
-            var toon = ToonSerializer.Deserialize(reply.Payload);
-            var data = toon.ContainsKey("Data") ? toon["Data"] : reply.Payload;
-            mcpContext = $"\n\nRELATÓRIO DO AGENTE ESPECIALISTA EM CÓDIGO:\n{data}";
+            mcpContext += await QuerySpecialistAsync("coder", "RELATÓRIO DO AGENTE ESPECIALISTA EM CÓDIGO", context.SessionId, input);
         }
         else if (input.Contains("pesquisa", StringComparison.OrdinalIgnoreCase) || input.Contains("logs", StringComparison.OrdinalIgnoreCase))
         {
-            var mcpMsg = new McpMessage { Sender = "orchestrator", TargetTopic = "researcher", ReplyTo = "orchestrator_reply_" + context.SessionId, CorrelationId = context.SessionId, TaskDescription = input };
-            await _messageBus.PublishAsync(mcpMsg);
-            var reply = await _messageBus.WaitForReplyAsync(mcpMsg.ReplyTo, TimeSpan.FromSeconds(30));
-
-            var toon = ToonSerializer.Deserialize(reply.Payload);
-            var data = toon.ContainsKey("Data") ? toon["Data"] : reply.Payload;
-            mcpContext = $"\n\nRELATÓRIO DO AGENTE PESQUISADOR:\n{data}";
+            mcpContext += await QuerySpecialistAsync("researcher", "RELATÓRIO DO AGENTE PESQUISADOR", context.SessionId, input);
         }
 
-        // Security check for sensitive keywords
+        if (input.Contains("diagnóstico", StringComparison.OrdinalIgnoreCase) || input.Contains("diagnostico", StringComparison.OrdinalIgnoreCase) || input.Contains("provider", StringComparison.OrdinalIgnoreCase))
+        {
+            mcpContext += await QuerySpecialistAsync("configops", "RELATÓRIO DO AGENTE DE CONFIGURAÇÃO", context.SessionId, input);
+        }
+
         if (input.Contains("segurança", StringComparison.OrdinalIgnoreCase) || input.Contains("vulnerabilidade", StringComparison.OrdinalIgnoreCase) || input.Contains("api key", StringComparison.OrdinalIgnoreCase))
         {
-            var mcpMsg = new McpMessage { Sender = "orchestrator", TargetTopic = "security", ReplyTo = "orchestrator_reply_" + context.SessionId, CorrelationId = context.SessionId, TaskDescription = input };
-            await _messageBus.PublishAsync(mcpMsg);
-            var reply = await _messageBus.WaitForReplyAsync(mcpMsg.ReplyTo, TimeSpan.FromSeconds(30));
-
-            var toon = ToonSerializer.Deserialize(reply.Payload);
-            var data = toon.ContainsKey("Data") ? toon["Data"] : reply.Payload;
-            mcpContext += $"\n\nRELATÓRIO DE SEGURANÇA:\n{data}";
+            mcpContext += await QuerySpecialistAsync("security", "RELATÓRIO DE SEGURANÇA", context.SessionId, input);
         }
 
         var history = await Memory.RetrieveRelevantContextAsync(context.SessionId);
@@ -154,6 +179,11 @@ public class NeuralOrchestrator : IMessageProcessor
     private async Task<string> InvokeWithFallbackAsync(string prompt)
     {
         var strategies = LLMStrategyFactory.GetFallbackChain(_configuration);
+        if (strategies.Count == 0)
+        {
+            return "⚠️ Nenhum provedor de IA válido está configurado no momento. Configure uma chave válida no ConfigUI e tente novamente.";
+        }
+
         var settings = new PromptExecutionSettings();
         bool autoFallback = _configuration["ENABLE_AUTO_FALLBACK"] == "true";
         bool simultaneousMode = _configuration["ENABLE_SIMULTANEOUS_LLM"] == "true";
