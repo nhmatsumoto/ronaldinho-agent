@@ -189,7 +189,7 @@ Local endpoints:
 ### 5.3 Full stack with Docker
 
 ```bash
-docker compose up -d --build
+docker compose up -d --build --remove-orphans
 ```
 
 Production compose:
@@ -277,7 +277,7 @@ This usually means you still have legacy containers created when fixed `containe
 
 ```bash
 ./dev_scripts/fix_docker_container_conflicts.sh
-docker compose up -d --build
+docker compose up -d --build --remove-orphans
 ```
 
 ### Bridge not sending Telegram messages
