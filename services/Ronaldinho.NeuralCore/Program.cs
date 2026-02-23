@@ -71,7 +71,9 @@ class Program
         }
 
         // 2. Load SOUL.md
-        string soulPath = Path.Combine(rootPath, "ronaldinho", "config", "SOUL.md");
+        string dataDirName = builder.Configuration["DATA_DIR"] ?? "ronaldinho";
+        string dataRoot = Path.Combine(rootPath, dataDirName);
+        string soulPath = Path.Combine(dataRoot, "config", "SOUL.md");
         string soul = File.Exists(soulPath) ? await File.ReadAllTextAsync(soulPath) : "MANDATO SUPREMO: Você é o Ronaldinho.";
 
         // --- Configure Web Services ---
@@ -114,7 +116,7 @@ class Program
         // To avoid ASP0000 (BuildServiceProvider anti-pattern), we manually instantiate the KeyVault
         // for the early bootstrap phase.
         var dataProtectionProvider = Microsoft.AspNetCore.DataProtection.DataProtectionProvider.Create(
-            new DirectoryInfo(Path.Combine(rootPath, "ronaldinho", "data", "protection-keys")));
+            new DirectoryInfo(Path.Combine(dataRoot, "data", "protection-keys")));
         var earlyVault = new LocalKeyVault(dataProtectionProvider);
 
         if (earlyVault.GetGlobalKey("GEMINI") is string gk) builder.Configuration["GEMINI_API_KEY"] = gk;
@@ -157,18 +159,21 @@ class Program
         // ===============================================
 
         // 9. Initialize Master Brain (NeuralOrchestrator)
-        var memDiffService = new Ronaldinho.MemoryDiff.MemoryDiffService(Path.Combine(rootPath, "ronaldinho", "data", "memorydiff"));
+        var memDiffService = new Ronaldinho.MemoryDiff.MemoryDiffService(Path.Combine(dataRoot, "data", "memorydiff"));
         var loggerFactory = builder.Services.BuildServiceProvider().GetRequiredService<ILoggerFactory>();
         var blockchainLogger = loggerFactory.CreateLogger<Chain>();
-        var blockchain = new Chain(Path.Combine(rootPath, "ronaldinho", "data", "chain.db"), blockchainLogger);
+        var blockchain = new Chain(Path.Combine(dataRoot, "data", "chain.db"), blockchainLogger);
 
         var orchestrator = new NeuralOrchestrator(
             builder.Configuration, soul, rootPath, fileSystemSkill, textProcessingSkill, logAnalyzerSkill, codebaseDiffSkill, sessionRouter, memoryStore, messageBus, memDiffService, blockchain);
 
         // Wire Blockchain to P2P relay
+        bool p2pInitiator = builder.Configuration["P2P_INITIATOR"] == "true";
         var p2pGateway = new P2PGateway(
             builder.Configuration["P2P_SIGNALING"] ?? "http://localhost:3000",
+            builder.Configuration["P2P_LOCAL_ID"] ?? "peer-a",
             builder.Configuration["P2P_REMOTE_ID"] ?? "peer-b",
+            p2pInitiator,
             orchestrator,
             builder.Services.BuildServiceProvider().GetRequiredService<ILoggerFactory>());
 
@@ -177,6 +182,22 @@ class Program
             var json = JsonSerializer.Serialize(block);
             await p2pGateway.SendAsync("all", "blockchain_sync", json);
         };
+
+        p2pGateway.RegisterHandler("blockchain_sync", async json =>
+        {
+            try
+            {
+                var block = JsonSerializer.Deserialize<Block>(json);
+                if (block != null)
+                {
+                    blockchain.SyncBlocks(new List<Block> { block });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[P2P] Failed to sync block: {ex.Message}");
+            }
+        });
 
         // Build the ASP.NET Core Application
         var app = builder.Build();
@@ -279,10 +300,11 @@ class Program
         _ = cronEngine.StartAsync(cts.Token);
         _ = registry.StartAllAsync(cts.Token);
 
-        // Listen on port 5000 (which is the backend exposed port in docker-compose)
-        app.Urls.Add("http://*:5000");
+        // Listen on configurable port (default 5000)
+        var port = builder.Configuration["PORT"] ?? "5000";
+        app.Urls.Add($"http://*:{port}");
 
-        Console.WriteLine("[System] Listening for API requests on http://*:5000...");
+        Console.WriteLine($"[System] Listening for API requests on http://*:{port}...");
 
         // This blocks the main thread and runs the HTTP server
         await app.RunAsync(cts.Token);

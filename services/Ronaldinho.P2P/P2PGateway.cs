@@ -17,16 +17,20 @@ namespace Ronaldinho.P2P
         private readonly CancellationTokenSource _cts = new();
         private readonly string _signalingUrl;
         private readonly string _remotePeerId;
+        private readonly string _localPeerId;
+        private readonly bool _isInitiator;
 
         public string Name => "P2P";
 
-        public P2PGateway(string signalingUrl, string remotePeerId, IMessageProcessor processor, ILoggerFactory loggerFactory)
+        public P2PGateway(string signalingUrl, string localPeerId, string remotePeerId, bool isInitiator, IMessageProcessor processor, ILoggerFactory loggerFactory)
         {
             _logger = loggerFactory.CreateLogger<P2PGateway>();
             _processor = processor ?? throw new ArgumentNullException(nameof(processor));
             _peerNode = new PeerNode(loggerFactory.CreateLogger<PeerNode>());
             _signalingUrl = signalingUrl;
+            _localPeerId = localPeerId;
             _remotePeerId = remotePeerId;
+            _isInitiator = isInitiator;
 
             // Register a default handler for generic messages
             _peerNode.RegisterHandler("message", async payload => await HandleIncomingAsync(payload));
@@ -34,8 +38,8 @@ namespace Ronaldinho.P2P
 
         public async Task StartAsync(CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("Starting P2P Gateway...");
-            await _peerNode.ConnectAsync(_signalingUrl, _remotePeerId);
+            _logger.LogInformation("Starting P2P Gateway (Local: {Local}, Remote: {Remote}, Initiator: {IsInitiator})...", _localPeerId, _remotePeerId, _isInitiator);
+            await _peerNode.ConnectAsync(_signalingUrl, _localPeerId, _remotePeerId, _isInitiator);
         }
 
         public async Task StopAsync(CancellationToken cancellationToken = default)
@@ -56,6 +60,11 @@ namespace Ronaldinho.P2P
             // Simple protocol: "channel|payload"
             var formatted = $"{channel}|{message}";
             await _peerNode.SendMessageAsync(formatted);
+        }
+
+        public void RegisterHandler(string channel, Func<string, Task> handler)
+        {
+            _peerNode.RegisterHandler(channel, handler);
         }
 
         public void Dispose()

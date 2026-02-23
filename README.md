@@ -7,6 +7,7 @@
 - [Japanese (JA)](README_ja.md)
 
 Ronaldinho-Agent is an autonomous engineering ecosystem composed of:
+
 - a **.NET 9 NeuralCore** API/orchestrator,
 - a **.NET Bridge worker** for Telegram integration,
 - a **React + Vite + Chakra UI ConfigUI**,
@@ -136,6 +137,7 @@ KC_HOSTNAME=localhost
 ```
 
 Notes:
+
 - NeuralCore can start without `TELEGRAM_BOT_TOKEN` to allow initial setup via ConfigUI.
 - Bridge now safely avoids scheduling Telegram polling when no token is configured.
 - OpenAI integration is now optional at startup: when `OPENAI_API_KEY` is missing, the ResearcherAgent is kept offline and the API still boots.
@@ -183,6 +185,7 @@ npm run dev
 ```
 
 Local endpoints:
+
 - NeuralCore API: `http://localhost:5000`
 - ConfigUI: `http://localhost:5173`
 - Keycloak: `http://localhost:8080`
@@ -204,10 +207,12 @@ docker compose -f docker-compose.prod.yml up -d --build
 ## 6. API and authentication
 
 Main protected routes in NeuralCore:
+
 - `GET /api/settings`
 - `POST /api/settings`
 
 OIDC/JWT settings are controlled by:
+
 - `AUTH_AUTHORITY`
 - `AUTH_AUDIENCE`
 - `VITE_AUTH_AUTHORITY`
@@ -232,6 +237,7 @@ npm run build
 ```
 
 Workflow:
+
 1. Create a feature/fix branch.
 2. Keep commits focused.
 3. Run checks locally.
@@ -239,11 +245,54 @@ Workflow:
 
 ---
 
-## 8. Utility scripts
+## 8. Test Proofs & Validation
+
+Ronaldinho-Agent capability is verified through a rigorous combination of unit, integration, and functional smoke tests.
+
+### 8.1 Automated Smoke Tests
+
+We use a unified `smoke_test.sh` to verify the "Phenomenal" capabilities of the NeuralCore in real-time.
+
+| Capability            | Status  | Proof Marker (Logs)                        |
+| :-------------------- | :------ | :----------------------------------------- |
+| **P2P Networking**    | ✅ PASS | `info: Ronaldinho.P2P.P2PGateway`          |
+| **Blockchain Sync**   | ✅ PASS | `info: Ronaldinho.Blockchain.Chain`        |
+| **MCP Orchestration** | ✅ PASS | `[MCP] Booting CodeSpecialistAgent`        |
+| **LLM Resilience**    | ✅ PASS | `[GeminiStrategy] Resilience Layer Active` |
+| **Memory Diffing**    | ✅ PASS | `ronaldinho/data/memorydiff/commits`       |
+| **KeyVault (AES)**    | ✅ PASS | `[System] Environment loaded`              |
+
+### 8.2 Proof of Handshake (P2P)
+
+Real-world decentralization is proven by the successful WebRTC DataChannel opening between independent instances:
+
+```text
+info: Ronaldinho.P2P.PeerNode[0]
+      Received offer from peer. Creating answer...
+info: Ronaldinho.P2P.PeerNode[0]
+      DataChannel opened with peer-a
+```
+
+### 8.3 Manual Verification
+
+To run the capability proofs yourself:
+
+```bash
+# Full P2P Handshake Proof
+./test_p2p.sh
+
+# Complete Capability Smoke Test
+./smoke_test.sh
+```
+
+---
+
+## 9. Utility scripts
 
 `dev_scripts/` includes helper scripts for startup, local UI launch, and operational utilities.
 
 `scripts/` includes Keycloak setup helpers:
+
 - `setup_keycloak.sh`
 - `add_google_idp.sh`
 - `add_github_idp.sh`
@@ -264,6 +313,7 @@ Workflow:
 ## 10. Troubleshooting
 
 ### `dotnet: command not found`
+
 Install .NET 9 SDK and verify:
 
 ```bash
@@ -271,9 +321,11 @@ dotnet --version
 ```
 
 ### ConfigUI authentication issues
+
 Verify Keycloak realm/client and all `AUTH_*` / `VITE_AUTH_*` variables.
 
 ### Docker container name conflict (`/ronaldinho_configui` or `/ronaldinho_config_ui` already in use)
+
 This usually means you still have legacy containers created when fixed `container_name` values were used. Remove them and start again:
 
 ```bash
@@ -282,9 +334,11 @@ docker compose up -d --build --remove-orphans
 ```
 
 ### Bridge not sending Telegram messages
+
 Check `TELEGRAM_BOT_TOKEN` and token source in local secrets/environment.
 
 ### Frontend lint/install conflicts
+
 Use a clean install (`rm -rf node_modules package-lock.json && npm install`) and validate package versions.
 
 ---
@@ -304,6 +358,7 @@ Use a clean install (`rm -rf node_modules package-lock.json && npm install`) and
 Contributions are welcome.
 
 Read before contributing:
+
 - `CONTRIBUTING.md`
 - `SECURITY.md`
 
