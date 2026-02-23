@@ -1,88 +1,301 @@
 # Ronaldinho-Agent 🚀 (Open Source Edition)
 
 > [!IMPORTANT]
-> **Codename Disclaimer**: "Ronaldinho-Agent" is currently a project codename. No official brand or naming has been established yet.
+> **Codename disclaimer**: "Ronaldinho-Agent" is currently a project codename and not a final product brand.
 
-[Leia este documento em Português (PT-BR)](README_pt-br.md)
+- [Português (PT-BR)](README_pt-br.md)
+- [日本語 (JA)](README_ja.md)
 
-Ronaldinho-Agent is an autonomous development ecosystem designed for high performance, security, and self-evolution. Powered by a **.NET 9 NeuralCore** and a **React/Chakra UI Governance Interface**, it manages multi-model AI missions with built-in resilience and deterministic governance.
+Ronaldinho-Agent is an autonomous engineering ecosystem composed of:
+- a **.NET 9 NeuralCore** API/orchestrator,
+- a **.NET Bridge worker** for Telegram integration,
+- a **React + Vite + Chakra UI ConfigUI**,
+- and **Keycloak + Postgres** for OIDC authentication.
 
-## 🌟 Our Vision: The Power of Community
-
-Inspired by the phenomenal growth of successful global open-source platforms like **OpenClaw** — whose technical potential and governance reached excellence driven by organic, collaborative community work — Ronaldinho was born to be more than just an assistant; it's a living ecosystem!
-
-Code alone reaches a limit without collective intelligence. By opening this AI agent to open source, we welcome engineers, enthusiasts, and visionaries from all over the world. The autonomous revolution is collaborative.
-
-## 🎯 Project Objectives
-
-- **Level 6 Autonomy**: The continuous capacity for self-starting, self-correction, and self-optimization.
-- **Multi-Model Gateway**: Native support for **Gemini 2.0**, **OpenAI (GPT-4o)**, and **Claude (Anthropic)**.
-- **Zero-Block Resilience**: Automatic fallback system that rotates models on rate limits (429 errors).
-- **Governance UI**: Modern dashboard for real-time configuration and API key management.
-- **Enterprise Security**: Authentication powered by **Keycloak** with identity federation.
-- **Strict Execution Rules**: Operates based on the "Unified Execution Doctrine" for absolute determinism.
+This README is the primary (English) project guide for understanding, running, and developing the platform.
 
 ---
 
-## 🚀 Quick Start
+## Table of Contents
 
-### Prerequisites
+- [1. Architecture](#1-architecture)
+- [2. Repository structure](#2-repository-structure)
+- [3. Prerequisites](#3-prerequisites)
+- [4. Environment variables (`.env`)](#4-environment-variables-env)
+- [5. Run modes](#5-run-modes)
+  - [5.1 Quick local start](#51-quick-local-start)
+  - [5.2 Service-by-service local run](#52-service-by-service-local-run)
+  - [5.3 Full stack with Docker](#53-full-stack-with-docker)
+- [6. API and authentication](#6-api-and-authentication)
+- [7. Development workflow](#7-development-workflow)
+- [8. Utility scripts](#8-utility-scripts)
+- [9. Security notes](#9-security-notes)
+- [10. Troubleshooting](#10-troubleshooting)
+- [11. Additional docs](#11-additional-docs)
+- [12. Contributing and license](#12-contributing-and-license)
 
-- **.NET 9 SDK** (Core Engine)
-- **Node.js / Bun** (Governance UI)
-- **Docker & Docker Compose** (Full Stack Deployment)
-- **PowerShell 7+** (Automation Scripts)
+---
 
-### Installation
+## 1. Architecture
 
-```bash
-# Clone the repository
-git clone https://github.com/nhmatsumoto/Ronaldinho-Agent.git
-cd Ronaldinho-Agent
+### Core components
 
-# Set up the environment
-cp .env.example .env
+1. **NeuralCore** (`services/Ronaldinho.NeuralCore`)
+   - Main API/orchestration runtime (`http://localhost:5000`).
+   - Loads root `.env` and local vault values.
+   - Protects settings endpoints with JWT/OIDC.
 
-# Modify .env with your API Key (Never submit keys to public repositories!)
+2. **Bridge** (`services/Ronaldinho.Bridge`)
+   - Telegram integration worker.
+   - Reads Telegram token from local secrets or environment.
+   - **Recent behavior**: if no token is present, Bridge still starts safely and skips Telegram polling job registration.
+
+3. **ConfigUI** (`services/Ronaldinho.ConfigUI`)
+   - Frontend governance interface (`http://localhost:5173` in dev).
+   - OIDC login against Keycloak.
+   - **Recent behavior**: settings fetch runs only after authentication; API errors are no longer silently replaced with fake/mock success.
+
+4. **Keycloak + Postgres** (docker-compose)
+   - Identity provider and persistence layer for auth.
+
+---
+
+## 2. Repository structure
+
+```text
+.
+├── services/
+│   ├── Ronaldinho.NeuralCore/   # .NET 9 core API and orchestration
+│   ├── Ronaldinho.Bridge/       # .NET 9 Telegram bridge worker
+│   └── Ronaldinho.ConfigUI/     # React/Vite governance UI
+├── ronaldinho/
+│   ├── config/                  # SOUL.md and runtime configs
+│   └── data/                    # local vault and runtime data
+├── dev_scripts/                 # local helper scripts
+├── scripts/                     # Keycloak and IdP helper scripts
+├── docs/                        # architecture/security/roadmap docs
+├── docker-compose.yml           # development stack
+├── docker-compose.prod.yml      # production stack
+├── README.md                    # primary docs (English)
+├── README_pt-br.md              # Portuguese docs
+└── README_ja.md                 # Japanese docs
 ```
 
-### Quick Boot (Local)
+---
 
-```powershell
-# Windows (PowerShell)
-./start_neural.ps1
+## 3. Prerequisites
+
+### Local development
+
+- **.NET SDK 9.0**
+- **Node.js 18+** (npm)
+- **PowerShell 7+** (for `.ps1` scripts)
+- **Git**
+
+### Containerized stack
+
+- **Docker**
+- **Docker Compose**
+
+---
+
+## 4. Environment variables (`.env`)
+
+> [!WARNING]
+> The repository currently does **not** include a `.env.example`; create `.env` manually at the repository root.
+
+Suggested baseline:
+
+```env
+# LLM + Telegram
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+TELEGRAM_BOT_TOKEN=
+LLM_PROVIDER=gemini
+ENABLE_AUTO_FALLBACK=true
+ALLOW_LOCAL_TOOLS=false
+
+# Auth (Keycloak / OIDC)
+AUTH_AUTHORITY=http://localhost:8080/realms/ronaldinho
+AUTH_AUDIENCE=account
+
+# ConfigUI (Vite)
+VITE_AUTH_AUTHORITY=http://localhost:8080/realms/ronaldinho
+VITE_AUTH_CLIENT_ID=configui-client
+VITE_AUTH_REDIRECT_URI=http://localhost:5173
+VITE_API_BASE_URL=http://localhost:5000/api
+
+# Keycloak DB / admin (docker-compose)
+DB_NAME=keycloak
+DB_USER=keycloak
+DB_PASSWORD=password
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=admin
+KC_HOSTNAME=localhost
 ```
 
+Notes:
+- NeuralCore can start without `TELEGRAM_BOT_TOKEN` to allow initial setup via ConfigUI.
+- Bridge now safely avoids scheduling Telegram polling when no token is configured.
+- Never commit real secrets.
+
+---
+
+## 5. Run modes
+
+## 5.1 Quick local start
+
+### Linux/macOS
+
 ```bash
-# Linux / macOS (Bash)
 chmod +x start_neural.sh ./dev_scripts/*.sh
 ./start_neural.sh
 ```
 
-### Full Stack (Docker)
+### Windows (PowerShell)
+
+```powershell
+./start_neural.ps1
+```
+
+## 5.2 Service-by-service local run
+
+### Terminal 1 — NeuralCore
 
 ```bash
-# Deploys Brain, UI, Keycloak, and Database
+dotnet run --project services/Ronaldinho.NeuralCore/Ronaldinho.NeuralCore.csproj
+```
+
+### Terminal 2 — Bridge (optional)
+
+```bash
+dotnet run --project services/Ronaldinho.Bridge/Ronaldinho.Bridge.csproj
+```
+
+### Terminal 3 — ConfigUI
+
+```bash
+cd services/Ronaldinho.ConfigUI
+npm install
+npm run dev
+```
+
+Local endpoints:
+- NeuralCore API: `http://localhost:5000`
+- ConfigUI: `http://localhost:5173`
+- Keycloak: `http://localhost:8080`
+
+## 5.3 Full stack with Docker
+
+```bash
 docker compose up -d --build
+```
+
+Production compose:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ---
 
-## 🤝 How to Contribute and Help Ronaldinho Grow
+## 6. API and authentication
 
-Just as brilliantly perceived with OpenClaw, we bet everything on contributions! From new `dev_scripts` to structural improvements in the *Orchestrator*:
+Main protected routes in NeuralCore:
+- `GET /api/settings`
+- `POST /api/settings`
 
-1. Fork the repository.
-2. Follow the crucial **Local Governance Rules** when creating your features.
-3. If you identify recurring manual actions, create tools in `.toolbox` or `dev_scripts/`.
-4. Work on your **Branch** (`git checkout -b feature/YourInnovation`).
-5. Generate Local Tests with TOON validation and write logs.
-6. Submit your **Pull Request** to the *main* / *master* branch.
-
-The community will analyze every submission. Be careful with key leaks or uncatalogued dependencies.
+OIDC/JWT settings are controlled by:
+- `AUTH_AUTHORITY`
+- `AUTH_AUDIENCE`
+- `VITE_AUTH_AUTHORITY`
+- `VITE_AUTH_CLIENT_ID`
+- `VITE_AUTH_REDIRECT_URI`
 
 ---
 
-## 📜 License
+## 7. Development workflow
 
-Distributed under the **MIT License**. See `LICENSE` for more details.
+Recommended local checks:
+
+```bash
+# Backend
+dotnet build services/Ronaldinho.NeuralCore/Ronaldinho.NeuralCore.csproj
+dotnet build services/Ronaldinho.Bridge/Ronaldinho.Bridge.csproj
+
+# Frontend
+cd services/Ronaldinho.ConfigUI
+npm run lint
+npm run build
+```
+
+Workflow:
+1. Create a feature/fix branch.
+2. Keep commits focused.
+3. Run checks locally.
+4. Open PR with clear impact and validation notes.
+
+---
+
+## 8. Utility scripts
+
+`dev_scripts/` includes helper scripts for startup, local UI launch, and operational utilities.
+
+`scripts/` includes Keycloak setup helpers:
+- `setup_keycloak.sh`
+- `add_google_idp.sh`
+- `add_github_idp.sh`
+
+> [!NOTE]
+> Review script defaults before production use.
+
+---
+
+## 9. Security notes
+
+- Do not commit `.env`, API keys, tokens, or sensitive logs.
+- Review `SECURITY.md` and `docs/security_model.md`.
+- Sanitize screenshots/log excerpts before sharing.
+
+---
+
+## 10. Troubleshooting
+
+### `dotnet: command not found`
+Install .NET 9 SDK and verify:
+
+```bash
+dotnet --version
+```
+
+### ConfigUI authentication issues
+Verify Keycloak realm/client and all `AUTH_*` / `VITE_AUTH_*` variables.
+
+### Bridge not sending Telegram messages
+Check `TELEGRAM_BOT_TOKEN` and token source in local secrets/environment.
+
+### Frontend lint/install conflicts
+Use a clean install (`rm -rf node_modules package-lock.json && npm install`) and validate package versions.
+
+---
+
+## 11. Additional docs
+
+- `docs/architecture.md`
+- `docs/security_model.md`
+- `docs/mission_lifecycle.md`
+- `docs/integration_roadmap.md`
+- `CONTRIBUTING.md`
+
+---
+
+## 12. Contributing and license
+
+Contributions are welcome.
+
+Read before contributing:
+- `CONTRIBUTING.md`
+- `SECURITY.md`
+
+License: **MIT** (`LICENSE`).

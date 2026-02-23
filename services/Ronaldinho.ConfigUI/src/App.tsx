@@ -71,8 +71,9 @@ function App() {
     });
 
     useEffect(() => {
+        if (!isAuthenticated) return;
         fetchSettings();
-    }, [fetchSettings]);
+    }, [fetchSettings, isAuthenticated]);
 
     useEffect(() => {
         if (settings) {
@@ -295,6 +296,15 @@ function App() {
                                             </Flex>
                                         </VStack>
                                     </Box>
+
+
+                                    {(errors.aiModel || errors.personality || errors.telegramToken) && (
+                                        <Box p={4} borderRadius="12px" bg="rgba(231, 76, 60, 0.1)" border="1px solid rgba(231, 76, 60, 0.35)">
+                                            {errors.aiModel?.message && <Text color="#ffb3b3" fontSize="sm">• {errors.aiModel.message}</Text>}
+                                            {errors.personality?.message && <Text color="#ffb3b3" fontSize="sm">• {errors.personality.message}</Text>}
+                                            {errors.telegramToken?.message && <Text color="#ffb3b3" fontSize="sm">• {errors.telegramToken.message}</Text>}
+                                        </Box>
+                                    )}
 
                                     <Button
                                         bg="#f1c40f"
