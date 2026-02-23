@@ -1,3 +1,4 @@
+using Telegram.Bot;
 using Hangfire;
 using Hangfire.Storage.SQLite;
 using Microsoft.Extensions.DependencyInjection;

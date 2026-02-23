@@ -65,7 +65,7 @@ function App() {
         handleSubmit,
         reset,
         control,
-        formState: { errors, isSubmitting },
+        formState: { isSubmitting },
     } = useForm<FormData>({
         resolver: zodResolver(schema),
     });
@@ -113,7 +113,7 @@ function App() {
             <ChakraProvider value={defaultSystem}>
                 <Center h="100vh" bg="#0a0b14">
                     <VStack gap={6}>
-                        <Spinner size="xl" thickness="4px" speed="0.65s" color="#f1c40f" />
+                        <Spinner size="xl" color="#f1c40f" />
                         <Text color="white" fontWeight="800" fontSize="2xl" letterSpacing="widest">CONECTANDO AO CÉREBRO...</Text>
                     </VStack>
                 </Center>
@@ -144,7 +144,7 @@ function App() {
                             {user?.picture && <img src={user.picture} alt="Profile" style={{ width: 44, height: 44, borderRadius: '50%', border: '2px solid #f1c40f' }} />}
                             <Box pr={4}>
                                 <Text fontSize="sm" fontWeight="900" color="white">{user?.name?.toUpperCase()}</Text>
-                                <Button size="xs" variant="link" color="#f1c40f" _hover={{ textDecoration: 'none', color: 'white' }} onClick={logout}>SIGNOUT</Button>
+                                <Button size="xs" variant="plain" color="#f1c40f" _hover={{ textDecoration: 'none', color: 'white' }} onClick={logout}>SIGNOUT</Button>
                             </Box>
                         </Flex>
                     </Flex>
