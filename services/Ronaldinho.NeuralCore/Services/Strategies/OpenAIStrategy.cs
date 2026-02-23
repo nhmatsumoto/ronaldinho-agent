@@ -1,6 +1,5 @@
 using Microsoft.SemanticKernel;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Ronaldinho.NeuralCore.Services.Strategies;
 
@@ -22,16 +21,18 @@ public class OpenAIStrategy : ILLMStrategy
         // Or implement a simple rotation if multiple keys exist.
         
         string modelId = configuration["OPENAI_MODEL_ID"] ?? "gpt-4o";
-        string apiKey = configuration["OPENAI_API_KEY"] ?? "placeholder_key";
+        string apiKey = configuration["OPENAI_API_KEY"] ?? string.Empty;
 
-        if (apiKey != "placeholder_key" && apiKey.Length > 8)
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            Console.WriteLine("[Strategy] OpenAI key missing. Skipping OpenAI chat completion registration.");
+            return;
+        }
+
+        if (apiKey.Length > 8)
         {
             string maskedKey = $"{apiKey[..4]}...{apiKey[^4..]}";
             Console.WriteLine($"[Strategy] Using OpenAI Key: {maskedKey}");
-        }
-        else
-        {
-            Console.WriteLine("[Strategy] WARNING: Using placeholder OpenAI Key (Check .env/Vault)");
         }
 
         builder.AddOpenAIChatCompletion(

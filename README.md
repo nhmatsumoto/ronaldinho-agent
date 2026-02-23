@@ -138,6 +138,7 @@ KC_HOSTNAME=localhost
 Notes:
 - NeuralCore can start without `TELEGRAM_BOT_TOKEN` to allow initial setup via ConfigUI.
 - Bridge now safely avoids scheduling Telegram polling when no token is configured.
+- OpenAI integration is now optional at startup: when `OPENAI_API_KEY` is missing, the ResearcherAgent is kept offline and the API still boots.
 - Never commit real secrets.
 
 ---
