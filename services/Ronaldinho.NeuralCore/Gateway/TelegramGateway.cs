@@ -2,7 +2,10 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using System.Threading;
+using System.Threading.Tasks;
 using Ronaldinho.NeuralCore.Core;
+using Ronaldinho.Contracts;
 
 namespace Ronaldinho.NeuralCore.Gateway;
 
@@ -55,7 +58,7 @@ public class TelegramGateway : IGateway
                 return;
 
             var chatId = message.Chat.Id;
-            
+
             // Indicate typing
             await botClient.SendChatActionAsync(chatId, ChatAction.Typing, cancellationToken: cancellationToken);
 
@@ -82,13 +85,13 @@ public class TelegramGateway : IGateway
             Console.WriteLine($"[Gateway] Unhandled Exception: {ex.Message}");
             if (update.Message != null)
             {
-                try 
+                try
                 {
                     await botClient.SendTextMessageAsync(
                         chatId: update.Message.Chat.Id,
                         text: $"🚨 Falha de operação na infraestrutura HTTP (Google API / Modelos?): {ex.Message}",
                         cancellationToken: cancellationToken);
-                } 
+                }
                 catch { /* Ignore inner send errors */ }
             }
         }
