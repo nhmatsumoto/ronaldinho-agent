@@ -14,7 +14,7 @@ services:
       - ./logs:/logs
     restart: unless-stopped
 
-  ronaldinho-configui:
+  ronaldinho-config-ui:
     build:
       context: services/Ronaldinho.ConfigUI
       dockerfile: Dockerfile
@@ -63,4 +63,5 @@ services:
 volumes:
   postgres_keycloak_data:
   ronaldinho_configui_node_modules:
+
 
