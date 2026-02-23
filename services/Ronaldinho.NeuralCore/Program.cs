@@ -17,6 +17,7 @@ using DotNetEnv;
 using System.Text.Json;
 using Ronaldinho.Blockchain;
 using Ronaldinho.P2P;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace Ronaldinho.NeuralCore;
 
@@ -24,11 +25,14 @@ public record AgentSettingsDto(
     string GeminiApiKey,
     string OpenAIApiKey,
     string AnthropicApiKey,
+    string NvidiaApiKey,
+    string NvidiaModelId,
     string TelegramToken,
     string AiModel,
     string Personality,
     bool LocalPermissions,
-    bool AutoFallback);
+    bool AutoFallback,
+    bool SimultaneousLlm);
 
 class Program
 {
@@ -53,14 +57,16 @@ class Program
         builder.Configuration.AddEnvironmentVariables();
 
         string geminiKey = builder.Configuration["GEMINI_API_KEY"] ?? "";
-        if (!string.IsNullOrEmpty(geminiKey))
-        {
-            Console.WriteLine($"[*] Gemini API Key loaded (starts with {geminiKey[..4]}).");
-        }
-        else
-        {
-            Console.WriteLine("[!] WARNING: GEMINI_API_KEY not found in configuration.");
-        }
+        Console.WriteLine($"[*] Gemini API Key: {MaskKey(geminiKey)}");
+
+        string openAIKey = builder.Configuration["OPENAI_API_KEY"] ?? "";
+        Console.WriteLine($"[*] OpenAI API Key: {MaskKey(openAIKey)}");
+
+        string anthropicKey = builder.Configuration["ANTHROPIC_API_KEY"] ?? "";
+        Console.WriteLine($"[*] Anthropic API Key: {MaskKey(anthropicKey)}");
+
+        string nvidiaKey = builder.Configuration["NVIDIA_API_KEY"] ?? "";
+        Console.WriteLine($"[*] NVIDIA API Key: {MaskKey(nvidiaKey)}");
 
         string telegramToken = builder.Configuration["TELEGRAM_BOT_TOKEN"] ?? "";
 
@@ -96,7 +102,7 @@ class Program
             .AddJwtBearer(options =>
             {
                 options.Authority = authAuthority;
-                options.RequireHttpsMetadata = false;
+                options.RequireHttpsMetadata = true; // FORCE HTTPS ALWAYS FOR SECURITY
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateAudience = true,
@@ -110,18 +116,20 @@ class Program
 
         // Add Security Services Early
         builder.Services.AddDataProtection();
-        builder.Services.AddSingleton<ILocalKeyVault, LocalKeyVault>();
+        builder.Services.AddSingleton<ILocalKeyVault>(sp =>
+            new LocalKeyVault(sp.GetRequiredService<IDataProtectionProvider>(), dataRoot));
 
         // Inject DB Vault Keys into IConfiguration
         // To avoid ASP0000 (BuildServiceProvider anti-pattern), we manually instantiate the KeyVault
         // for the early bootstrap phase.
         var dataProtectionProvider = Microsoft.AspNetCore.DataProtection.DataProtectionProvider.Create(
             new DirectoryInfo(Path.Combine(dataRoot, "data", "protection-keys")));
-        var earlyVault = new LocalKeyVault(dataProtectionProvider);
+        var earlyVault = new LocalKeyVault(dataProtectionProvider, dataRoot);
 
         if (earlyVault.GetGlobalKey("GEMINI") is string gk) builder.Configuration["GEMINI_API_KEY"] = gk;
         if (earlyVault.GetGlobalKey("OPENAI") is string ok) builder.Configuration["OPENAI_API_KEY"] = ok;
         if (earlyVault.GetGlobalKey("ANTHROPIC") is string ak) builder.Configuration["ANTHROPIC_API_KEY"] = ak;
+        if (earlyVault.GetGlobalKey("NVIDIA") is string nk) builder.Configuration["NVIDIA_API_KEY"] = nk;
 
         // 5. Initialize Core Services (singleton-like instantiations)
         var fileSystemSkill = new Services.SuperToolbox.FileSystemSkill(rootPath);
@@ -144,7 +152,6 @@ class Program
         var codeAgent = new CodeSpecialistAgent(messageBus, codeBuilder.Build());
 
         Console.WriteLine("[MCP] Booting ResearcherAgent with OpenAIStrategy...");
-        var openAIKey = builder.Configuration["OPENAI_API_KEY"];
         if (!string.IsNullOrWhiteSpace(openAIKey))
         {
             var openAIStrategy = new OpenAIStrategy();
@@ -155,6 +162,15 @@ class Program
         else
         {
             Console.WriteLine("[MCP] OpenAI key not configured. ResearcherAgent will stay offline.");
+        }
+
+        Console.WriteLine("[MCP] Booting SecuritySpecialistAgent with NvidiaStrategy...");
+        if (!string.IsNullOrEmpty(nvidiaKey))
+        {
+            var nvidiaStrategy = new NvidiaStrategy();
+            var securityBuilder = Kernel.CreateBuilder();
+            nvidiaStrategy.Configure(securityBuilder, builder.Configuration);
+            _ = new SecuritySpecialistAgent(messageBus, securityBuilder.Build());
         }
         // ===============================================
 
@@ -222,11 +238,14 @@ class Program
                 GeminiApiKey: vault.GetKey(userSub, "GEMINI") != null ? "VAULT_LOCKED_KEY" : "",
                 OpenAIApiKey: vault.GetKey(userSub, "OPENAI") != null ? "VAULT_LOCKED_KEY" : "",
                 AnthropicApiKey: vault.GetKey(userSub, "ANTHROPIC") != null ? "VAULT_LOCKED_KEY" : "",
+                NvidiaApiKey: vault.GetKey(userSub, "NVIDIA") != null ? "VAULT_LOCKED_KEY" : "",
+                NvidiaModelId: config["NVIDIA_MODEL_ID"] ?? "",
                 TelegramToken: config["TELEGRAM_BOT_TOKEN"] ?? "",
                 AiModel: config["LLM_PROVIDER"] ?? "gemini",
                 Personality: currentSoul,
                 LocalPermissions: config["ALLOW_LOCAL_TOOLS"] == "true",
-                AutoFallback: config["ENABLE_AUTO_FALLBACK"] == "true"
+                AutoFallback: config["ENABLE_AUTO_FALLBACK"] == "true",
+                SimultaneousLlm: config["ENABLE_SIMULTANEOUS_LLM"] == "true"
             ));
         }).RequireAuthorization();
 
@@ -255,6 +274,11 @@ class Program
                 vault.SaveKey(userSub, "ANTHROPIC", request.AnthropicApiKey);
                 app.Configuration["ANTHROPIC_API_KEY"] = request.AnthropicApiKey;
             }
+            if (!string.IsNullOrEmpty(request.NvidiaApiKey) && request.NvidiaApiKey != "VAULT_LOCKED_KEY")
+            {
+                vault.SaveKey(userSub, "NVIDIA", request.NvidiaApiKey);
+                app.Configuration["NVIDIA_API_KEY"] = request.NvidiaApiKey;
+            }
 
             // 1. Update SOUL.md
             var dir = Path.GetDirectoryName(soulPath);
@@ -274,8 +298,10 @@ class Program
 
             envDict["TELEGRAM_BOT_TOKEN"] = request.TelegramToken;
             envDict["LLM_PROVIDER"] = request.AiModel;
+            envDict["NVIDIA_MODEL_ID"] = request.NvidiaModelId;
             envDict["ALLOW_LOCAL_TOOLS"] = request.LocalPermissions ? "true" : "false";
             envDict["ENABLE_AUTO_FALLBACK"] = request.AutoFallback ? "true" : "false";
+            envDict["ENABLE_SIMULTANEOUS_LLM"] = request.SimultaneousLlm ? "true" : "false";
 
             var newEnvLines = envDict.Select(kv => $"{kv.Key}={kv.Value}");
             await File.WriteAllLinesAsync(envPath, newEnvLines);
@@ -306,7 +332,14 @@ class Program
 
         Console.WriteLine($"[System] Listening for API requests on http://*:{port}...");
 
-        // This blocks the main thread and runs the HTTP server
+        // blocks the main thread and runs the HTTP server
         await app.RunAsync(cts.Token);
+    }
+
+    private static string MaskKey(string key)
+    {
+        if (string.IsNullOrEmpty(key)) return "[NOT CONFIGURED]";
+        if (key.Length <= 8) return "[SECURELY LOADED]";
+        return $"{key[..4]}...{key[^4..]}";
     }
 }

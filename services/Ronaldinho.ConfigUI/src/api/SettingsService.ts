@@ -5,11 +5,14 @@ export interface AgentSettings {
     geminiApiKey?: string;
     openaiApiKey?: string;
     anthropicApiKey?: string;
+    nvidiaApiKey?: string;
+    nvidiaModelId?: string;
     telegramToken: string;
     aiModel: string;
     personality: string;
     localPermissions: boolean;
     autoFallback: boolean;
+    simultaneousLlm: boolean;
 }
 
 export const SettingsService = {
