@@ -140,10 +140,18 @@ class Program
         var codeAgent = new CodeSpecialistAgent(messageBus, codeBuilder.Build());
 
         Console.WriteLine("[MCP] Booting ResearcherAgent with OpenAIStrategy...");
-        var openAIStrategy = new OpenAIStrategy();
-        var researchBuilder = Kernel.CreateBuilder();
-        openAIStrategy.Configure(researchBuilder, builder.Configuration);
-        var researcherAgent = new ResearcherAgent(messageBus, researchBuilder.Build());
+        var openAIKey = builder.Configuration["OPENAI_API_KEY"];
+        if (!string.IsNullOrWhiteSpace(openAIKey))
+        {
+            var openAIStrategy = new OpenAIStrategy();
+            var researchBuilder = Kernel.CreateBuilder();
+            openAIStrategy.Configure(researchBuilder, builder.Configuration);
+            _ = new ResearcherAgent(messageBus, researchBuilder.Build());
+        }
+        else
+        {
+            Console.WriteLine("[MCP] OpenAI key not configured. ResearcherAgent will stay offline.");
+        }
         // ===============================================
 
         // 9. Initialize Master Brain (NeuralOrchestrator)
