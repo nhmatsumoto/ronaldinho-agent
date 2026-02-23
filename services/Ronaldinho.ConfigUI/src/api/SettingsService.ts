@@ -5,8 +5,10 @@ export interface AgentSettings {
     geminiApiKey?: string;
     openaiApiKey?: string;
     anthropicApiKey?: string;
+    openRouterApiKey?: string;
     telegramToken: string;
     aiModel: string;
+    openRouterModelId?: string;
     personality: string;
     localPermissions: boolean;
     autoFallback: boolean;

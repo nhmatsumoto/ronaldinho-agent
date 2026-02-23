@@ -16,8 +16,10 @@ const schema = z.object({
     geminiApiKey: z.string().optional(),
     openaiApiKey: z.string().optional(),
     anthropicApiKey: z.string().optional(),
+    openRouterApiKey: z.string().optional(),
     telegramToken: z.string().min(1, 'O Token do Telegram é obrigatório para receber mensagens.'),
     aiModel: z.string().min(1, 'Você deve selecionar uma Engine de IA principal.'),
+    openRouterModelId: z.string().optional(),
     personality: z.string().min(20, 'A personalidade base deve ser descritiva e ter pelo menos 20 caracteres.'),
     localPermissions: z.boolean(),
     autoFallback: z.boolean(),
@@ -81,8 +83,10 @@ function App() {
                 geminiApiKey: settings.geminiApiKey || '',
                 openaiApiKey: settings.openaiApiKey || '',
                 anthropicApiKey: settings.anthropicApiKey || '',
+                openRouterApiKey: settings.openRouterApiKey || '',
                 telegramToken: settings.telegramToken || '',
                 aiModel: settings.aiModel || 'gemini',
+                openRouterModelId: settings.openRouterModelId || 'qwen/qwen3-coder:free',
                 personality: settings.personality || 'MANDATO SUPREMO: Você é o Ronaldinho.',
                 localPermissions: settings.localPermissions || false,
                 autoFallback: settings.autoFallback ?? true,
@@ -219,6 +223,7 @@ function App() {
                                                     <option value="gemini" style={{ background: '#0a0b14' }}>GOOGLE GEMINI 2.0 FLASH</option>
                                                     <option value="openai" style={{ background: '#0a0b14' }}>OPENAI GPT-4O (ULTRA)</option>
                                                     <option value="claude" style={{ background: '#0a0b14' }}>ANTHROPIC CLAUDE 3.5 SONNET</option>
+                                                    <option value="openrouter" style={{ background: '#0a0b14' }}>OPENROUTER (FREE CODING MODELS)</option>
                                                 </select>
                                             </Box>
 
@@ -234,6 +239,14 @@ function App() {
                                                 <Box gridColumn="span 2">
                                                     <label style={labelStyle}>Anthropic Key</label>
                                                     <input type="password" style={inputStyle} {...register('anthropicApiKey')} />
+                                                </Box>
+                                                <Box>
+                                                    <label style={labelStyle}>OpenRouter Key</label>
+                                                    <input type="password" style={inputStyle} {...register('openRouterApiKey')} />
+                                                </Box>
+                                                <Box>
+                                                    <label style={labelStyle}>OpenRouter Model</label>
+                                                    <input type="text" style={inputStyle} {...register('openRouterModelId')} placeholder="qwen/qwen3-coder:free" />
                                                 </Box>
                                             </Grid>
                                         </VStack>

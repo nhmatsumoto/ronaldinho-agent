@@ -24,8 +24,10 @@ public record AgentSettingsDto(
     string GeminiApiKey,
     string OpenAIApiKey,
     string AnthropicApiKey,
+    string OpenRouterApiKey,
     string TelegramToken,
     string AiModel,
+    string OpenRouterModelId,
     string Personality,
     bool LocalPermissions,
     bool AutoFallback);
@@ -193,8 +195,10 @@ class Program
                 GeminiApiKey: vault.GetKey(userSub, "GEMINI") != null ? "VAULT_LOCKED_KEY" : "",
                 OpenAIApiKey: vault.GetKey(userSub, "OPENAI") != null ? "VAULT_LOCKED_KEY" : "",
                 AnthropicApiKey: vault.GetKey(userSub, "ANTHROPIC") != null ? "VAULT_LOCKED_KEY" : "",
+                OpenRouterApiKey: vault.GetKey(userSub, "OPENROUTER") != null ? "VAULT_LOCKED_KEY" : "",
                 TelegramToken: config["TELEGRAM_BOT_TOKEN"] ?? "",
                 AiModel: config["LLM_PROVIDER"] ?? "gemini",
+                OpenRouterModelId: config["OPENROUTER_MODEL_ID"] ?? "qwen/qwen3-coder:free",
                 Personality: currentSoul,
                 LocalPermissions: config["ALLOW_LOCAL_TOOLS"] == "true",
                 AutoFallback: config["ENABLE_AUTO_FALLBACK"] == "true"
@@ -226,6 +230,11 @@ class Program
                 vault.SaveKey(userSub, "ANTHROPIC", request.AnthropicApiKey);
                 app.Configuration["ANTHROPIC_API_KEY"] = request.AnthropicApiKey;
             }
+            if (!string.IsNullOrEmpty(request.OpenRouterApiKey) && request.OpenRouterApiKey != "VAULT_LOCKED_KEY")
+            {
+                vault.SaveKey(userSub, "OPENROUTER", request.OpenRouterApiKey);
+                app.Configuration["OPENROUTER_API_KEY"] = request.OpenRouterApiKey;
+            }
 
             // 1. Update SOUL.md
             var dir = Path.GetDirectoryName(soulPath);
@@ -245,6 +254,7 @@ class Program
 
             envDict["TELEGRAM_BOT_TOKEN"] = request.TelegramToken;
             envDict["LLM_PROVIDER"] = request.AiModel;
+            envDict["OPENROUTER_MODEL_ID"] = request.OpenRouterModelId;
             envDict["ALLOW_LOCAL_TOOLS"] = request.LocalPermissions ? "true" : "false";
             envDict["ENABLE_AUTO_FALLBACK"] = request.AutoFallback ? "true" : "false";
 

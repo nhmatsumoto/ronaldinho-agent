@@ -12,6 +12,7 @@ public class LLMStrategyFactory
         {
             "openai" => new OpenAIStrategy(),
             "claude" => new ClaudeStrategy(),
+            "openrouter" => new OpenRouterStrategy(),
             "gemini" => new GeminiStrategy(),
             _ => new GeminiStrategy() // Default
         };
@@ -27,9 +28,12 @@ public class LLMStrategyFactory
         // 2. Add others if keys exist
         if (!string.IsNullOrEmpty(configuration["OPENAI_API_KEY"]) && configuration["LLM_PROVIDER"] != "openai")
             chain.Add(new OpenAIStrategy());
-            
+
         if (!string.IsNullOrEmpty(configuration["ANTHROPIC_API_KEY"]) && configuration["LLM_PROVIDER"] != "claude")
             chain.Add(new ClaudeStrategy());
+
+        if (!string.IsNullOrEmpty(configuration["OPENROUTER_API_KEY"]) && configuration["LLM_PROVIDER"] != "openrouter")
+            chain.Add(new OpenRouterStrategy());
 
         if (configuration["LLM_PROVIDER"] != "gemini")
             chain.Add(new GeminiStrategy());
