@@ -1,88 +1,276 @@
 # Ronaldinho-Agent 🚀 (Edição Open Source)
 
 > [!IMPORTANT]
-> **Aviso de Codinome**: "Ronaldinho-Agent" é atualmente um codinome do projeto. Nenhuma marca ou nome oficial foi estabelecido ainda.
+> **Aviso de codinome**: "Ronaldinho-Agent" é um codinome de projeto e não representa a marca final do produto.
 
-[Read this document in English (EN)](README.md)
+- [English (EN)](README.md)
+- [日本語 (JA)](README_ja.md)
 
-Ronaldinho-Agent é um ecossistema autônomo de desenvolvimento projetado para altíssima performance, segurança e autoevolução. Impulsionado por um **NeuralCore em .NET 9** e uma **Interface de Governança em React/Chakra UI**, gerencia missões de IA multi-modelo com resiliência nativa e governança determinística.
+O Ronaldinho-Agent é um ecossistema de engenharia autônoma composto por:
+- **NeuralCore em .NET 9** (API e orquestração),
+- **Bridge em .NET** para integração Telegram,
+- **ConfigUI em React + Vite + Chakra UI**,
+- **Keycloak + Postgres** para autenticação OIDC.
 
-## 🌟 Nossa Visão: A Força da Comunidade
-
-Inspirado no fenomenal crescimento de plataformas de sucesso global como o **OpenClaw** — cujo potencial técnico e governança atingiram excelência impulsionados pelo trabalho colaborativo e orgânico da comunidade —, o Ronaldinho nasce para ser mais do que apenas um assistente, um ecossistema vivo!
-
-O código sozinho atinge um limite sem a inteligência coletiva. Ao abrirmos esse agente de IA para Open Source, damos as boas-vindas a engenheiros, entusiastas e visionários de todo o mundo. A revolução autônoma é colaborativa.
-
-## 🎯 Objetivos do Projeto
-
-- **Autonomia Nível 6**: A capacidade ininterrupta de auto-início, autocorreção e auto-otimização.
-- **Gateway Multi-Modelo**: Suporte nativo para **Gemini 2.0**, **OpenAI (GPT-4o)** e **Claude (Anthropic)**.
-- **Resiliência Zero-Block**: Sistema de fallback automático que rotaciona modelos em caso de limites de taxa (erros 429).
-- **Interface de Governança**: Dashboard moderno para configuração em tempo real e gestão de chaves de API.
-- **Segurança Corporativa**: Autenticação via **Keycloak** com suporte a federação de identidade.
-- **Regras Stritas de Execução**: Opera sob a "Unified Execution Doctrine" para determinismo absoluto.
+Este README em PT-BR é o guia para entender, executar e desenvolver o projeto.
 
 ---
 
-## 🚀 Guia de Início Rápido
+## Sumário
 
-### Pré-requisitos
+- [1. Arquitetura](#1-arquitetura)
+- [2. Estrutura do repositório](#2-estrutura-do-repositório)
+- [3. Pré-requisitos](#3-pré-requisitos)
+- [4. Variáveis de ambiente (`.env`)](#4-variáveis-de-ambiente-env)
+- [5. Modos de execução](#5-modos-de-execução)
+- [6. API e autenticação](#6-api-e-autenticação)
+- [7. Fluxo de desenvolvimento](#7-fluxo-de-desenvolvimento)
+- [8. Scripts utilitários](#8-scripts-utilitários)
+- [9. Segurança](#9-segurança)
+- [10. Troubleshooting](#10-troubleshooting)
+- [11. Documentação adicional](#11-documentação-adicional)
+- [12. Contribuição e licença](#12-contribuição-e-licença)
 
-- **.NET 9 SDK** (Cérebro Core)
-- **Node.js / Bun** (Interface de Governança)
-- **Docker & Docker Compose** (Deploy Full Stack)
-- **PowerShell 7+** (Scripts de Automação)
+---
 
-### Instalação
+## 1. Arquitetura
 
-```bash
-# Clone o repositório
-git clone https://github.com/SeuUsuario/Ronaldinho-Agent.git
-cd Ronaldinho-Agent
+### Componentes principais
 
-# Configure o ambiente
-cp .env.example .env
+1. **NeuralCore** (`services/Ronaldinho.NeuralCore`)
+   - Runtime principal da API/orquestração (`http://localhost:5000`).
+   - Carrega `.env` da raiz e valores de vault local.
+   - Protege endpoints de settings com JWT/OIDC.
 
-# Modifique o .env com sua API Key (Nunca submeta chaves para repositórios públicos!)
+2. **Bridge** (`services/Ronaldinho.Bridge`)
+   - Worker de integração com Telegram.
+   - Lê token do Telegram de secret local ou variável de ambiente.
+   - **Comportamento recente**: sem token, o Bridge sobe com segurança e não agenda polling do Telegram.
+
+3. **ConfigUI** (`services/Ronaldinho.ConfigUI`)
+   - Interface de governança (`http://localhost:5173` em dev).
+   - Login OIDC via Keycloak.
+   - **Comportamento recente**: busca settings só após autenticação e não mascara mais erros de API com fallback falso.
+
+4. **Keycloak + Postgres** (docker-compose)
+   - Camada de identidade e persistência de autenticação.
+
+---
+
+## 2. Estrutura do repositório
+
+```text
+.
+├── services/
+│   ├── Ronaldinho.NeuralCore/   # API e orquestração .NET 9
+│   ├── Ronaldinho.Bridge/       # Worker Telegram .NET 9
+│   └── Ronaldinho.ConfigUI/     # UI de governança React/Vite
+├── ronaldinho/
+│   ├── config/                  # SOUL.md e configs
+│   └── data/                    # vault local e dados de runtime
+├── dev_scripts/                 # scripts auxiliares de ambiente local
+├── scripts/                     # scripts para Keycloak/IdP
+├── docs/                        # documentação técnica
+├── docker-compose.yml           # stack de desenvolvimento
+├── docker-compose.prod.yml      # stack de produção
+├── README.md                    # documentação principal (EN)
+├── README_pt-br.md              # documentação PT-BR
+└── README_ja.md                 # documentação JA
 ```
 
-### Início Rápido (Local)
+---
 
-```powershell
-# Windows (PowerShell)
-./start_neural.ps1
+## 3. Pré-requisitos
+
+### Desenvolvimento local
+
+- **.NET SDK 9.0**
+- **Node.js 18+** (npm)
+- **PowerShell 7+** (scripts `.ps1`)
+- **Git**
+
+### Stack em containers
+
+- **Docker**
+- **Docker Compose**
+
+---
+
+## 4. Variáveis de ambiente (`.env`)
+
+> [!WARNING]
+> O repositório atualmente **não** possui `.env.example`; crie manualmente um `.env` na raiz.
+
+Exemplo base:
+
+```env
+# LLM + Telegram
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+TELEGRAM_BOT_TOKEN=
+LLM_PROVIDER=gemini
+ENABLE_AUTO_FALLBACK=true
+ALLOW_LOCAL_TOOLS=false
+
+# Auth (Keycloak / OIDC)
+AUTH_AUTHORITY=http://localhost:8080/realms/ronaldinho
+AUTH_AUDIENCE=account
+
+# ConfigUI (Vite)
+VITE_AUTH_AUTHORITY=http://localhost:8080/realms/ronaldinho
+VITE_AUTH_CLIENT_ID=configui-client
+VITE_AUTH_REDIRECT_URI=http://localhost:5173
+VITE_API_BASE_URL=http://localhost:5000/api
+
+# Keycloak DB / admin
+DB_NAME=keycloak
+DB_USER=keycloak
+DB_PASSWORD=password
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=admin
+KC_HOSTNAME=localhost
 ```
 
+Notas:
+- O NeuralCore pode subir sem `TELEGRAM_BOT_TOKEN` para setup inicial.
+- O Bridge agora evita agendar polling quando não há token configurado.
+- Nunca commite segredos reais.
+
+---
+
+## 5. Modos de execução
+
+### 5.1 Inicialização rápida
+
+Linux/macOS:
+
 ```bash
-# Linux / macOS (Bash)
 chmod +x start_neural.sh ./dev_scripts/*.sh
 ./start_neural.sh
 ```
 
-### Stack Completa (Docker)
+Windows (PowerShell):
+
+```powershell
+./start_neural.ps1
+```
+
+### 5.2 Execução por serviço
+
+NeuralCore:
 
 ```bash
-# Sobe o Cérebro, UI, Keycloak e Banco de Dados
+dotnet run --project services/Ronaldinho.NeuralCore/Ronaldinho.NeuralCore.csproj
+```
+
+Bridge (opcional):
+
+```bash
+dotnet run --project services/Ronaldinho.Bridge/Ronaldinho.Bridge.csproj
+```
+
+ConfigUI:
+
+```bash
+cd services/Ronaldinho.ConfigUI
+npm install
+npm run dev
+```
+
+### 5.3 Full stack com Docker
+
+```bash
 docker compose up -d --build
+```
+
+Produção:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ---
 
-## 🤝 Como Contribuir e Ajudar o Ronaldinho a Crescer
+## 6. API e autenticação
 
-Assim como percebido brilhantemente com o OpenClaw, nós apostamos tudo nas contribuições! Desde novos scripts `dev_scripts` à melhorias estruturais no *Orquestrador*:
+Rotas protegidas principais:
+- `GET /api/settings`
+- `POST /api/settings`
 
-1. Realize um **Fork** do repositório.
-2. Siga as cruciais **Regras de Governança Local** ao criar suas features.
-3. Se você identificar ações manuais recorrentes, crie ferramentas em `.toolbox` ou `dev_scripts/`.
-4. Trabalhe na sua **Branch** (`git checkout -b feature/SuaInovacao`).
-5. Gere os Testes Locais com a validação do TOON e escreva logs.
-6. Envie o seu **Pull Request** para a *main* / *master*.
-  
-A comunidade analisará cada submissão. Cuidado com o vazamento de chaves ou dependências não catalogadas.
+Variáveis-chave de autenticação:
+- `AUTH_AUTHORITY`
+- `AUTH_AUDIENCE`
+- `VITE_AUTH_AUTHORITY`
+- `VITE_AUTH_CLIENT_ID`
+- `VITE_AUTH_REDIRECT_URI`
 
 ---
 
-## 📜 Licença
+## 7. Fluxo de desenvolvimento
 
-Distribuído sob a Licença **MIT**. Veja o arquivo `LICENSE` para maiores detalhes.
+Checks recomendados:
+
+```bash
+# Backend
+dotnet build services/Ronaldinho.NeuralCore/Ronaldinho.NeuralCore.csproj
+dotnet build services/Ronaldinho.Bridge/Ronaldinho.Bridge.csproj
+
+# Frontend
+cd services/Ronaldinho.ConfigUI
+npm run lint
+npm run build
+```
+
+---
+
+## 8. Scripts utilitários
+
+- `dev_scripts/`: inicialização e rotinas locais.
+- `scripts/`: setup de Keycloak e IdPs (`setup_keycloak.sh`, `add_google_idp.sh`, `add_github_idp.sh`).
+
+---
+
+## 9. Segurança
+
+- Não versione `.env`, tokens, chaves e logs sensíveis.
+- Leia `SECURITY.md` e `docs/security_model.md`.
+
+---
+
+## 10. Troubleshooting
+
+### `dotnet: command not found`
+Instale .NET 9 SDK e valide:
+
+```bash
+dotnet --version
+```
+
+### Problemas de autenticação na ConfigUI
+Valide realm/client no Keycloak e variáveis `AUTH_*`/`VITE_AUTH_*`.
+
+### Bridge sem resposta no Telegram
+Valide `TELEGRAM_BOT_TOKEN` e fonte do token (secrets/env).
+
+---
+
+## 11. Documentação adicional
+
+- `docs/architecture.md`
+- `docs/security_model.md`
+- `docs/mission_lifecycle.md`
+- `docs/integration_roadmap.md`
+- `CONTRIBUTING.md`
+
+---
+
+## 12. Contribuição e licença
+
+Contribuições são bem-vindas.
+
+Leia antes de contribuir:
+- `CONTRIBUTING.md`
+- `SECURITY.md`
+
+Licença: **MIT** (`LICENSE`).
