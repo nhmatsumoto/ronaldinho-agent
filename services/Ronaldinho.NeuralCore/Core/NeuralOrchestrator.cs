@@ -100,14 +100,32 @@ public class NeuralOrchestrator : IMessageProcessor
             var mcpMsg = new McpMessage { Sender = "orchestrator", TargetTopic = "coder", ReplyTo = "orchestrator_reply_" + context.SessionId, CorrelationId = context.SessionId, TaskDescription = input };
             await _messageBus.PublishAsync(mcpMsg);
             var reply = await _messageBus.WaitForReplyAsync(mcpMsg.ReplyTo, TimeSpan.FromSeconds(30));
-            mcpContext = $"\n\nRELATÓRIO DO AGENTE ESPECIALISTA EM CÓDIGO:\n{reply.Payload}";
+
+            var toon = ToonSerializer.Deserialize(reply.Payload);
+            var data = toon.ContainsKey("Data") ? toon["Data"] : reply.Payload;
+            mcpContext = $"\n\nRELATÓRIO DO AGENTE ESPECIALISTA EM CÓDIGO:\n{data}";
         }
         else if (input.Contains("pesquisa", StringComparison.OrdinalIgnoreCase) || input.Contains("logs", StringComparison.OrdinalIgnoreCase))
         {
             var mcpMsg = new McpMessage { Sender = "orchestrator", TargetTopic = "researcher", ReplyTo = "orchestrator_reply_" + context.SessionId, CorrelationId = context.SessionId, TaskDescription = input };
             await _messageBus.PublishAsync(mcpMsg);
             var reply = await _messageBus.WaitForReplyAsync(mcpMsg.ReplyTo, TimeSpan.FromSeconds(30));
-            mcpContext = $"\n\nRELATÓRIO DO AGENTE PESQUISADOR:\n{reply.Payload}";
+
+            var toon = ToonSerializer.Deserialize(reply.Payload);
+            var data = toon.ContainsKey("Data") ? toon["Data"] : reply.Payload;
+            mcpContext = $"\n\nRELATÓRIO DO AGENTE PESQUISADOR:\n{data}";
+        }
+
+        // Security check for sensitive keywords
+        if (input.Contains("segurança", StringComparison.OrdinalIgnoreCase) || input.Contains("vulnerabilidade", StringComparison.OrdinalIgnoreCase) || input.Contains("api key", StringComparison.OrdinalIgnoreCase))
+        {
+            var mcpMsg = new McpMessage { Sender = "orchestrator", TargetTopic = "security", ReplyTo = "orchestrator_reply_" + context.SessionId, CorrelationId = context.SessionId, TaskDescription = input };
+            await _messageBus.PublishAsync(mcpMsg);
+            var reply = await _messageBus.WaitForReplyAsync(mcpMsg.ReplyTo, TimeSpan.FromSeconds(30));
+
+            var toon = ToonSerializer.Deserialize(reply.Payload);
+            var data = toon.ContainsKey("Data") ? toon["Data"] : reply.Payload;
+            mcpContext += $"\n\nRELATÓRIO DE SEGURANÇA:\n{data}";
         }
 
         var history = await Memory.RetrieveRelevantContextAsync(context.SessionId);
@@ -138,49 +156,34 @@ public class NeuralOrchestrator : IMessageProcessor
         var strategies = LLMStrategyFactory.GetFallbackChain(_configuration);
         var settings = new PromptExecutionSettings();
         bool autoFallback = _configuration["ENABLE_AUTO_FALLBACK"] == "true";
+        bool simultaneousMode = _configuration["ENABLE_SIMULTANEOUS_LLM"] == "true";
+
+        if (simultaneousMode && strategies.Count > 1)
+        {
+            return await InvokeSimultaneouslyAsync(prompt, strategies, settings);
+        }
 
         foreach (var strategy in strategies)
         {
             try
             {
                 Console.WriteLine($"[Resilience] Attempting reasoning with {strategy.ProviderName}...");
+
+                // Reuse kernel if it's the primary one, otherwise build a fresh one with the strategy
                 var currentKernel = strategy.ProviderName == strategies[0].ProviderName ? _kernel : BuildKernel(strategy);
 
                 var response = await currentKernel.InvokePromptAsync(prompt, new KernelArguments(settings));
                 var result = response.ToString();
 
-                // Post-processing: Memory Snapshotting & Blockchain Ledger
-                try
-                {
-                    if (_memoryDiff is not null)
-                    {
-                        var commitId = _memoryDiff.SaveCommit(new { LastResponse = result });
-                        Console.WriteLine($"[NeuralCore] Memory snapshot saved: {commitId}");
-                    }
-
-                    if (_blockchain is not null && result.Contains("FINDING:", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var tx = new KnowledgeTransaction
-                        {
-                            Data = result,
-                            Author = strategy.ProviderName
-                        };
-                        _blockchain.AddBlock(new[] { tx });
-                        Console.WriteLine("[NeuralCore] Significant finding recorded to blockchain.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[NeuralCore] Post-processing error: {ex.Message}");
-                }
+                await PostProcessResponseAsync(result, strategy.ProviderName);
 
                 return result;
             }
-            catch (Exception ex) when (ex.ToString().Contains("429") || ex.Message.Contains("Too Many Requests"))
+            catch (Exception ex) when (ex.ToString().Contains("429") || ex.Message.Contains("Too Many Requests") || ex.Message.Contains("quota"))
             {
                 if (!autoFallback)
                 {
-                    Console.WriteLine("[Resilience] 429 detected but Auto-Fallback is DISABLED.");
+                    Console.WriteLine($"[Resilience] {strategy.ProviderName} rate limited (429) but Auto-Fallback is DISABLED.");
                     throw;
                 }
 
@@ -190,10 +193,74 @@ public class NeuralOrchestrator : IMessageProcessor
             catch (Exception ex)
             {
                 Console.WriteLine($"[Error] {ex.GetType().Name} in {strategy.ProviderName}: {ex.Message}");
+                Console.WriteLine($"[Trace] {ex.StackTrace}");
                 if (strategy == strategies.Last()) throw;
             }
         }
 
-        return "🛑 **Ronaldinho está temporariamente fora de combate.** Todos os modelos configurados atingiram o limite de taxa. Por favor, aguarde alguns minutos.";
+        return "🛑 **Ronaldinho está temporariamente fora de combate.** Todos os modelos configurados falharam ou atingiram o limite de taxa. Por favor, aguarde alguns minutos.";
+    }
+
+    private async Task<string> InvokeSimultaneouslyAsync(string prompt, List<ILLMStrategy> strategies, PromptExecutionSettings settings)
+    {
+        Console.WriteLine($"[Resilience] Entering SIMULTANEOUS MODE (Racing {strategies.Count} models) ⚡");
+
+        var tasks = strategies.Select(async strategy =>
+        {
+            try
+            {
+                var kernel = strategy.ProviderName == strategies[0].ProviderName ? _kernel : BuildKernel(strategy);
+                var response = await kernel.InvokePromptAsync(prompt, new KernelArguments(settings));
+                return new { Strategy = strategy, Result = response.ToString(), Success = true };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Resilience] Racing error in {strategy.ProviderName}: {ex.Message}");
+                return new { Strategy = strategy, Result = string.Empty, Success = false };
+            }
+        }).ToList();
+
+        while (tasks.Count > 0)
+        {
+            var completedTask = await Task.WhenAny(tasks);
+            tasks.Remove(completedTask);
+            var result = await completedTask;
+
+            if (result.Success)
+            {
+                Console.WriteLine($"[Resilience] Racing winner: {result.Strategy.ProviderName} 🏆");
+                await PostProcessResponseAsync(result.Result, result.Strategy.ProviderName);
+                return result.Result;
+            }
+        }
+
+        return "🛑 **Ronaldinho está temporariamente fora de combate.** Todos os modelos configurados na corrida simultânea falharam.";
+    }
+
+    private async Task PostProcessResponseAsync(string result, string providerName)
+    {
+        try
+        {
+            if (_memoryDiff is not null)
+            {
+                var commitId = _memoryDiff.SaveCommit(new { LastResponse = result, Provider = providerName });
+                Console.WriteLine($"[NeuralCore] Memory snapshot saved ({providerName}): {commitId}");
+            }
+
+            if (_blockchain is not null && result.Contains("FINDING:", StringComparison.OrdinalIgnoreCase))
+            {
+                var tx = new KnowledgeTransaction
+                {
+                    Data = result,
+                    Author = providerName
+                };
+                _blockchain.AddBlock(new[] { tx });
+                Console.WriteLine($"[NeuralCore] Significant finding recorded to blockchain by {providerName}.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[NeuralCore] Post-processing error: {ex.Message}");
+        }
     }
 }

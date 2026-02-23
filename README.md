@@ -20,9 +20,10 @@ This README is the primary (English) project guide for understanding, running, a
 ## Table of Contents
 
 - [1. Architecture](#1-architecture)
-- [2. Repository structure](#2-repository-structure)
-- [3. Prerequisites](#3-prerequisites)
-- [4. Environment variables (`.env`)](#4-environment-variables-env)
+- [2. Core Systems & Mechanisms](#2-core-systems-mechanisms)
+- [3. Repository structure](#3-repository-structure)
+- [4. Prerequisites](#4-prerequisites)
+- [5. Environment variables (`.env`)](#5-environment-variables-env)
 - [5. Run modes](#5-run-modes)
   - [5.1 Quick local start](#51-quick-local-start)
   - [5.2 Service-by-service local run](#52-service-by-service-local-run)
@@ -61,7 +62,96 @@ This README is the primary (English) project guide for understanding, running, a
 
 ---
 
-## 2. Repository structure
+## 2. Core Systems & Mechanisms
+
+Ronaldinho-Agent is powered by a suite of specialized systems designed for autonomy, resilience, and decentralized intelligence.
+
+### 🧠 NeuralCore & LLM Orchestration
+
+- **Semantic Kernel Foundation**: Uses Microsoft's Semantic Kernel to orchestrate complex AI workflows and multi-agent coordination.
+- **Zero-Block Resilience**: A sophisticated fallback mechanism that automatically rotates between providers (Gemini ➔ OpenAI ➔ Claude ➔ Ollama) upon encountering rate limits (429) or failures.
+
+```mermaid
+graph LR
+    User([User Request]) --> NC[NeuralCore]
+    NC --> G{{"Gemini (Primary)"}}
+    G -- "Fail/429" --> O{{"OpenAI (Ultra)"}}
+    O -- "Fail/429" --> C{{"Claude (Sonnet)"}}
+    C -- "Fail/429" --> L{{"Ollama (Local)"}}
+    G -- Success --> R([Response])
+    O -- Success --> R
+    C -- Success --> R
+    L -- Success --> R
+    style G fill:#4285F4,color:#fff
+    style O fill:#10a37f,color:#fff
+    style C fill:#d97757,color:#fff
+    style L fill:#8e44ad,color:#fff
+```
+
+- **MCP Protocol**: Implements the Model Context Protocol for seamless integration of specialized agent skills and external tools.
+
+### 🌐 P2P Mesh Networking
+
+- **WebRTC DataChannels**: Secure, direct, and lag-free communication between Ronaldinho nodes without relying on a central server.
+- **Autonomous Discovery**: Uses a lightweight signaling server for initial handshakes, after which peers communicate directly.
+
+```mermaid
+graph TD
+    NodeA[Ronaldinho Node A] <--> Sig(Signaling Server)
+    NodeB[Ronaldinho Node B] <--> Sig
+    NodeA -- "WebRTC Handshake" --> NodeB
+    NodeA == "Direct DataChannel (P2P)" ==> NodeB
+    style Sig fill:#f39c12,color:#fff
+    style NodeA fill:#2c3e50,color:#fff
+    style NodeB fill:#2c3e50,color:#fff
+```
+
+- **Decentralized Coordination**: Enables multiple agents to share context and tasks over a distributed mesh.
+
+### ⛓️ Knowledge Blockchain
+
+- **Distributed Ledger**: A proof-of-work based blockchain (`Ronaldinho.Blockchain`) that stores knowledge transactions and system decisions.
+- **State Consistency**: Ensures all nodes in the mesh have a synchronized and immutable history of the agent's "thoughts" and actions.
+
+```mermaid
+sequenceDiagram
+    participant A as Node A
+    participant B as Node B
+    A->>A: Mine New Block (POW)
+    A->>B: Broadcast Block
+    B->>B: Validate Hash & Index
+    B->>B: Append to LiteDB
+    Note over A,B: State Synchronized
+```
+
+- **LiteDB Persistence**: Efficient local storage of the ledger for fast retrieval and auditing.
+
+### 💾 Memory & Evolution (Git-Backed)
+
+- **Git-Backed Memory**: Persists the agent's evolutionary state as a series of versioned commits, ensuring total traceability.
+- **MemoryDiff Service**: Utilizes JSON-Patch (RFC 6902) to calculate precise diffs between knowledge states, optimizing storage and making history searchable.
+
+```mermaid
+graph TD
+    State[(Current State)] --> MD(MemoryDiff Service)
+    MD --> C[Create Versioned Commit]
+    C --> G(Git Storage)
+    G --> EG(Emergent Governance)
+    EG --> BP[Update Best Practices Guide]
+    BP --> State
+```
+
+- **Emergent Governance**: An autonomous system that analyzes contribution patterns in the codebase and automatically updates best practices guides (`docs/emergent_best_practices.md`).
+
+### 🛡️ SecurityGuard
+
+- **Zero-Trust Security**: Local-first philosophy where sensitive data is encrypted at rest and never leaves the environment unencrypted.
+- **AES-256 KeyVault**: Industry-standard symmetric encryption for API keys and secrets.
+- **PII Scrubber**: Automated regex-based redaction system that cleanses logs of emails, credit cards, and secrets before they are written to disk.
+
+---
+
+## 3. Repository structure
 
 ```text
 .

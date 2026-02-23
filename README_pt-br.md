@@ -7,6 +7,7 @@
 - [日本語 (JA)](README_ja.md)
 
 O Ronaldinho-Agent é um ecossistema de engenharia autônoma composto por:
+
 - **NeuralCore em .NET 9** (API e orquestração),
 - **Bridge em .NET** para integração Telegram,
 - **ConfigUI em React + Vite + Chakra UI**,
@@ -19,9 +20,10 @@ Este README em PT-BR é o guia para entender, executar e desenvolver o projeto.
 ## Sumário
 
 - [1. Arquitetura](#1-arquitetura)
-- [2. Estrutura do repositório](#2-estrutura-do-repositório)
-- [3. Pré-requisitos](#3-pré-requisitos)
-- [4. Variáveis de ambiente (`.env`)](#4-variáveis-de-ambiente-env)
+- [2. Sistemas e Mecanismos Nucleares](#2-sistemas-e-mecanismos-nucleares)
+- [3. Estrutura do repositório](#2-estrutura-do-repositório)
+- [4. Pré-requisitos](#3-pré-requisitos)
+- [5. Variáveis de ambiente (`.env`)](#4-variáveis-de-ambiente-env)
 - [5. Modos de execução](#5-modos-de-execução)
 - [6. API e autenticação](#6-api-e-autenticação)
 - [7. Fluxo de desenvolvimento](#7-fluxo-de-desenvolvimento)
@@ -57,7 +59,96 @@ Este README em PT-BR é o guia para entender, executar e desenvolver o projeto.
 
 ---
 
-## 2. Estrutura do repositório
+## 2. Sistemas e Mecanismos Nucleares
+
+O Ronaldinho-Agent é impulsionado por uma suíte de sistemas especializados projetados para autonomia, resiliência e inteligência descentralizada.
+
+### 🧠 NeuralCore & Orquestração de LLM
+
+- **Base em Semantic Kernel**: Utiliza o Semantic Kernel da Microsoft para orquestrar fluxos de trabalho de IA complexos e coordenação multi-agente.
+- **Resiliência Zero-Block**: Um mecanismo sofisticado de fallback que rotaciona automaticamente entre provedores (Gemini ➔ OpenAI ➔ Claude ➔ Ollama) ao encontrar limites de taxa (429) ou falhas.
+
+```mermaid
+graph LR
+    User([Requisição do Usuário]) --> NC[NeuralCore]
+    NC --> G{{"Gemini (Principal)"}}
+    G -- "Falha/429" --> O{{"OpenAI (Ultra)"}}
+    O -- "Falha/429" --> C{{"Claude (Sonnet)"}}
+    C -- "Falha/429" --> L{{"Ollama (Local)"}}
+    G -- Sucesso --> R([Resposta])
+    O -- Sucesso --> R
+    C -- Sucesso --> R
+    L -- Sucesso --> R
+    style G fill:#4285F4,color:#fff
+    style O fill:#10a37f,color:#fff
+    style C fill:#d97757,color:#fff
+    style L fill:#8e44ad,color:#fff
+```
+
+- **Protocolo MCP**: Implementa o Model Context Protocol para integração fluida de habilidades especializadas de agentes e ferramentas externas.
+
+### 🌐 Rede Mesh P2P
+
+- **WebRTC DataChannels**: Comunicação segura, direta e sem latência entre nós do Ronaldinho sem depender de um servidor central.
+- **Descoberta Autônoma**: Utiliza um servidor de sinalização leve para o handshake inicial, após o qual os pares se comunicam diretamente.
+
+```mermaid
+graph TD
+    NodeA[Nó Ronaldinho A] <--> Sig(Servidor de Sinalização)
+    NodeB[Nó Ronaldinho B] <--> Sig
+    NodeA -- "Handshake WebRTC" --> NodeB
+    NodeA == "DataChannel Direto (P2P)" ==> NodeB
+    style Sig fill:#f39c12,color:#fff
+    style NodeA fill:#2c3e50,color:#fff
+    style NodeB fill:#2c3e50,color:#fff
+```
+
+- **Coordenação Descentralizada**: Permite que múltiplos agentes compartilhem contexto e tarefas em uma malha distribuída.
+
+### ⛓️ Blockchain de Conhecimento
+
+- **Ledger Distribuído**: Uma blockchain baseada em proof-of-work (`Ronaldinho.Blockchain`) que armazena transações de conhecimento e decisões do sistema.
+- **Consistência de Estado**: Garante que todos os nós na rede tenham um histórico sincronizado e imutável das ações e "pensamentos" do agente.
+
+```mermaid
+sequenceDiagram
+    participant A as Nó A
+    participant B as Nó B
+    A->>A: Miner Novo Bloco (POW)
+    A->>B: Broadcast do Bloco
+    B->>B: Valida Hash & Índice
+    B->>B: Anexa ao LiteDB
+    Note over A,B: Estado Sincronizado
+```
+
+- **Persistência LiteDB**: Armazenamento local eficiente do ledger para recuperação rápida e auditoria.
+
+### 💾 Memória & Evolução (Baseada em Git)
+
+- **Memória Baseada em Git**: Persiste o estado evolutivo do agente como uma série de commits versionados, garantindo rastreabilidade total.
+- **Serviço MemoryDiff**: Utiliza JSON-Patch (RFC 6902) para calcular diffs precisos entre estados de conhecimento, otimizando o armazenamento e tornando o histórico pesquisável.
+
+```mermaid
+graph TD
+    State[(Estado Atual)] --> MD(Serviço MemoryDiff)
+    MD --> C[Criar Commit Versionado]
+    C --> G(Armazenamento Git)
+    G --> EG(Governança Emergente)
+    EG --> BP[Atualizar Guia de Boas Práticas]
+    BP --> State
+```
+
+- **Governança Emergente**: Um sistema autônomo que analisa padrões de contribuição no código e atualiza automaticamente os guias de melhores práticas (`docs/emergent_best_practices.md`).
+
+### 🛡️ SecurityGuard
+
+- **Segurança Zero-Trust**: Filosofia local-first onde dados sensíveis são criptografados em repouso e nunca saem do ambiente sem proteção.
+- **KeyVault AES-256**: Criptografia simétrica padrão de mercado para chaves de API e segredos.
+- **PII Scrubber**: Sistema automatizado baseado em regex que limpa logs de e-mails, cartões de crédito e segredos antes de serem gravados em disco.
+
+---
+
+## 3. Estrutura do repositório
 
 ```text
 .
@@ -133,6 +224,7 @@ KC_HOSTNAME=localhost
 ```
 
 Notas:
+
 - O NeuralCore pode subir sem `TELEGRAM_BOT_TOKEN` para setup inicial.
 - O Bridge agora evita agendar polling quando não há token configurado.
 - Nunca commite segredos reais.
@@ -141,19 +233,26 @@ Notas:
 
 ## 5. Modos de execução
 
-### 5.1 Inicialização rápida
+### 5.1 Inicialização Total (Recomendado)
 
-Linux/macOS:
+O projeto agora está totalmente configurado para rodar com um único comando via Docker:
 
 ```bash
-chmod +x start_neural.sh ./dev_scripts/*.sh
-./start_neural.sh
+docker compose up -d --build
 ```
 
-Windows (PowerShell):
+Isso subirá:
 
-```powershell
-./start_neural.ps1
+- **NeuralCore** (Backend) em `https://localhost:5000`
+- **Bridge** (Telegram Worker)
+- **ConfigUI** (Frontend) em `http://localhost:5173`
+- **Keycloak** (Identidade) em `http://localhost:8080`
+- **Postgres** (Banco de dados)
+
+Para ver os logs de todos os serviços:
+
+```bash
+docker compose logs -f
 ```
 
 ### 5.2 Execução por serviço
@@ -195,10 +294,12 @@ docker compose -f docker-compose.prod.yml up -d --build
 ## 6. API e autenticação
 
 Rotas protegidas principais:
+
 - `GET /api/settings`
 - `POST /api/settings`
 
 Variáveis-chave de autenticação:
+
 - `AUTH_AUTHORITY`
 - `AUTH_AUDIENCE`
 - `VITE_AUTH_AUTHORITY`
@@ -241,6 +342,7 @@ npm run build
 ## 10. Troubleshooting
 
 ### `dotnet: command not found`
+
 Instale .NET 9 SDK e valide:
 
 ```bash
@@ -248,9 +350,11 @@ dotnet --version
 ```
 
 ### Problemas de autenticação na ConfigUI
+
 Valide realm/client no Keycloak e variáveis `AUTH_*`/`VITE_AUTH_*`.
 
 ### Bridge sem resposta no Telegram
+
 Valide `TELEGRAM_BOT_TOKEN` e fonte do token (secrets/env).
 
 ---
@@ -270,6 +374,7 @@ Valide `TELEGRAM_BOT_TOKEN` e fonte do token (secrets/env).
 Contribuições são bem-vindas.
 
 Leia antes de contribuir:
+
 - `CONTRIBUTING.md`
 - `SECURITY.md`
 

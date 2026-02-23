@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import {
-    ChakraProvider, defaultSystem, Box, Heading, VStack, Button, Container, Text,
+    ChakraProvider, defaultSystem, Box, Heading, VStack, Button, Text,
     Spinner, Center, Flex, Grid
 } from '@chakra-ui/react';
 import { useForm, Controller } from 'react-hook-form';
@@ -16,11 +16,14 @@ const schema = z.object({
     geminiApiKey: z.string().optional(),
     openaiApiKey: z.string().optional(),
     anthropicApiKey: z.string().optional(),
+    nvidiaApiKey: z.string().optional(),
+    nvidiaModelId: z.string().optional(),
     telegramToken: z.string().min(1, 'O Token do Telegram é obrigatório para receber mensagens.'),
     aiModel: z.string().min(1, 'Você deve selecionar uma Engine de IA principal.'),
     personality: z.string().min(20, 'A personalidade base deve ser descritiva e ter pelo menos 20 caracteres.'),
     localPermissions: z.boolean(),
     autoFallback: z.boolean(),
+    simultaneousLlm: z.boolean(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -65,7 +68,7 @@ function App() {
         handleSubmit,
         reset,
         control,
-        formState: { isSubmitting },
+        formState: { isSubmitting, errors },
     } = useForm<FormData>({
         resolver: zodResolver(schema),
     });
@@ -81,11 +84,14 @@ function App() {
                 geminiApiKey: settings.geminiApiKey || '',
                 openaiApiKey: settings.openaiApiKey || '',
                 anthropicApiKey: settings.anthropicApiKey || '',
+                nvidiaApiKey: settings.nvidiaApiKey || '',
+                nvidiaModelId: settings.nvidiaModelId || '',
                 telegramToken: settings.telegramToken || '',
                 aiModel: settings.aiModel || 'gemini',
                 personality: settings.personality || 'MANDATO SUPREMO: Você é o Ronaldinho.',
                 localPermissions: settings.localPermissions || false,
                 autoFallback: settings.autoFallback ?? true,
+                simultaneousLlm: settings.simultaneousLlm ?? false,
             });
         }
     }, [settings, reset]);
@@ -130,27 +136,28 @@ function App() {
                 bg="#0a0b14"
                 minH="100vh"
                 py={12}
+                px={{ base: 4, md: 8, lg: 12 }}
                 color="white"
                 backgroundImage="radial-gradient(circle at 50% -20%, #1a1b3a 0%, #0a0b14 60%)"
             >
-                <Container maxW="container.xl">
+                <Box maxW="100%" mx="auto">
 
-                    <Flex justify="space-between" align="center" mb={12}>
-                        <VStack align="start" gap={1}>
-                            <Heading size="3xl" color="#f1c40f" letterSpacing="widest" fontWeight="900">RONALDINHO</Heading>
-                            <Text color="rgba(255, 255, 255, 0.5)" fontSize="sm" fontWeight="800" textTransform="uppercase" letterSpacing="3px">Neural Core Governance</Text>
+                    <Flex direction="column" align="center" mb={12}>
+                        <VStack gap={4} textAlign="center" mb={8}>
+                            <Heading size="4xl" color="#f1c40f" letterSpacing="widest" fontWeight="900">RONALDINHO</Heading>
+                            <Text color="rgba(255, 255, 255, 0.5)" fontSize="xs" fontWeight="800" textTransform="uppercase" letterSpacing="4px">Neural Core Governance</Text>
                         </VStack>
 
                         <Flex align="center" gap={4} p={3} {...glassStyle} borderRadius="99px">
                             {user?.picture && <img src={user.picture} alt="Profile" style={{ width: 44, height: 44, borderRadius: '50%', border: '2px solid #f1c40f' }} />}
-                            <Box pr={4}>
-                                <Text fontSize="sm" fontWeight="900" color="white">{user?.name?.toUpperCase()}</Text>
+                            <Box px={4}>
+                                <Text fontSize="xs" fontWeight="900" color="white">{user?.name?.toUpperCase()}</Text>
                                 <Button size="xs" variant="plain" color="#f1c40f" _hover={{ textDecoration: 'none', color: 'white' }} onClick={logout}>SIGNOUT</Button>
                             </Box>
                         </Flex>
                     </Flex>
 
-                    <Grid templateColumns={{ base: "1fr", lg: "1fr 2fr" }} gap={10}>
+                    <Grid templateColumns={{ base: "1fr", xl: "1fr 2fr" }} gap={12} alignItems="start">
 
                         {/* LEFT COLUMN: STATUS OVERVIEW */}
                         <VStack gap={8} align="stretch">
@@ -173,7 +180,7 @@ function App() {
                                         </Text>
                                     </Box>
 
-                                    <Grid templateColumns="repeat(2, 1fr)" gap={4} pt={4}>
+                                    <Grid templateColumns="repeat(auto-fit, minmax(140px, 1fr))" gap={4} pt={4}>
                                         <Box p={4} borderRadius="16px" bg="rgba(255, 255, 255, 0.05)" border="1px solid rgba(255, 255, 255, 0.05)">
                                             <Text fontSize="9px" fontWeight="900" color="rgba(255, 255, 255, 0.4)" mb={1}>GEMINI</Text>
                                             <Text fontSize="xs" fontWeight="900" color={settings?.geminiApiKey ? "#2ecc71" : "#e74c3c"}>{settings?.geminiApiKey ? 'SYNCED' : 'OFFLINE'}</Text>
@@ -185,6 +192,10 @@ function App() {
                                         <Box p={4} borderRadius="16px" bg="rgba(255, 255, 255, 0.05)" border="1px solid rgba(255, 255, 255, 0.05)">
                                             <Text fontSize="9px" fontWeight="900" color="rgba(255, 255, 255, 0.4)" mb={1}>CLAUDE</Text>
                                             <Text fontSize="xs" fontWeight="900" color={settings?.anthropicApiKey ? "#2ecc71" : "#e74c3c"}>{settings?.anthropicApiKey ? 'SYNCED' : 'OFFLINE'}</Text>
+                                        </Box>
+                                        <Box p={4} borderRadius="16px" bg="rgba(255, 255, 255, 0.05)" border="1px solid rgba(255, 255, 255, 0.05)">
+                                            <Text fontSize="9px" fontWeight="900" color="rgba(255, 255, 255, 0.4)" mb={1}>NVIDIA</Text>
+                                            <Text fontSize="xs" fontWeight="900" color={settings?.nvidiaApiKey ? "#2ecc71" : "#e74c3c"}>{settings?.nvidiaApiKey ? 'SYNCED' : 'OFFLINE'}</Text>
                                         </Box>
                                         <Box p={4} borderRadius="16px" bg="rgba(255, 255, 255, 0.05)" border="1px solid rgba(255, 255, 255, 0.05)">
                                             <Text fontSize="9px" fontWeight="900" color="rgba(255, 255, 255, 0.4)" mb={1}>TELEGRAM</Text>
@@ -219,6 +230,7 @@ function App() {
                                                     <option value="gemini" style={{ background: '#0a0b14' }}>GOOGLE GEMINI 2.0 FLASH</option>
                                                     <option value="openai" style={{ background: '#0a0b14' }}>OPENAI GPT-4O (ULTRA)</option>
                                                     <option value="claude" style={{ background: '#0a0b14' }}>ANTHROPIC CLAUDE 3.5 SONNET</option>
+                                                    <option value="nvidia" style={{ background: '#0a0b14' }}>NVIDIA NIM (LATENCY OPTIMIZED)</option>
                                                 </select>
                                             </Box>
 
@@ -231,9 +243,17 @@ function App() {
                                                     <label style={labelStyle}>OpenAI Key</label>
                                                     <input type="password" style={inputStyle} {...register('openaiApiKey')} />
                                                 </Box>
-                                                <Box gridColumn="span 2">
+                                                <Box>
                                                     <label style={labelStyle}>Anthropic Key</label>
                                                     <input type="password" style={inputStyle} {...register('anthropicApiKey')} />
+                                                </Box>
+                                                <Box>
+                                                    <label style={labelStyle}>NVIDIA Key</label>
+                                                    <input type="password" style={inputStyle} {...register('nvidiaApiKey')} />
+                                                </Box>
+                                                <Box gridColumn="span 2">
+                                                    <label style={labelStyle}>NVIDIA Model ID</label>
+                                                    <input type="text" style={inputStyle} placeholder="e.g. meta/llama-3.1-8b-instruct" {...register('nvidiaModelId')} />
                                                 </Box>
                                             </Grid>
                                         </VStack>
@@ -255,7 +275,7 @@ function App() {
                                                 <input type="password" style={inputStyle} {...register('telegramToken')} />
                                             </Box>
 
-                                            <Flex gap={8}>
+                                            <Grid templateColumns={{ base: "1fr", md: "1fr 1fr 1fr" }} gap={8}>
                                                 <Flex align="center" gap={4} p={4} borderRadius="16px" bg="rgba(241, 196, 15, 0.05)" border="1px solid rgba(241, 196, 15, 0.1)" flex={1}>
                                                     <Controller
                                                         name="autoFallback"
@@ -293,16 +313,35 @@ function App() {
                                                         <Text fontSize="10px" color="rgba(255, 255, 255, 0.5)">Escrita em Disco</Text>
                                                     </Box>
                                                 </Flex>
-                                            </Flex>
+
+                                                <Flex align="center" gap={4} p={4} borderRadius="16px" bg="rgba(52, 152, 219, 0.05)" border="1px solid rgba(52, 152, 219, 0.1)" flex={1}>
+                                                    <Controller
+                                                        name="simultaneousLlm"
+                                                        control={control}
+                                                        render={({ field }) => (
+                                                            <input
+                                                                type="checkbox"
+                                                                style={{ width: '22px', height: '22px', accentColor: '#3498db' }}
+                                                                checked={field.value}
+                                                                onChange={(e) => field.onChange(e.target.checked)}
+                                                            />
+                                                        )}
+                                                    />
+                                                    <Box>
+                                                        <Text fontWeight="800" fontSize="xs" color="#3498db">SIMULTANEOUS</Text>
+                                                        <Text fontSize="10px" color="rgba(255, 255, 255, 0.5)">Parallel Reasoning</Text>
+                                                    </Box>
+                                                </Flex>
+                                            </Grid>
                                         </VStack>
                                     </Box>
 
 
-                                    {(errors.aiModel || errors.personality || errors.telegramToken) && (
+                                    {Object.keys(errors).length > 0 && (
                                         <Box p={4} borderRadius="12px" bg="rgba(231, 76, 60, 0.1)" border="1px solid rgba(231, 76, 60, 0.35)">
-                                            {errors.aiModel?.message && <Text color="#ffb3b3" fontSize="sm">• {errors.aiModel.message}</Text>}
-                                            {errors.personality?.message && <Text color="#ffb3b3" fontSize="sm">• {errors.personality.message}</Text>}
-                                            {errors.telegramToken?.message && <Text color="#ffb3b3" fontSize="sm">• {errors.telegramToken.message}</Text>}
+                                            {Object.entries(errors).map(([key, value]) => (
+                                                <Text key={key} color="#ffb3b3" fontSize="sm">• {value?.message as string}</Text>
+                                            ))}
                                         </Box>
                                     )}
 
@@ -325,7 +364,7 @@ function App() {
                             </form>
                         </Box>
                     </Grid>
-                </Container>
+                </Box>
             </Box>
         </ChakraProvider>
     );
