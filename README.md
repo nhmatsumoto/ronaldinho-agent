@@ -1,151 +1,98 @@
-# Ronaldinho-Agent 🚀 (Python Edition)
+# Ronaldinho-Agent 🚀
 
-> [!IMPORTANT]
-> **Pivô para Python**: O projeto migrou de .NET/C# para um ecossistema **100% Python**. Esta mudança foi estratégica para permitir uma integração nativa com ferramentas agentic avançadas (terminal, editor) e aproveitar o ecossistema de IA em rápida evolução.
+Ronaldinho-Agent é um ecossistema de engenharia autônomo composto por:
 
-Ronaldinho-Agent é um ecossistema de engenharia autônoma composto por:
+- **Python NeuralCore**: O cérebro evolutivo (FastAPI + PydanticAI).
+- **Integração Multi-Modelos**: Troca dinâmica entre Gemini, NVIDIA, OpenAI, Anthropic e Groq com testes de integridade em tempo real.
+- **Python Bridge**: Integração com Telegram e processamento de eventos.
+- **Web Dashboard**: Interface para gestão de conexões OAuth2 e monitoramento.
 
-- **Python NeuralCore**: O cérebro orquestrador (FastAPI + PydanticAI).
-- **Python Bridge**: Integração com Telegram.
-- **ConfigUI**: Interface de governança em React.
+---
 
-## 🧠 Arquitetura e Fluxo de Agente
-
-O Ronaldinho agora opera com um loop de raciocínio que permite o uso de ferramentas do sistema de forma autônoma.
-
-```mermaid
-graph TD
-    User([Usuário]) --> Bridge[Bridge Telegram]
-    Bridge --> Core[NeuralCore Python]
-
-    subgraph "Reasoning Loop (PydanticAI)"
-        Core --> Planner[Planejamento]
-        Planner --> Tools{Chamada de Ferramentas}
-        Tools --> Terminal[Execução de Shell]
-        Tools --> Editor[Edição de Código]
-        Terminal --> Result[Resultado da Ação]
-        Editor --> Result
-        Result --> Core
-    end
-
-    Core --> FinalResp([Resposta Final])
-    FinalResp --> Bridge
-```
-
-## 💾 Memória Evolutiva (Git-Backed)
-
-O conhecimento do Ronaldinho não é apenas salvo; ele **evolui**. Inspirado no sistema de controle de versão Git, cada aprendizado significativo ou mudança de estado é registrado como um commit imutável.
-
-- **Rastreabilidade**: Todo o histórico de "pensamentos" e ajustes de personalidade pode ser auditado.
-- **Rollback de Conhecimento**: Capacidade de retornar a estados anteriores de consciência em caso de "alucinações" persistentes.
-
-```mermaid
-gitGraph
-    commit id: "Personalidade Base"
-    commit id: "Aprendizado: FastAPI"
-    branch feature/autonomia
-    checkout feature/autonomia
-    commit id: "Ferramenta: Terminal"
-    commit id: "Ferramenta: Editor"
-    checkout main
-    merge feature/autonomia
-    commit id: "Ronaldinho Fenomenal v2"
-```
-
-## ⛓️ Inteligência Distribuída & Blockchain
-
-O Ronaldinho não está sozinho. O projeto visa criar uma rede de agentes descentralizada onde o conhecimento é validado e compartilhado via **Blockchain**.
-
-- **Consenso de Conhecimento**: Agentes em diferentes nós validam informações antes de integrá-las à memória coletiva.
-- **D-AI (Decentralized AI)**: Uma infraestrutura onde o poder de processamento e o conhecimento são distribuídos, eliminando pontos únicos de falha.
-
-```mermaid
-graph LR
-    subgraph "Nó 1 (Brasil)"
-        A1[Agente A] <--> L1[(Local Ledger)]
-    end
-    subgraph "Nó 2 (Japão)"
-        A2[Agente B] <--> L2[(Local Ledger)]
-    end
-    subgraph "Nó 3 (Europa)"
-        A3[Agente C] <--> L3[(Local Ledger)]
-    end
-
-    L1 <--> BC{Blockchain Network}
-    L2 <--> BC
-    L3 <--> BC
-
-    BC -- "Sincronização de Conhecimento" --> L1
-    BC -- "Sincronização de Conhecimento" --> L2
-    BC -- "Sincronização de Conhecimento" --> L3
-```
-
-## 🌐 Componentes do Ecossistema
-
-O sistema é modular e utiliza protocolos modernos para garantir resiliência e autonomia.
-
-```mermaid
-graph LR
-    subgraph Services
-        NC[NeuralCore]
-        B[Bridge]
-        UI[ConfigUI]
-    end
-
-    subgraph Infrastructure
-        D[Docker Compose]
-        K[Keycloak Auth]
-        S[Signaling Server]
-    end
-
-    NC <--> B
-    NC <--> UI
-    UI <--> K
-    NC <--> S
-    D -.-> NC
-    D -.-> B
-    D -.-> UI
-```
-
-## 🛠️ Quick Local Start
+## 🛠️ Como Rodar o Projeto
 
 ### 1. Pré-requisitos
 
 - **Python 3.10+**
-- **Node.js 18+**
-- **Docker**
+- **Docker & Docker Compose** (opcional, para rodar via containers)
+- **Telegram Bot Token** (obtido via [@BotFather](https://t.me/botfather))
 
-### 2. Configuração
+### 2. Configuração do Ambiente
 
-Crie o arquivo `.env` na raiz baseado no exemplo.
+Crie um arquivo `.env` na raiz do projeto (use o `.env.example` como base):
 
-### 3. Lançamento Unificado
+```bash
+cp .env.example .env
+# Edite as chaves conforme necessário (TELEGRAM_BOT_TOKEN, etc.)
+```
 
-O projeto utiliza um script central para subir todos os serviços:
+### 3. Execução Local (Recomendado para Dev)
+
+#### Passo A: Preparar o ambiente virtual
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r services/core/requirements.txt
+```
+
+#### Passo B: Iniciar todos os serviços
+
+Use o script unificado que inicia o Signaling Server, NeuralCore e Bridge em background:
 
 ```bash
 chmod +x start_ronaldinho.sh
 ./start_ronaldinho.sh
 ```
 
-## 🐳 Stack Docker
+### 4. Execução via Docker
 
-Para um ambiente isolado e completo:
+Se preferir isolamento total:
 
 ```bash
-docker compose up -d --build
+docker-compose up --build
 ```
+
+---
+
+## 🖥️ Web Dashboard & OAuth2
+
+O Ronaldinho agora possui um Dashboard Web para facilitar a conexão com provedores sem precisar editar o `.env` manualmente.
+
+1. Com o **NeuralCore** rodando (porta 5000), abra o arquivo `services/web/index.html` no seu navegador.
+2. No painel de **Conexões**, clique em "Conectar OpenAI" ou "Conectar Gemini".
+3. Siga o fluxo OAuth2 para autorizar o Ronaldinho.
+4. As chaves serão salvas de forma segura e criptografada no seu cofre local (`ronaldinho/vault.json`).
+
+---
+
+## 🧠 Recursos Avançados
+
+### Teste de Integridade de Modelos
+
+O Ronaldinho testa automaticamente a validade das chaves e a disponibilidade dos modelos. Você pode rodar o benchmarker manualmente para ver o status atual:
+
+```bash
+export PYTHONPATH=$PYTHONPATH:$(pwd)/services/core
+python3 services/core/app/benchmarker.py
+```
+
+### Fallback "Local Gemini CLI"
+
+Em caso de falha total nas APIs externas, o Ronaldinho utiliza um wrapper direto (`app/gemini_cli_local.py`) para garantir que o serviço nunca fique offline.
+
+---
 
 ## 📂 Estrutura do Repositório
 
 ```text
 .
 ├── services/
-│   ├── core/                # IA, Orquestração e Ferramentas (FastAPI)
-│   ├── bridge/              # Bridge Telegram (Python)
-│   └── ui/                  # Interface de Governança (React)
-├── ronaldinho/              # Soul & Configurações
-├── docker-compose.yml       # Stack Unificada
+│   ├── core/                # Brain & Manus Tools (FastAPI)
+│   ├── bridge/              # Telegram Bridge (Python)
+│   └── web/                 # Dashboard Web (HTML/JS/CSS)
+├── ronaldinho/              # Cofre de Segredos (vault.json) & Soul
+├── logs_v1/                 # Logs de execução
 └── start_ronaldinho.sh      # Launcher Unificado
 ```
 
