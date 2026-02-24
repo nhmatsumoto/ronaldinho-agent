@@ -1,7 +1,7 @@
 import time
 import asyncio
 import httpx
-from app.config import settings
+from config import settings
 
 async def ping_provider(provider_name: str, url: str, api_key: str) -> float:
     """Pings a provider to measure latency. Returns latency in seconds or 999 if failed."""

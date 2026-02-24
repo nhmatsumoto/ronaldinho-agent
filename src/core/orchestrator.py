@@ -3,15 +3,15 @@ import logging
 import random
 from pydantic_ai import Agent, RunContext
 
-from .config import settings
-from .tools.terminal import TerminalTool
-from .tools.editor import EditorTool
-from .tools.dev_toolkit import DevToolkit
-from .brain import get_integrated_system_prompt, detect_best_persona
-from .benchmarker import get_latencies, get_fastest_provider
-from .gemini_cli_local import gemini_cli
-from .evolution_logger import evolution_logger
-from .models import get_boot_model, get_model_instance, GEMINI_ROTATION_MODELS, CustomGeminiModel
+from config import settings
+from tools.terminal import TerminalTool
+from tools.editor import EditorTool
+from tools.dev_toolkit import DevToolkit
+from brain import get_integrated_system_prompt, detect_best_persona
+from benchmarker import get_latencies, get_fastest_provider
+from gemini_cli_local import gemini_cli
+from evolution_logger import evolution_logger
+from models import get_boot_model, get_model_instance, GEMINI_ROTATION_MODELS
 
 logger = logging.getLogger("neural-core")
 
@@ -24,10 +24,9 @@ dev_toolkit = DevToolkit(root_path)
 def create_agent(persona: str = None):
     """Creates a fresh PydanticAI Agent with the given persona."""
     system_prompt = get_integrated_system_prompt(root_path, active_persona=persona)
-    boot_model = get_boot_model()
     
     agent = Agent(
-        boot_model or "google-gla:gemini-2.0-flash", # Minimal fallback string
+        "google-gla:gemini-2.0-flash", # Default, can be overridden in run()
         system_prompt=system_prompt
     )
 
@@ -101,8 +100,9 @@ class Orchestrator:
             model = await self.get_dynamic_model(is_coding_task=is_coding)
             if model:
                 try:
+                    logger.info(f"[*] Running with primary model: {model}")
                     result = await self.active_agent.run(message, model=model)
-                    evolution_logger.log_event("dynamic", getattr(model, 'model_id', 'unknown'), "SUCCESS")
+                    evolution_logger.log_event("dynamic", str(model), "SUCCESS")
                     return result.data
                 except Exception as e:
                     logger.warning(f"[!] Primary model failed: {e}. Starting rotation...")
@@ -128,6 +128,8 @@ class Orchestrator:
         
         # 4. Final Fallback: Local CLI
         try:
+            logger.info("[*] All remote models failed. Using local CLI fallback.")
             return await gemini_cli.generate_response(message)
-        except Exception:
+        except Exception as e:
+            logger.error(f"Critical failure: {e}")
             return "❌ **Ronaldinho fora de campo**: Todos os modelos falharam. Verifique sua conexão!"

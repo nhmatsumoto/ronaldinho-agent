@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from .orchestrator import Orchestrator
-from .config import settings
-from .auth import auth_manager
-from .vault import vault
+from orchestrator import Orchestrator
+from config import settings
+from auth import auth_manager
+from vault import vault
 import uvicorn
 
 app = FastAPI(title="Ronaldinho Neural Core (Python)")

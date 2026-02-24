@@ -2,7 +2,7 @@ import os
 import datetime
 
 class EvolutionLogger:
-    def __init__(self, log_path="ronaldinho/evolution.log"):
+    def __init__(self, log_path=".agent/evolution.log"):
         self.log_path = log_path
         os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
 

@@ -2,7 +2,7 @@ import os
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
-load_dotenv(os.path.join(os.path.dirname(__file__), "../../../.env"))
+load_dotenv(os.path.join(os.path.dirname(__file__), "../../.env"))
 
 class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     CODING_MODEL_ID: str = "nvidia:meta/llama-3.1-405b-instruct"
     ENABLE_BENCHMARKING: bool = True
     PORT: int = 5000
-    DATA_DIR: str = "ronaldinho"
+    DATA_DIR: str = ".agent"
 
     class Config:
         env_file = ".env"

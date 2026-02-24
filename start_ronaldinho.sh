@@ -6,7 +6,7 @@ echo "🏀 Ronaldinho Agent is starting (Pure Background Mode)..."
 
 # Pre-flight: Kill any existing processes on ports 3000 and 5000
 echo "[*] Cleaning up old processes..."
-fuser -k 3000/tcp 5000/tcp > /dev/null 2>&1
+fuser -k 3000/tcp 3001/tcp 5000/tcp > /dev/null 2>&1
 
 # 0. Check Virtual Environment and Logs
 if [ ! -d "venv" ]; then
@@ -18,7 +18,7 @@ LOG_DIR="logs_v1"
 mkdir -p $LOG_DIR
 chmod +x start_ronaldinho.sh
 
-PYTHON_BIN=$(pwd)/venv/bin/python3
+PYTHON_BIN="$(pwd)/venv/bin/python3 -u"
 
 # 1. Start Signaling Server
 echo "[*] Starting Signaling Server..."

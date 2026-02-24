@@ -1,8 +1,8 @@
 import httpx
 import os
 import logging
-from .config import settings
-from .vault import vault
+from config import settings
+from vault import vault
 
 logger = logging.getLogger("auth-manager")
 

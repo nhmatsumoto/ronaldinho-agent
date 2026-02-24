@@ -1,7 +1,7 @@
 import json
 import os
 import base64
-from app.config import settings
+from config import settings
 import logging
 
 logger = logging.getLogger("token-vault")

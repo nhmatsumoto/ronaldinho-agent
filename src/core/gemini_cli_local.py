@@ -4,7 +4,7 @@ import logging
 import shutil
 import asyncio
 import os
-from app.config import settings
+from config import settings
 
 logger = logging.getLogger("gemini-cli-local")
 

@@ -71,7 +71,7 @@ class SignalingHandler(BaseHTTPRequestHandler):
          pass
 
 if __name__ == '__main__':
-    port = 3000
+    port = 3001
     # Clear log file on start
     with open(LOG_FILE, "w") as f:
         f.write(f"--- Signaling Server Started at {datetime.datetime.now()} ---\n")
