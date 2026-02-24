@@ -31,7 +31,44 @@ graph TD
 
 ---
 
-## 🛠️ Getting Started
+## � Evolutionary Memory & Decentralized Knowledge
+
+Ronaldinho maintains a self-improving memory system that combines local versioning with decentralized verification.
+
+### 1. Git-Based Memory Diffs
+
+All internal state changes, learned skills, and project modifications are tracked as versioned commits. This allows the agent to "rewind" its state or branch out into different knowledge paths.
+
+```mermaid
+gitGraph
+    commit id: "Core Setup"
+    commit id: "Learning: JavaScript"
+    branch feature/python-ai
+    checkout feature/python-ai
+    commit id: "Neural patterns"
+    commit id: "Vault implementation"
+    checkout main
+    merge feature/python-ai
+    commit id: "Evolution V3"
+```
+
+### 2. Blockchain Knowledge Ledger
+
+To ensure knowledge integrity and cross-agent synchronization, Ronaldinho anchors "Knowledge Transactions" to a decentralized ledger. This prevents data tampering and enables a shared source of truth for autonomous agents.
+
+```mermaid
+graph LR
+    Core[Neural Core] --> |New Fact/Skill| Tx[Knowledge Transaction]
+    Tx --> Hash[Cryptographic Hash]
+    Hash --> Chain{Blockchain Ledger}
+    Chain --> Block1[Block N]
+    Chain --> Block2[Block N+1]
+    Block1 -.-> |Sync| Other[Other Agents]
+```
+
+---
+
+## �🛠️ Getting Started
 
 ### 1. Prerequisites
 
