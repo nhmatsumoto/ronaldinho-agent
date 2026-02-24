@@ -24,6 +24,19 @@
         </div>
       </header>
 
+      <section class="auth-box">
+        <h3>Conexões de Provedores</h3>
+        <div class="auth-buttons">
+          <button onclick="startOAuth('openai')" class="auth-btn openai">
+            Conectar OpenAI
+          </button>
+          <button onclick="startOAuth('google')" class="auth-btn gemini">
+            Conectar Gemini
+          </button>
+        </div>
+        <div id="auth-status" class="auth-status-text">Buscando status...</div>
+      </section>
+
       <main class="chat-area" id="chat-messages">
         <div class="message system">
           <p>

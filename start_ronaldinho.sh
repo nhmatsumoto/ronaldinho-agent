@@ -39,9 +39,16 @@ $PYTHON_BIN bridge.py > ../../$LOG_DIR/bridge.log 2>&1 &
 BRIDGE_PID=$!
 cd ../..
 
+# 4. Start Autonomous Monitor
+if [ -f "monitor_evolution.sh" ]; then
+    echo "[*] Starting Autonomous Evolution Monitor..."
+    ./monitor_evolution.sh > /dev/null 2>&1 &
+    MONITOR_PID=$!
+fi
+
 echo "🚀 Ronaldinho is ready and running in background!"
 echo "Check logs in $LOG_DIR/ directory for details."
 echo "Press Ctrl+C to stop all services."
 
-trap "kill $SIGNALING_PID $NEURAL_PID $BRIDGE_PID; exit" INT
+trap "kill $SIGNALING_PID $NEURAL_PID $BRIDGE_PID $MONITOR_PID; exit" INT
 wait

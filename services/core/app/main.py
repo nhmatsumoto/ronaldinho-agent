@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from app.orchestrator import Orchestrator
 from app.config import settings
+from app.auth import auth_manager
+from app.vault import vault
 import uvicorn
 
 app = FastAPI(title="Ronaldinho Neural Core (Python)")
@@ -44,6 +46,28 @@ async def chat(request: MessageRequest):
         error_msg = str(e)
         print(f"[!] Error in chat: {error_msg}")
         raise HTTPException(status_code=503, detail=error_msg)
+
+# --- OAuth2 Endpoints ---
+
+@app.get("/api/auth/login/{provider}")
+async def auth_login(provider: str):
+    redirect_uri = "http://localhost:5000/api/auth/callback"
+    url = auth_manager.get_login_url(provider, redirect_uri)
+    if not url:
+        raise HTTPException(status_code=400, detail="Provedor inválido")
+    return {"url": url}
+
+@app.get("/api/auth/callback")
+async def auth_callback(code: str, provider: str = "google"):
+    redirect_uri = "http://localhost:5000/api/auth/callback"
+    token = await auth_manager.exchange_code(provider, code, redirect_uri)
+    if not token:
+        raise HTTPException(status_code=400, detail="Falha na autenticação")
+    return {"status": "success", "message": f"Conectado ao {provider} com sucesso!"}
+
+@app.get("/api/auth/status")
+async def auth_status():
+    return {"providers": vault.list_providers()}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=settings.PORT)

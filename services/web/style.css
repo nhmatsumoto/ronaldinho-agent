@@ -96,6 +96,59 @@ header {
   box-shadow: 0 0 10px var(--secondary);
 }
 
+.auth-box {
+  padding: 16px 32px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-box h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.8;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.auth-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.auth-btn.openai {
+  border-color: #10a37f;
+}
+
+.auth-btn.gemini {
+  border-color: #4285f4;
+}
+
+.auth-status-text {
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
 .chat-area {
   flex: 1;
   padding: 32px;

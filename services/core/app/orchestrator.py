@@ -24,20 +24,30 @@ dev_toolkit = DevToolkit(root_path)
 
 from app.skills import get_integrated_system_prompt
 from app.benchmarker import get_latencies, get_fastest_provider
+from app.gemini_cli_local import gemini_cli
+from app.vault import vault
 
 def get_model_instance(provider_name: str, model_id: str = None):
     """Returns a PydanticAI Model instance for the given provider, or None if config is missing."""
     try:
         if provider_name == "gemini":
-            if not settings.GEMINI_API_KEY: return None
+            # Check vault for user token
+            user_token = vault.get_token("google")
+            api_key = user_token.get("access_token") if user_token else settings.GEMINI_API_KEY
+            if not api_key: return None
+            
             try:
-                gla_provider = GoogleGLAProvider(api_key=settings.GEMINI_API_KEY)
-                return GeminiModel(model_id or "gemini-1.5-pro", provider=gla_provider)
+                gla_provider = GoogleGLAProvider(api_key=api_key)
+                return GeminiModel(model_id or "gemini-1.5-flash", provider=gla_provider)
             except Exception: return None
         
         elif provider_name == "openai":
-            if not settings.OPENAI_API_KEY: return None
-            oa_provider = OpenAIProvider(api_key=settings.OPENAI_API_KEY)
+            # Check vault for user token
+            user_token = vault.get_token("openai")
+            api_key = user_token.get("access_token") if user_token else settings.OPENAI_API_KEY
+            if not api_key: return None
+            
+            oa_provider = OpenAIProvider(api_key=api_key)
             return OpenAIChatModel(model_id or "gpt-4o", provider=oa_provider)
         
         elif provider_name == "anthropic":
@@ -139,7 +149,7 @@ system_prompt = get_integrated_system_prompt(root_path)
 # We handle the case where get_boot_model() might return None
 boot_model = get_boot_model()
 agent = Agent(
-    boot_model or GeminiModel("gemini-1.5-pro", provider=GoogleGLAProvider(api_key="placeholder")),
+    boot_model or GeminiModel("gemini-1.5-flash", provider=GoogleGLAProvider(api_key="placeholder")),
     system_prompt=system_prompt
 )
 
@@ -231,6 +241,14 @@ class Orchestrator:
                     logger.warning(f"[!] Fallback {provider_name} also failed: {ef}")
                     continue
             
+            # --- FINAL FALLBACK: Local Gemini CLI ---
+            try:
+                logger.info("[*] Attempting final fallback with Local Gemini CLI...")
+                response = await gemini_cli.generate_response(message)
+                return response
+            except Exception as ecli:
+                logger.error(f"[!] Local Gemini CLI failed: {ecli}")
+
             # If we reach here, tell the user EXACTLY how to fix it based on the error
             if "403" in str(e) or "Forbidden" in str(e):
                 return "⚠️ **Erro 403 (NVIDIA NIM)**: Sua chave da NVIDIA não tem permissão ou expirou. Por favor, adicione uma **GEMINI_API_KEY** gratuita no seu `.env` para eu voltar a jogar! Eu cuidarei de tudo assim que a chave estiver lá. 🏀🛡️"

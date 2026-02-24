@@ -3,6 +3,7 @@ const chatMessages = document.getElementById('chat-messages');
 const userInput = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
 const coreStatus = document.getElementById('core-status');
+const authStatus = document.getElementById('auth-status');
 
 // Verificação de saúde do Core
 async function checkHealth() {
@@ -17,6 +18,60 @@ async function checkHealth() {
         console.error('Core offline:', error);
         coreStatus.innerHTML = '<span class="status-dot"></span> Core Offline';
         coreStatus.classList.remove('online');
+    }
+}
+
+// OAuth2 Logic
+async function startOAuth(provider) {
+    try {
+        const response = await fetch(`${API_URL}/api/auth/login/${provider}`);
+        const data = await response.json();
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            alert('Erro ao iniciar login: ' + (data.detail || 'Desconhecido'));
+        }
+    } catch (error) {
+        console.error('Auth error:', error);
+        alert('Erro de conexão ao iniciar login.');
+    }
+}
+
+async function updateAuthStatus() {
+    try {
+        const response = await fetch(`${API_URL}/api/auth/status`);
+        const data = await response.json();
+        if (data.providers && data.providers.length > 0) {
+            authStatus.innerText = 'Conectado: ' + data.providers.join(', ');
+        } else {
+            authStatus.innerText = 'Nenhum provedor conectado (usando .env)';
+        }
+    } catch (error) {
+        authStatus.innerText = 'Status de conexão indisponível.';
+    }
+}
+
+// Handle OAuth callback if URL has code
+async function handleCallback() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    // For simplicity, we assume 'provider' is passed back or we default to google
+    if (code) {
+        authStatus.innerText = 'Finalizando conexão...';
+        try {
+            const response = await fetch(`${API_URL}/api/auth/callback?code=${code}`);
+            const data = await response.json();
+            if (response.ok) {
+                appendMessage(`✅ Ronaldinho: ${data.message}`, 'ai');
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                appendMessage(`❌ Falha na conexão: ${data.detail}`, 'ai');
+            }
+        } catch (error) {
+            console.error('Callback error:', error);
+        }
+        updateAuthStatus();
     }
 }
 
@@ -72,4 +127,7 @@ userInput.addEventListener('keypress', (e) => {
 
 // Inicialização
 checkHealth();
+updateAuthStatus();
+handleCallback();
 setInterval(checkHealth, 5000);
+setInterval(updateAuthStatus, 10000);
