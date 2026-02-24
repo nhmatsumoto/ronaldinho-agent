@@ -10,11 +10,28 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "../../.env"))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 NEURAL_CORE_URL = os.getenv("NEURAL_CORE_URL", "http://localhost:5000/api/chat")
 
+async def send_large_message(update: Update, text: str):
+    """Splits a long message into chunks that fit within Telegram's limits."""
+    MAX_LENGTH = 4000
+    if len(text) <= MAX_LENGTH:
+        await update.message.reply_text(text)
+        return
+
+    # Split into chunks of MAX_LENGTH
+    for i in range(0, len(text), MAX_LENGTH):
+        chunk = text[i:i + MAX_LENGTH]
+        await update.message.reply_text(chunk)
+        # Small sleep to avoid flood limits
+        await asyncio.sleep(0.5)
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     text = update.message.text
     
     print(f"[*] Message from {user_id}: {text}")
+    
+    # Show "typing..." status in Telegram
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     
     # Send to Neural Core
     async with httpx.AsyncClient() as client:
@@ -26,7 +43,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             if response.status_code == 200:
                 reply = response.json().get("response", "Erro: Resposta vazia.")
-                await update.message.reply_text(reply)
+                await send_large_message(update, reply)
             else:
                 await update.message.reply_text(f"Erro no Neural Core: {response.status_code}")
         except Exception as e:

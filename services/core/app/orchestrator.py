@@ -1,6 +1,6 @@
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIChatModel
-from pydantic_ai.models.gemini import GeminiModel
+from pydantic_ai.models.gemini import GeminiModel as PydanticGeminiModel
 from pydantic_ai.models.anthropic import AnthropicModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.providers.google_gla import GoogleGLAProvider
@@ -26,6 +26,41 @@ from app.skills import get_integrated_system_prompt
 from app.benchmarker import get_latencies, get_fastest_provider
 from app.gemini_cli_local import gemini_cli
 from app.vault import vault
+from app.evolution_logger import evolution_logger
+import random
+import httpx
+
+# Custom GeminiModel to handle exceptions and quota detection
+class CustomGeminiModel(PydanticGeminiModel):
+    async def generate(self, prompt: str) -> str:
+        api_key = self.provider.get_api_key()
+        if not api_key: raise ValueError("No API Key")
+        
+        # Use v1beta for better model support/preview IDs
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_id}:generateContent?key={api_key}"
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(url, json={"contents": [{"parts": [{"text": prompt}]}]}, timeout=30.0)
+                if response.status_code == 429:
+                    raise Exception(f"Quota Exceeded (429) for {self.model_id}")
+                if response.status_code != 200:
+                    raise Exception(f"Gemini API Error {response.status_code}: {response.text}")
+                
+                data = response.json()
+                if 'candidates' not in data or not data['candidates']:
+                    raise Exception(f"Gemini API returned no candidates: {data}")
+                
+                return data['candidates'][0]['content']['parts'][0]['text']
+            except Exception as e:
+                raise e
+
+# Models to rotate through when Gemini hits limits
+GEMINI_ROTATION_MODELS = [
+    "gemini-2.0-flash",
+    "gemini-1.5-flash", 
+    "gemini-1.5-pro",
+    "gemini-2.5-flash" # User reported this exists and works
+]
 
 def get_model_instance(provider_name: str, model_id: str = None):
     """Returns a PydanticAI Model instance for the given provider, or None if config is missing."""
@@ -38,7 +73,8 @@ def get_model_instance(provider_name: str, model_id: str = None):
             
             try:
                 gla_provider = GoogleGLAProvider(api_key=api_key)
-                return GeminiModel(model_id or "gemini-1.5-flash", provider=gla_provider)
+                # We default to a stable model but rotation will swap it if it fails
+                return CustomGeminiModel(model_id or "gemini-2.0-flash", provider=gla_provider)
             except Exception: return None
         
         elif provider_name == "openai":
@@ -146,10 +182,10 @@ async def get_dynamic_model(is_coding_task: bool = False):
 
 # Initialize Agent
 system_prompt = get_integrated_system_prompt(root_path)
-# We handle the case where get_boot_model() might return None
+# Handle the case where get_boot_model() might return None
 boot_model = get_boot_model()
 agent = Agent(
-    boot_model or GeminiModel("gemini-1.5-flash", provider=GoogleGLAProvider(api_key="placeholder")),
+    boot_model or CustomGeminiModel("gemini-2.0-flash", provider=GoogleGLAProvider(api_key="placeholder")),
     system_prompt=system_prompt
 )
 
@@ -215,42 +251,68 @@ class Orchestrator:
         coding_keywords = ["escreva um código", "refatore", "bug", "fix", "python", "javascript", "code", "docker", "git", "commit", "planeje", "implemente"]
         is_coding = any(kw in message.lower() for kw in coding_keywords)
         
-        # Try dynamic model first
+        # Priority list of models to try
+        tried_combinations = [] # list of (provider, model_id)
+        
+        # 1. Start with the "Recommended" provider from Benchmarker/Settings
         try:
-            model = await get_dynamic_model(is_coding_task=is_coding)
-            if not model:
-                raise Exception("Nenhuma chave de API configurada no arquivo .env (GEMINI_API_KEY, NVIDIA_API_KEY, etc. estão vazias).")
-            
-            result = await agent.run(message, model=model)
-            return result.data
-        except Exception as e:
-            logger.warning(f"[!] Primary model failed: {e}. Trying fallbacks...")
-            
-            # Runtime Fallback
-            priority = settings.MODEL_PRIORITY.split(",")
-            for provider_name in priority:
-                fallback_model = get_model_instance(provider_name)
-                if not fallback_model:
-                    continue
-                
+            primary_model = await get_dynamic_model(is_coding_task=is_coding)
+            if primary_model:
                 try:
-                    logger.info(f"[*] Attempting fallback with: {provider_name}")
+                    p_name = "gemini" if isinstance(primary_model, CustomGeminiModel) else "other"
+                    p_id = getattr(primary_model, 'model_id', 'unknown')
+                    
+                    result = await agent.run(message, model=primary_model)
+                    evolution_logger.log_event(p_name, p_id, "SUCCESS")
+                    return result.data
+                except Exception as e:
+                    logger.warning(f"[!] Primary model failed: {e}. Starting rotation...")
+                    evolution_logger.log_event("dynamic", "primary", "FAILURE", error=str(e))
+        except Exception as e:
+            logger.error(f"[!] Error getting dynamic model: {e}")
+
+        # 2. Rotation Loop
+        priority = settings.MODEL_PRIORITY.split(",")
+        for provider_name in priority:
+            # Special logic for Gemini: Rotate through several IDs
+            if provider_name == "gemini":
+                for model_id in GEMINI_ROTATION_MODELS:
+                    try:
+                        fallback_model = get_model_instance(provider_name, model_id=model_id)
+                        if not fallback_model: continue
+                        
+                        logger.info(f"[*] Attempting fallback: {provider_name} | {model_id}")
+                        result = await agent.run(message, model=fallback_model)
+                        evolution_logger.log_event(provider_name, model_id, "SUCCESS")
+                        return result.data
+                    except Exception as ef:
+                        logger.warning(f"[!] {provider_name} | {model_id} failed: {ef}")
+                        evolution_logger.log_event(provider_name, model_id, "FAILURE", error=str(ef))
+                        continue
+            else:
+                # Standard fallback for other providers
+                try:
+                    fallback_model = get_model_instance(provider_name)
+                    if not fallback_model: continue
+                    
+                    f_id = getattr(fallback_model, 'model_id', 'unknown')
+                    logger.info(f"[*] Attempting fallback: {provider_name} | {f_id}")
                     result = await agent.run(message, model=fallback_model)
+                    evolution_logger.log_event(provider_name, f_id, "SUCCESS")
                     return result.data
                 except Exception as ef:
-                    logger.warning(f"[!] Fallback {provider_name} also failed: {ef}")
+                    logger.warning(f"[!] Fallback {provider_name} failed: {ef}")
+                    evolution_logger.log_event(provider_name, "unknown", "FAILURE", error=str(ef))
                     continue
-            
-            # --- FINAL FALLBACK: Local Gemini CLI ---
-            try:
-                logger.info("[*] Attempting final fallback with Local Gemini CLI...")
-                response = await gemini_cli.generate_response(message)
-                return response
-            except Exception as ecli:
-                logger.error(f"[!] Local Gemini CLI failed: {ecli}")
+        
+        # 3. Final Fallback: Local Gemini CLI
+        try:
+            logger.info("[*] Attempting final fallback with Local Gemini CLI...")
+            response = await gemini_cli.generate_response(message)
+            evolution_logger.log_event("local_cli", "gemini", "SUCCESS")
+            return response
+        except Exception as ecli:
+            logger.error(f"[!] Local Gemini CLI failed: {ecli}")
+            evolution_logger.log_event("local_cli", "gemini", "FAILURE", error=str(ecli))
 
-            # If we reach here, tell the user EXACTLY how to fix it based on the error
-            if "403" in str(e) or "Forbidden" in str(e):
-                return "⚠️ **Erro 403 (NVIDIA NIM)**: Sua chave da NVIDIA não tem permissão ou expirou. Por favor, adicione uma **GEMINI_API_KEY** gratuita no seu `.env` para eu voltar a jogar! Eu cuidarei de tudo assim que a chave estiver lá. 🏀🛡️"
-            
-            return f"❌ **Ronaldinho fora de campo**: {str(e)}. Verifique suas chaves no .env!"
+        return "❌ **Ronaldinho fora de campo**: Todos os modelos (remotos e locais) falharam ou atingiram o limite. Por favor, verifique sua conexão ou chaves no .env!"

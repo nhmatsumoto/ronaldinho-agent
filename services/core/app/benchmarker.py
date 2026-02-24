@@ -26,7 +26,7 @@ async def test_model_capability(provider_name: str, api_key: str) -> bool:
         async with httpx.AsyncClient() as client:
             if provider_name == "gemini":
                 # Using v1beta for Gemini as per project settings, but checking if it's functional
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
                 payload = {"contents": [{"parts": [{"text": "hi"}]}]}
                 response = await client.post(url, json=payload, timeout=5.0)
                 return response.status_code == 200

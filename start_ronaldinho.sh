@@ -39,7 +39,14 @@ $PYTHON_BIN bridge.py > ../../$LOG_DIR/bridge.log 2>&1 &
 BRIDGE_PID=$!
 cd ../..
 
-# 4. Start Autonomous Monitor
+# 4. Start Web Dashboard (Python HTTP Server)
+echo "[*] Starting Web Dashboard on http://localhost:3000..."
+cd services/web
+$PYTHON_BIN -m http.server 3000 > ../../$LOG_DIR/web.log 2>&1 &
+WEB_PID=$!
+cd ../..
+
+# 5. Start Autonomous Monitor
 if [ -f "monitor_evolution.sh" ]; then
     echo "[*] Starting Autonomous Evolution Monitor..."
     ./monitor_evolution.sh > /dev/null 2>&1 &
@@ -47,8 +54,10 @@ if [ -f "monitor_evolution.sh" ]; then
 fi
 
 echo "🚀 Ronaldinho is ready and running in background!"
+echo "Dashboard: http://localhost:3000"
+echo "Neural Core: http://localhost:5000"
 echo "Check logs in $LOG_DIR/ directory for details."
 echo "Press Ctrl+C to stop all services."
 
-trap "kill $SIGNALING_PID $NEURAL_PID $BRIDGE_PID $MONITOR_PID; exit" INT
+trap "kill $SIGNALING_PID $NEURAL_PID $BRIDGE_PID $WEB_PID $MONITOR_PID 2>/dev/null; exit" INT
 wait

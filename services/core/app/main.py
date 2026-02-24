@@ -51,15 +51,20 @@ async def chat(request: MessageRequest):
 
 @app.get("/api/auth/login/{provider}")
 async def auth_login(provider: str):
-    redirect_uri = "http://localhost:5000/api/auth/callback"
-    url = auth_manager.get_login_url(provider, redirect_uri)
-    if not url:
-        raise HTTPException(status_code=400, detail="Provedor inválido")
-    return {"url": url}
+    # Redirect back to the Dashboard so script.js can handle the code
+    redirect_uri = "http://localhost:3000/index.html"
+    try:
+        url = auth_manager.get_login_url(provider, redirect_uri)
+        if not url:
+            raise HTTPException(status_code=400, detail="Provedor inválido")
+        return {"url": url}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/auth/callback")
 async def auth_callback(code: str, provider: str = "google"):
-    redirect_uri = "http://localhost:5000/api/auth/callback"
+    # The redirect_uri must match what was sent to Google
+    redirect_uri = "http://localhost:3000/index.html"
     token = await auth_manager.exchange_code(provider, code, redirect_uri)
     if not token:
         raise HTTPException(status_code=400, detail="Falha na autenticação")
