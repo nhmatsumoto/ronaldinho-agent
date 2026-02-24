@@ -1,7 +1,7 @@
 services:
   ronaldinho-neuralcore:
     build:
-      context: services/core
+      context: src/core
       dockerfile: Dockerfile
     container_name: ronaldinho_neuralcore
     ports:
@@ -11,18 +11,18 @@ services:
       - LLM_PROVIDER=gemini
     volumes:
       - ./.env:/.env:ro
-      - ./ronaldinho:/ronaldinho
+      - ./.agent:/.agent
       - ./logs:/logs
     restart: unless-stopped
 
   ronaldinho-bridge:
     build:
-      context: services/bridge
+      context: src/bridge
       dockerfile: Dockerfile
     container_name: ronaldinho_bridge
     volumes:
       - ./.env:/.env:ro
-      - ./ronaldinho:/ronaldinho
+      - ./.agent:/.agent
       - ./logs:/logs
     depends_on:
       - ronaldinho-neuralcore

@@ -10,7 +10,7 @@ fuser -k 3000/tcp 5000/tcp > /dev/null 2>&1
 
 # 0. Check Virtual Environment and Logs
 if [ ! -d "venv" ]; then
-    echo "[!] Virtual environment not found. Please run: python3 -m venv venv && source venv/bin/activate && pip install -r services/core/requirements.txt"
+    echo "[!] Virtual environment not found. Please run: python3 -m venv venv && source venv/bin/activate && pip install -r src/core/requirements.txt"
     exit 1
 fi
 
@@ -27,21 +27,21 @@ SIGNALING_PID=$!
 
 # 2. Start Neural Core (Python)
 echo "[*] Starting Neural Core..."
-cd services/core
-$PYTHON_BIN -m app.main > ../../$LOG_DIR/core.log 2>&1 &
+cd src/core
+$PYTHON_BIN main.py > ../../$LOG_DIR/core.log 2>&1 &
 NEURAL_PID=$!
 cd ../..
 
 # 3. Start Telegram Bridge (Python)
 echo "[*] Starting Telegram Bridge..."
-cd services/bridge
-$PYTHON_BIN bridge.py > ../../$LOG_DIR/bridge.log 2>&1 &
+cd src/bridge
+$PYTHON_BIN main.py > ../../$LOG_DIR/bridge.log 2>&1 &
 BRIDGE_PID=$!
 cd ../..
 
 # 4. Start Web Dashboard (Python HTTP Server)
 echo "[*] Starting Web Dashboard on http://localhost:3000..."
-cd services/web
+cd src/web
 $PYTHON_BIN -m http.server 3000 > ../../$LOG_DIR/web.log 2>&1 &
 WEB_PID=$!
 cd ../..
