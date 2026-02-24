@@ -30,6 +30,10 @@ class OAuthManager:
         if not config:
             return None
         
+        # Validate that credentials are not mock-id
+        if config['client_id'] == "mock-id" or config['client_secret'] == "mock-secret":
+            raise ValueError(f"As credenciais OAuth para {provider} não foram configuradas no .env. Configure GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET.")
+            
         return f"{config['auth_url']}?client_id={config['client_id']}&redirect_uri={redirect_uri}&response_type=code&scope={config['scope']}&access_type=offline&prompt=consent"
 
     async def exchange_code(self, provider: str, code: str, redirect_uri: str):

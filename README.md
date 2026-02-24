@@ -160,4 +160,24 @@ graph LR
 └── start_ronaldinho.sh      # Unified Launcher
 ```
 
+---
+
+## 🔑 OAuth2 Setup (Dashboard)
+
+To use the Dashboard's "Connect" buttons, you must provide your own OAuth2 credentials:
+
+1. **Google Gemini**:
+   - Go to [Google Cloud Console](https://console.cloud.google.com/).
+   - Create a project and enable the **Generative Language API**.
+   - Create an **OAuth 2.0 Client ID** (Web Application).
+   - Add `http://localhost:3000/index.html` to **Authorized redirect URIs**.
+   - Copy the Client ID and Secret to your `.env`.
+
+2. **Configuration**:
+   Add these to your `.env`:
+   ```bash
+   GOOGLE_CLIENT_ID=your-id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-secret
+   ```
+
 License: **MIT**
