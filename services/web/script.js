@@ -51,10 +51,16 @@ async function sendMessage() {
 
         const data = await response.json();
         chatMessages.removeChild(typingDiv);
+        
+        if (!response.ok) {
+            appendMessage(`⚠️ Erro: ${data.detail || 'Ocorreu um erro no servidor'}`, 'ai');
+            return;
+        }
+
         appendMessage(data.response, 'ai');
     } catch (error) {
-        chatMessages.removeChild(typingDiv);
-        appendMessage('Desculpe, craque. Ocorreu um erro na conexão.', 'ai');
+        if (chatMessages.contains(typingDiv)) chatMessages.removeChild(typingDiv);
+        appendMessage('❌ Desculpe, craque. Erro de conexão com o Core.', 'ai');
         console.error('Error:', error);
     }
 }

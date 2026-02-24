@@ -9,7 +9,13 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     ANTHROPIC_API_KEY: str = ""
     NVIDIA_API_KEY: str = ""
+    NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
     NVIDIA_MODEL_ID: str = "meta/llama-3-1-8b-instruct"
+    
+    # NVIDIA NIM (Self-hosted)
+    NIM_BASE_URL: str = ""
+    NIM_API_KEY: str = "local-dev-key"
+    
     GROQ_API_KEY: str = ""
     
     # Expanded Free Model Providers
@@ -23,7 +29,7 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     TELEGRAM_BOT_TOKEN: str = ""
     LLM_PROVIDER: str = "gemini" # Default provider
-    MODEL_PRIORITY: str = "gemini,nvidia,openai,anthropic,groq,cerebras,sambanova,openrouter,mistral"
+    MODEL_PRIORITY: str = "gemini,nvidia,nim,openai,anthropic,groq,cerebras,sambanova,openrouter,mistral"
     CODING_MODEL_ID: str = "nvidia:meta/llama-3.1-405b-instruct"
     ENABLE_BENCHMARKING: bool = True
     PORT: int = 5000
