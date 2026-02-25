@@ -1,90 +1,112 @@
-const chatMessages = document.getElementById('chat-messages');
-const userInput = document.getElementById('user-input');
-const sendBtn = document.getElementById('send-btn');
-const personaName = document.getElementById('persona-name');
-const personaStatus = document.getElementById('persona-status');
-const statusModel = document.getElementById('status-model');
+const menuItems = document.querySelectorAll('.menu-item');
+const tabPanes = document.querySelectorAll('.tab-pane');
+const viewTitle = document.getElementById('view-title');
+const saveBtn = document.getElementById('save-all-btn');
+const toast = document.getElementById('toast');
 
-const API_URL = 'http://localhost:5000/api/chat';
+const CORE_URL = 'http://localhost:5000';
 
-function addMessage(text, type = 'system') {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `message ${type}`;
-    
-    // Simple markdown-to-html (bold only for now)
-    const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
-    
-    msgDiv.innerHTML = `<div class="bubble">${formattedText}</div>`;
-    chatMessages.appendChild(msgDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+// Tab switching
+menuItems.forEach(item => {
+    item.addEventListener('click', () => {
+        const target = item.getAttribute('data-tab');
+        
+        menuItems.forEach(i => i.classList.remove('active'));
+        tabPanes.forEach(p => p.classList.remove('active'));
+        
+        item.classList.add('active');
+        document.getElementById(`tab-${target}`).classList.add('active');
+        
+        viewTitle.innerText = item.innerText.trim();
+    });
+});
+
+function showToast(msg) {
+    toast.innerText = msg;
+    toast.classList.add('active');
+    setTimeout(() => toast.classList.remove('active'), 3000);
 }
 
-async function sendMessage() {
-    const text = userInput.value.trim();
-    if (!text) return;
+// Stats & Config Fetching
+async function syncDashboard() {
+    try {
+        const [healthRes, configRes] = await Promise.all([
+            fetch(`${CORE_URL}/health`),
+            fetch(`${CORE_URL}/api/config`)
+        ]);
 
-    userInput.value = '';
-    addMessage(text, 'user');
+        if (healthRes.ok) {
+            const health = await healthRes.json();
+            document.getElementById('status-core').innerText = "Online";
+            document.getElementById('status-team').innerText = `${health.active_team_count} Especialistas`;
+            document.getElementById('val-llm').innerText = health.llm_provider.toUpperCase();
+            document.getElementById('val-ghost').innerText = health.browser_ghost_mode === 'active' ? 'Ativo' : 'Logoff';
+            document.getElementById('val-telegram').innerText = health.telegram_active ? 'Conectado' : 'Offline';
+        }
 
-    // Show typing indicator
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'message system typing';
-    typingDiv.innerHTML = '<div class="bubble">...</div>';
-    chatMessages.appendChild(typingDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (configRes.ok) {
+            const config = await configRes.json();
+            document.getElementById('key-gemini').value = config.GEMINI_API_KEY;
+            document.getElementById('key-openai').value = config.OPENAI_API_KEY;
+            document.getElementById('key-nvidia').value = config.NVIDIA_API_KEY;
+            document.getElementById('key-telegram').value = config.TELEGRAM_BOT_TOKEN;
+            document.getElementById('model-priority').value = config.MODEL_PRIORITY;
+        }
+    } catch (e) {
+        document.getElementById('status-core').innerText = "Offline";
+        document.getElementById('status-core').className = "value";
+    }
+}
+
+// Save Config
+saveBtn.addEventListener('click', async () => {
+    const keys = {
+        GEMINI_API_KEY: document.getElementById('key-gemini').value,
+        OPENAI_API_KEY: document.getElementById('key-openai').value,
+        NVIDIA_API_KEY: document.getElementById('key-nvidia').value,
+        TELEGRAM_BOT_TOKEN: document.getElementById('key-telegram').value,
+        MODEL_PRIORITY: document.getElementById('model-priority').value
+    };
 
     try {
-        const response = await fetch(API_URL, {
+        saveBtn.innerText = "Salvando...";
+        saveBtn.disabled = true;
+
+        const res = await fetch(`${CORE_URL}/api/config/save`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text })
+            body: JSON.stringify({ keys })
         });
 
-        chatMessages.removeChild(typingDiv);
-
-        if (response.ok) {
-            const data = await response.json();
-            addMessage(data.response);
-            
-            // Check if persona changed (heuristic)
-            if (text.toLowerCase().includes('arquitetura')) personaName.innerText = "Ronaldinho (Arquiteto)";
-            else if (text.toLowerCase().includes('frontend')) personaName.innerText = "Ronaldinho (Frontend)";
-            else if (text.toLowerCase().includes('bug')) personaName.innerText = "Ronaldinho (Reviewer)";
-            else personaName.innerText = "Ronaldinho (Orquestrador)";
-
-        } else {
-            addMessage("❌ Erro ao conectar com o Core.");
-        }
-    } catch (error) {
-        chatMessages.removeChild(typingDiv);
-        addMessage("❌ Falha crítica de conexão.");
-    }
-}
-
-sendBtn.addEventListener('click', sendMessage);
-userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    }
-});
-
-// Auto-expand textarea
-userInput.addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = (this.scrollHeight) + 'px';
-});
-
-// Fetch initial health
-async function checkHealth() {
-    try {
-        const res = await fetch('http://localhost:5000/health');
         if (res.ok) {
-            const data = await res.json();
-            statusModel.innerText = data.llm_provider.toUpperCase();
+            showToast("Configurações salvas! ⚽");
+        } else {
+            showToast("Erro ao salvar configurações.");
         }
-    } catch (e) {}
+    } catch (e) {
+        showToast("Falha técnica de conexão.");
+    } finally {
+        saveBtn.innerText = "Salvar Alterações";
+        saveBtn.disabled = false;
+    }
+});
+
+// Trigger Browser Login
+async function triggerBrowserLogin() {
+    try {
+        const res = await fetch(`${CORE_URL}/api/browser/login`, {
+            method: 'POST'
+        });
+        if (res.ok) {
+            showToast("🚀 Abrindo navegador de login...");
+        } else {
+            showToast("❌ Falha ao abrir navegador.");
+        }
+    } catch (e) {
+        showToast("Falha de conexão com o Core.");
+    }
 }
 
-checkHealth();
-setInterval(checkHealth, 10000);
+// Initial Sync
+syncDashboard();
+setInterval(syncDashboard, 15000);

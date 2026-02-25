@@ -63,16 +63,38 @@ def get_integrated_system_prompt(root_path: str, active_persona: str = None) -> 
 def detect_best_persona(message: str) -> str:
     """Heuristically determines the best specialist for a message."""
     msg = message.lower()
-    if any(kw in msg for kw in ["arquitetura", "estrutura", "padrao", "desenho"]):
-        return "architect"
-    if any(kw in msg for kw in ["frontend", "ui", "ux", "tela", "css", "react"]):
-        return "frontend"
-    if any(kw in msg for kw in ["banco", "database", "sql", "postgres", "schema"]):
-        return "database"
-    if any(kw in msg for kw in ["bug", "fix", "erro", "consertar", "debug"]):
-        return "reviewer"
-    if any(kw in msg for kw in ["codigo", "implemente", "crie", "desenvolva"]):
-        return "developer"
-    if any(kw in msg for kw in ["saas", "negocio", "plano", "mercado"]):
-        return "business"
+    
+    # 0. High priority: Antigravity Signal
+    if "[antigravity_sig]" in msg:
+        return "antigravity_envoy"
+    
+    # 1. Hardcoded high-priority mappings
+    mappings = {
+        "architect": ["arquitetura", "projeto", "estrutura", "padrao", "desenho"],
+        "frontend": ["frontend", "ui", "ux", "tela", "css", "react", "html", "browser"],
+        "database": ["banco", "database", "sql", "postgres", "schema", "query", "mongo"],
+        "reviewer": ["bug", "fix", "erro", "consertar", "debug", "audit"],
+        "developer": ["codigo", "implemente", "crie", "desenvolva", "funcao", "script"],
+        "devops": ["docker", "deploy", "kubernetes", "k8s", "pipeline", "ci/cd", "infra"],
+        "security": ["seguranca", "security", "pentest", "vulnerabilidade", "auth"],
+        "business": ["saas", "negocio", "plano", "mercado", "roi", "produto"],
+        "prompt_engineer": ["prompt", "instrucao", "system prompt", "melhore o prompt"],
+        "rag_architect": ["rag", "retrieval", "vetorial", "embeddings"],
+    }
+    
+    for persona, keywords in mappings.items():
+        if any(kw in msg for kw in keywords):
+            return persona
+
+    # 2. Dynamic slug matching
+    # Check if the message contains any of the 100+ roles by their simplified name
+    team_dir = ".agent/team"
+    if os.path.exists(team_dir):
+        files = [f.replace(".toon", "") for f in os.listdir(team_dir) if f.endswith(".toon")]
+        for role_slug in files:
+            # Check if slug or humanized name is in message
+            humanized = role_slug.replace("_", " ")
+            if role_slug in msg or humanized in msg:
+                return role_slug
+
     return None

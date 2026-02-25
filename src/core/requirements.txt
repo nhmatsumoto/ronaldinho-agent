@@ -10,3 +10,6 @@ anthropic
 aiohttp
 rich
 python-telegram-bot
+playwright
+playwright-stealth
+python-dotenv

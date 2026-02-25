@@ -20,6 +20,18 @@ chmod +x start_ronaldinho.sh
 
 PYTHON_BIN="$(pwd)/venv/bin/python3 -u"
 
+# 0.5 Check Browser Session (Ghost Mode)
+SESSION_DIR=".agent/browser_session"
+if [ ! -d "$SESSION_DIR" ] || [ -z "$(ls -A $SESSION_DIR)" ]; then
+    echo "[!] Browser session (Ghost Mode) not found or empty."
+    read -p "[?] Deseja realizar o login no ChatGPT agora para ativar o Ghost Mode? (s/n): " login_choice
+    if [[ "$login_choice" == "s" || "$login_choice" == "S" ]]; then
+        ./scripts/browser_login.sh
+    else
+        echo "[*] Prosseguindo sem Ghost Mode configurado."
+    fi
+fi
+
 # 1. Start Signaling Server
 echo "[*] Starting Signaling Server..."
 $PYTHON_BIN signaling_server.py > $LOG_DIR/signaling.log 2>&1 &
