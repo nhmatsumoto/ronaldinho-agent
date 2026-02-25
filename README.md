@@ -119,6 +119,17 @@ If APIs fail, Ronaldinho uses your browser session. To configure:
 
 ---
 
+## 📱 Telegram Integration
+
+Ronaldinho uses Telegram as his primary Neural Bridge for interacting with you on the go.
+
+1. **Create the Bot**: Talk to [@BotFather](https://t.me/botfather) on Telegram and send `/newbot`.
+2. **Get the Token**: Choose a name and username for your agent. BotFather will provide an HTTP API Token (e.g., `123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11`).
+3. **Configure**: Add the token to your `.env` file under `TELEGRAM_BOT_TOKEN`, or set it securely via the OpenClaw Dashboard.
+4. **Chat**: Open your new bot on Telegram, hit Start, and send your first mission!
+
+---
+
 ## 🔑 Environment Variables (.env)
 
 | Variable             | Description                                                            |
