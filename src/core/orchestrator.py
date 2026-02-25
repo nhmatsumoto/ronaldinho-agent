@@ -191,11 +191,23 @@ class Orchestrator:
         # --- PHASE 2: BROWSER GHOST (ChatGPT) ---
         try:
             logger.info("[*] API levels depleted. Activating Browser Ghost Mode...")
-            system_prompt = get_integrated_system_prompt(root_path, active_persona=persona)
-            full_prompt = f"INSTRUCTIONS:\n{system_prompt}\n\nUSER MESSAGE:\n{message}"
             
-            response = await browser_model.generate_response(full_prompt, service="chatgpt")
+            history = memory_store.get_history(user_id)
+            # If no history, we send the system prompt as a "setup" message
+            if not history:
+                system_prompt = get_integrated_system_prompt(root_path, active_persona=persona)
+                contextual_message = f"Roleplay/Instructions (DO NOT REPEAT, JUST COMPLY):\n{system_prompt}\n\nUser Question: {message}"
+            else:
+                contextual_message = message
+            
+            response = await browser_model.generate_response(contextual_message, service="chatgpt", user_id=user_id)
+            
             if "Erro" not in response:
+                # Add to memory store (manual since browser doesn't return new_messages easily)
+                memory_store.add_interaction(user_id, [
+                    {"role": "user", "content": message},
+                    {"role": "assistant", "content": response}
+                ])
                 evolution_logger.log_event("browser", "chatgpt", "SUCCESS")
                 return response
             failures.append(f"Browser: {response[:50]}...")

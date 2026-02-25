@@ -13,9 +13,10 @@ class BrowserModel:
         self.browser_context = None
         self.playwright = None
         self.access_token = None
-        self.user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        self.user_pages = {} # Map user_id to page
+        self.user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
-    async def _setup(self, headless=True):
+    async def _setup(self, user_id="default_user", headless=True):
         if not self.playwright:
             self.playwright = await async_playwright().start()
             self.browser_context = await self.playwright.chromium.launch_persistent_context(
@@ -26,22 +27,24 @@ class BrowserModel:
                     "--disable-blink-features=AutomationControlled",
                     "--no-sandbox",
                     "--disable-setuid-sandbox",
-                    "--window-size=1920,1080"
+                    "--window-size=1280,720"
                 ]
             )
-            page = self.browser_context.pages[0] if self.browser_context.pages else await self.browser_context.new_page()
+        
+        if user_id not in self.user_pages or self.user_pages[user_id].is_closed():
+            page = await self.browser_context.new_page()
             page.on("response", self._intercept_auth)
-            await page.set_viewport_size({"width": 1920, "height": 1080})
+            await page.set_viewport_size({"width": 1280, "height": 720})
             
-            # Initial token extraction
+            # Initial load to chatgpt
             try:
                 await page.goto("https://chatgpt.com", wait_until="domcontentloaded", timeout=30000)
-                await asyncio.sleep(5)
-                await self._extract_token_via_js(page)
+                await asyncio.sleep(2)
             except: pass
             
-            return page
-        return self.browser_context.pages[0]
+            self.user_pages[user_id] = page
+
+        return self.user_pages[user_id]
 
     async def _extract_token_via_js(self, page):
         try:
@@ -75,15 +78,16 @@ class BrowserModel:
                     self._save_token(data["accessToken"])
             except: pass
 
-    async def generate_response(self, prompt: str, service="chatgpt") -> str:
+    async def generate_response(self, prompt: str, service="chatgpt", user_id="default_user") -> str:
         try:
-            return await asyncio.wait_for(self._generate_logic(prompt, service), timeout=95)
+            return await asyncio.wait_for(self._generate_logic(prompt, service, user_id), timeout=95)
         except asyncio.TimeoutError:
             return "❌ Erro: Timeout (95s). O ChatGPT está demorando muito para responder."
         except Exception as e:
+            logger.error(f"[!] Browser failure: {e}")
             return f"❌ Erro Crítico Motor: {str(e)}"
 
-    async def _generate_logic(self, prompt: str, service="chatgpt") -> str:
+    async def _generate_logic(self, prompt: str, service="chatgpt", user_id="default_user") -> str:
         token_path = os.path.join(self.session_dir, "last_token.txt")
         if not self.access_token and os.path.exists(token_path):
             with open(token_path, "r") as f:
@@ -125,12 +129,14 @@ class BrowserModel:
                         if last_data: return last_data
             except: pass
 
-        # 2. BROWSER GHOST MODE
-        page = await self._setup(headless=True)
+        # 2. BROWSER GHOST MODE (Playwright)
+        page = await self._setup(user_id=user_id, headless=True)
         try:
             if service == "chatgpt":
-                await page.goto("https://chatgpt.com", wait_until="domcontentloaded", timeout=60000)
-                await asyncio.sleep(5)
+                # Only goto if we are not already on chatgpt
+                if "chatgpt.com" not in page.url:
+                    await page.goto("https://chatgpt.com", wait_until="domcontentloaded", timeout=60000)
+                    await asyncio.sleep(3)
                 
                 if await page.query_selector("text=Log in") or await page.query_selector("text=Sign in"):
                     return "❌ Erro: Login necessário no ChatGPT."

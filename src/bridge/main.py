@@ -1,10 +1,16 @@
 import asyncio
 import os
 import re
+import httpx
+import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
-import httpx
+from telegram.error import BadRequest
 from dotenv import load_dotenv
+
+# Config Logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("ronaldinho-bridge")
 
 # Load Env
 load_dotenv(os.path.join(os.path.dirname(__file__), "../../.env"))
@@ -13,19 +19,39 @@ NEURAL_CORE_URL = os.getenv("NEURAL_CORE_URL", "http://127.0.0.1:5000/api/chat")
 BRIDGE_FILE = os.path.join(os.path.dirname(__file__), "../../.agent/brain/NEURAL_BRIDGE.md")
 LAST_ID_FILE = os.path.join(os.path.dirname(__file__), "../../.agent/brain/LAST_TELEGRAM_ID.txt")
 
+# Global Persistent Client for speed
+http_client = httpx.AsyncClient(timeout=180)
+
 async def send_large_message(bot, chat_id, text):
-    """Splits a long message into chunks for Telegram."""
+    """Splits a long message into chunks for Telegram with Markdown fallback."""
     MAX_LENGTH = 4000
-    if len(text) <= MAX_LENGTH:
-        await bot.send_message(chat_id=chat_id, text=text, parse_mode="Markdown")
-        return
-    for i in range(0, len(text), MAX_LENGTH):
-        await bot.send_message(chat_id=chat_id, text=text[i:i+MAX_LENGTH], parse_mode="Markdown")
-        await asyncio.sleep(0.5)
+    # Clean text to avoid some common markdown issues before sending
+    # But let the fallback handle the heavy lifting
+    chunks = [text[i:i+MAX_LENGTH] for i in range(0, len(text), MAX_LENGTH)]
+    
+    for chunk in chunks:
+        if not chunk.strip(): continue
+        try:
+            # Try with Markdown first
+            await bot.send_message(chat_id=chat_id, text=chunk, parse_mode="Markdown")
+        except BadRequest as e:
+            logger.warning(f"Markdown parse failed, falling back to plain text: {e}")
+            # Explicit fallback for any parsing error
+            try:
+                await bot.send_message(chat_id=chat_id, text=chunk)
+            except Exception as e2:
+                logger.error(f"Failed to send plain text message: {e2}")
+        except Exception as e:
+            logger.error(f"Unexpected error in send_large_message: {e}")
+            # Last ditch effort
+            try:
+                await bot.send_message(chat_id=chat_id, text=chunk)
+            except: pass
+        await asyncio.sleep(0.2)
 
 async def check_neural_bridge(application):
     """Periodically checks the NEURAL_BRIDGE.md for Antigravity responses."""
-    print("[*] Neural Bridge Monitor Active.")
+    logger.info("[*] Neural Bridge Monitor Active.")
     processed_responses = set()
     
     while True:
@@ -38,35 +64,19 @@ async def check_neural_bridge(application):
                     with open(BRIDGE_FILE, 'r') as f:
                         content = f.read()
                     
-                    # Look for [RESPONSE TO: ...] sections
-                    # Simple regex to find responses
                     responses = re.findall(r"--- \[RESPONSE TO: .*?\] ---\n(.*?)(?=\n--- \[|$)", content, re.DOTALL)
                     
                     for resp in responses:
                         resp_id = hash(resp.strip())
                         if resp_id not in processed_responses:
-                            print(f"[*] Found new Antigravity response. Pushing to Telegram ID: {last_chat_id}")
+                            logger.info(f"[*] Found Antigravity response. Pushing to Telegram ID: {last_chat_id}")
                             header = "🛸 **MENSAGEM DO ANTIGRAVITY:**\n\n"
                             await send_large_message(application.bot, last_chat_id, header + resp.strip())
                             processed_responses.add(resp_id)
             except Exception as e:
-                print(f"[!] Error in Bridge Monitor: {e}")
+                logger.error(f"[!] Error in Bridge Monitor: {e}")
         
-        await asyncio.sleep(10) # Check every 10 seconds
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-    chat_id = str(update.effective_chat.id)
-    text = update.message.text
-    
-    # Save last chat ID for Antigravity fallbacks
-    with open(LAST_ID_FILE, 'w') as f:
-        f.write(chat_id)
-    
-    print(f"[*] Message from {user_id} (Chat: {chat_id}): {text}")
-    print(f"    [TELEGRAM] Processing mission for {update.effective_user.first_name}...")
-# Global Persistent Client for speed
-http_client = httpx.AsyncClient(timeout=180)
+        await asyncio.sleep(10)
 
 async def typing_loop(context, chat_id, stop_event):
     """Keep the 'typing' indicator active until the response is ready."""
@@ -83,10 +93,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     
     # Save last chat ID for Antigravity fallbacks
-    with open(LAST_ID_FILE, 'w') as f:
-        f.write(chat_id)
+    try:
+        with open(LAST_ID_FILE, 'w') as f:
+            f.write(chat_id)
+    except: pass
     
-    print(f"[*] Mission received: {text[:50]}...")
+    logger.info(f"[*] Mission received from {update.effective_user.first_name} ({user_id}): {text[:50]}...")
     
     # Start persistent typing indicator
     stop_typing = asyncio.Event()
@@ -105,18 +117,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply = response.json().get("response", "Erro: Resposta vazia.")
             await send_large_message(context.bot, chat_id, reply)
         else:
+            logger.error(f"Neural Core Error: {response.status_code}")
             await context.bot.send_message(chat_id=chat_id, text=f"⚠️ Neural Core Busy ({response.status_code})")
             
     except Exception as e:
         stop_typing.set()
-        await context.bot.send_message(chat_id=chat_id, text=f"❌ Connection Lag: {str(e)[:100]}")
+        logger.error(f"Connection error in handle_message: {e}")
+        await context.bot.send_message(chat_id=chat_id, text=f"❌ Connection Lag or Error: {str(e)[:100]}")
 
 async def main():
     if not TELEGRAM_BOT_TOKEN:
-        print("❌ ERROR: TELEGRAM_BOT_TOKEN not found!")
+        logger.error("❌ ERROR: TELEGRAM_BOT_TOKEN not found!")
         return
         
-    print("🚀 Ronaldinho Python Bridge starting...")
+    logger.info("🚀 Ronaldinho Python Bridge starting...")
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     
     # Start the monitor as a background task
