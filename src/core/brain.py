@@ -11,39 +11,24 @@ _prompt_cache = {
 }
 
 def load_soul_and_knowledge(root_path: str) -> str:
-    """Loads the core soul and knowledge files into a single prompt string."""
+    """Loads a truncated soul for faster response. Knowledge is now handled via tools if needed."""
     soul_path = os.path.join(root_path, ".agent/soul/SOUL.md")
-    knowledge_path = os.path.join(root_path, ".agent/soul/KNOWLEDGE.md")
     
-    prompt_parts = []
+    prompt_parts = ["# IDENTITY: Ronaldinho (OpenClaw Edition)"]
     
     if os.path.exists(soul_path):
         with open(soul_path, 'r') as f:
-            prompt_parts.append(f"### SOUL (Identity)\n{f.read()}")
-            
-    if os.path.exists(knowledge_path):
-        with open(knowledge_path, 'r') as f:
-            prompt_parts.append(f"### KNOWLEDGE (Context)\n{f.read()}")
+            # We only take the first 1000 chars of soul to keep it snappy
+            prompt_parts.append(f.read()[:1000])
             
     return "\n\n".join(prompt_parts)
 
 def load_skills(root_path: str) -> str:
-    """Discovers and loads all SKILL.md files from the skills directory."""
-    skills_dir = os.path.join(root_path, ".agent/skills")
-    if not os.path.exists(skills_dir):
-        return ""
-        
-    skills_prompt = ["### SKILLS (Extended Capabilities)"]
-    
-    for skill_name in os.listdir(skills_dir):
-        skill_path = os.path.join(skills_dir, skill_name)
-        if os.path.isdir(skill_path):
-            skill_file = os.path.join(skill_path, "SKILL.md")
-            if os.path.exists(skill_file):
-                with open(skill_file, 'r') as f:
-                    skills_prompt.append(f"#### Skill: {skill_name}\n{f.read()}")
-                    
-    return "\n\n".join(skills_prompt) if len(skills_prompt) > 1 else ""
+    """
+    Skills metadata loading is now DISABLED here because they are registered as native tools.
+    This saves thousands of tokens per request.
+    """
+    return ""
 
 def load_persona(root_path: str, persona_name: str) -> str:
     """Loads a specific specialist persona from the team directory."""

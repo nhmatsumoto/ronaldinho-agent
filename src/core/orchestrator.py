@@ -20,11 +20,7 @@ if not logger.handlers:
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 class ExecutionLane:
-    """
-    Ensures serial execution per user/session.
-    Prevents race conditions in tool usage (terminal, files).
-    Inspired by OpenClaw's Lane Queue.
-    """
+    """Ensures serial execution per user/session."""
     def __init__(self):
         self.locks = {}
 
@@ -33,7 +29,25 @@ class ExecutionLane:
             self.locks[user_id] = asyncio.Lock()
         return self.locks[user_id]
 
+class MemoryStore:
+    """Persistent chat history to save tokens and maintain context."""
+    def __init__(self):
+        self.histories = {}
+
+    def get_history(self, user_id: str):
+        if user_id not in self.histories:
+            self.histories[user_id] = []
+        return self.histories[user_id]
+
+    def add_interaction(self, user_id: str, messages: list):
+        current = self.get_history(user_id)
+        current.extend(messages)
+        # Keep last 20 interactions to save tokens
+        if len(current) > 40:
+            self.histories[user_id] = current[-40:]
+
 lane_manager = ExecutionLane()
+memory_store = MemoryStore()
 
 # Global Tools Initialization
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -120,9 +134,9 @@ class Orchestrator:
 
     async def process_message(self, message: str, user_id: str = "default_user") -> str:
         async with lane_manager.get_lock(user_id):
-            return await self._process_logic(message)
+            return await self._process_logic(message, user_id)
 
-    async def _process_logic(self, message: str) -> str:
+    async def _process_logic(self, message: str, user_id: str) -> str:
         # 1. Persona Detection
         persona = detect_best_persona(message) or "default"
         if persona != self.current_persona:
@@ -150,7 +164,11 @@ class Orchestrator:
                         model = get_model_instance("gemini", model_id=m_id)
                         if not model: continue
                         logger.debug(f"[*] Executing via {provider}:{m_id}")
-                        result = await self.active_agent.run(message, model=model)
+                        
+                        history = memory_store.get_history(user_id)
+                        result = await self.active_agent.run(message, model=model, message_history=history)
+                        
+                        memory_store.add_interaction(user_id, result.new_messages())
                         evolution_logger.log_event(provider, m_id, "SUCCESS")
                         return result.data
                     except Exception as e:
@@ -160,7 +178,11 @@ class Orchestrator:
                     model = get_model_instance(provider)
                     if not model: continue
                     logger.debug(f"[*] Executing via {provider}")
-                    result = await self.active_agent.run(message, model=model)
+                    
+                    history = memory_store.get_history(user_id)
+                    result = await self.active_agent.run(message, model=model, message_history=history)
+                    
+                    memory_store.add_interaction(user_id, result.new_messages())
                     evolution_logger.log_event(provider, "default", "SUCCESS")
                     return result.data
                 except Exception as e:

@@ -9,6 +9,7 @@ from brain import clear_brain_cache
 from skills_engine import skills_engine
 import uvicorn
 import os
+import subprocess
 
 app = FastAPI(title="Ronaldinho Neural Core (Python)")
 
@@ -45,7 +46,7 @@ async def health_check():
         "status": "ok", 
         "service": "neural-core",
         "edition": "openclaw-pro",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "llm_provider": provider,
         "benchmarking": settings.ENABLE_BENCHMARKING,
         "active_team_count": len(os.listdir(team_path)) if os.path.exists(team_path) else 0,
@@ -137,13 +138,28 @@ async def chat(request: MessageRequest):
         status_code = 429 if "quota" in error_msg.lower() or "429" in error_msg else 503
         raise HTTPException(status_code=status_code, detail=error_msg)
 
+@app.post("/api/browser/login")
+async def browser_login():
+    """Triggers the manual browser login script with DISPLAY inheritance."""
+    try:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../scripts/browser_login.sh"))
+        root_dir = os.path.dirname(os.path.dirname(script_path))
+        os.chmod(script_path, 0o755)
+        
+        # Pass environment to ensure it can open a window on the current desktop
+        subprocess.Popen(["bash", script_path], cwd=root_dir, env=os.environ.copy())
+        return {"status": "success", "message": "Navegador de login aberto. Verifique sua área de trabalho."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/antigravity/sync")
 async def antigravity_sync():
     team_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.agent/team"))
     return {
         "soul": "integrated",
         "active_team_count": len(os.listdir(team_path)) if os.path.exists(team_path) else 0,
-        "protocol": "PROTOCOL_ANTIGRAVITY.md found"
+        "protocol": "PROTOCOL_ANTIGRAVITY.md found",
+        "edition": "OpenClaw Pro"
     }
 
 if __name__ == "__main__":
