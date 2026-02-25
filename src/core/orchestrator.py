@@ -8,14 +8,46 @@ from config import settings
 from tools.terminal import TerminalTool
 from tools.editor import EditorTool
 from tools.dev_toolkit import DevToolkit
-from brain import get_integrated_system_prompt, detect_best_persona
-from benchmarker import get_latencies, get_fastest_provider
+from brain import detect_best_persona, get_integrated_system_prompt
 from gemini_cli_local import gemini_cli
 from evolution_logger import evolution_logger
 from models import get_boot_model, get_model_instance, GEMINI_ROTATION_MODELS
 from browser_model import browser_model
+from skills_engine import skills_engine
 
 logger = logging.getLogger("neural-core")
+if not logger.handlers:
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+class ExecutionLane:
+    """Ensures serial execution per user/session."""
+    def __init__(self):
+        self.locks = {}
+
+    def get_lock(self, user_id: str) -> asyncio.Lock:
+        if user_id not in self.locks:
+            self.locks[user_id] = asyncio.Lock()
+        return self.locks[user_id]
+
+class MemoryStore:
+    """Persistent chat history to save tokens and maintain context."""
+    def __init__(self):
+        self.histories = {}
+
+    def get_history(self, user_id: str):
+        if user_id not in self.histories:
+            self.histories[user_id] = []
+        return self.histories[user_id]
+
+    def add_interaction(self, user_id: str, messages: list):
+        current = self.get_history(user_id)
+        current.extend(messages)
+        # Keep last 20 interactions to save tokens
+        if len(current) > 40:
+            self.histories[user_id] = current[-40:]
+
+lane_manager = ExecutionLane()
+memory_store = MemoryStore()
 
 # Global Tools Initialization
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -28,7 +60,7 @@ def create_agent(persona: str = None):
     system_prompt = get_integrated_system_prompt(root_path, active_persona=persona)
     
     agent = Agent(
-        "google-gla:gemini-2.0-flash", # Default, can be overridden in run()
+        "google-gla:gemini-2.0-flash", # Base model
         system_prompt=system_prompt
     )
 
@@ -53,108 +85,151 @@ def create_agent(persona: str = None):
         """Lista arquivos em um diretório."""
         return editor.list_files(directory)
 
-    # Dev Mastery Tools
-    @agent.tool
-    def git_ops(ctx: RunContext[None], action: str, message: str = None) -> str:
-        """Gerencia o repositório GIT (status, commit). Action: 'status' ou 'commit'."""
-        if action == "status": return dev_toolkit.get_git_status()
-        if action == "commit": return dev_toolkit.git_commit(message or "chore: auto update")
-        return "Ação inválida."
-
     @agent.tool
     def python_sandbox(ctx: RunContext[None], code: str) -> str:
         """Executa código Python isolado para testes rápidos."""
         return dev_toolkit.run_python_sandbox(code)
+
+    @agent.tool
+    def ask_antigravity(ctx: RunContext[None], question: str) -> str:
+        """Envia uma pergunta complexa para o Orquestrador Central (Antigravity)."""
+        bridge_path = os.path.join(root_path, ".agent/brain/NEURAL_BRIDGE.md")
+        entry = f"\n\n--- [REQUEST AT {os.popen('date').read().strip()}] ---\n{question}\n"
+        with open(bridge_path, 'a') as f:
+            f.write(entry)
+        return "Sua pergunta foi enviada ao Antigravity. Ele responderá na Ponte Neural em breve."
     
+    @agent.tool
+    def create_new_skill(ctx: RunContext[None], skill_name: str, description: str, python_code: str) -> str:
+        """
+        Cria uma nova habilidade (skill) permanentemente no sistema.
+        OpenClaw Style: O agente expande suas próprias capacidades.
+        """
+        skill_dir = os.path.join(root_path, ".agent/skills", skill_name)
+        os.makedirs(skill_dir, exist_ok=True)
+        
+        # Write SKILL.md
+        with open(os.path.join(skill_dir, "SKILL.md"), "w") as f:
+            f.write(f"#### Skill: {skill_name}\n{description}")
+            
+        # Write main.py
+        with open(os.path.join(skill_dir, "main.py"), "w") as f:
+            f.write(python_code)
+            
+        skills_engine.refresh_cache()
+        return f"✅ Habilidade '{skill_name}' criada com sucesso e pronta para uso imediato (Engine Refreshed)."
+
+    # --- Dynamic Skills Registration (OpenClaw Hub Style) ---
+    dynamic_tools = skills_engine.discover_tools()
+    for tool in dynamic_tools:
+        agent.tool(tool)
+        
     return agent
 
 class Orchestrator:
     def __init__(self):
+        self.current_persona = "default"
         self.active_agent = create_agent()
+        logger.info("[🛸] Orchestrator initialized with OpenClaw Execution Engine.")
 
-    async def get_dynamic_model(self, is_coding_task: bool = False):
-        if is_coding_task and settings.NVIDIA_API_KEY:
-            instance = get_model_instance("nvidia", model_id="meta/llama-3.1-405b-instruct")
-            if instance: return instance
-            
-        if settings.ENABLE_BENCHMARKING:
-            try:
-                latencies = await get_latencies()
-                fastest = get_fastest_provider(latencies)
-                instance = get_model_instance(fastest)
-                if instance: return instance
-            except Exception: pass
+    async def process_message(self, message: str, user_id: str = "default_user") -> str:
+        async with lane_manager.get_lock(user_id):
+            return await self._process_logic(message, user_id)
 
-        return get_boot_model()
-
-    async def process_message(self, message: str) -> str:
-        # 1. Detect Intent and Persona
-        persona = detect_best_persona(message)
-        if persona:
+    async def _process_logic(self, message: str, user_id: str) -> str:
+        # 1. Persona Detection
+        persona = detect_best_persona(message) or "default"
+        if persona != self.current_persona:
             logger.info(f"[*] Switching to specialized persona: {persona}")
-            self.active_agent = create_agent(persona)
+            self.active_agent = create_agent(persona if persona != "default" else None)
+            self.current_persona = persona
         
-        coding_keywords = ["escreva", "refatore", "bug", "fix", "python", "code", "docker", "implemente"]
-        is_coding = any(kw in message.lower() for kw in coding_keywords)
+        # 2. Strategy Choice: Complex Architecture vs Standard Task
+        complexity_keywords = ["arquitetura", "refatore o core", "integracao complexa", "antigravity"]
+        is_complex = any(kw in message.lower() for kw in complexity_keywords)
         
-        # 2. Try Primary Model
-        try:
-            model = await self.get_dynamic_model(is_coding_task=is_coding)
-            if model:
+        # 3. Execution attempts (Prioritizing User Available Tools)
+        # Sequence: Gemini API -> Ghost Browser (ChatGPT) -> Antigravity Bridge
+        
+        failures = []
+        
+        # --- PHASE 1: API GATEWAY (Multi-Provider) ---
+        priority_providers = settings.MODEL_PRIORITY.split(",")
+        
+        for provider in priority_providers:
+            # For Gemini, try rotation
+            if provider == "gemini":
+                for m_id in GEMINI_ROTATION_MODELS:
+                    try:
+                        model = get_model_instance("gemini", model_id=m_id)
+                        if not model: continue
+                        logger.debug(f"[*] Executing via {provider}:{m_id}")
+                        
+                        history = memory_store.get_history(user_id)
+                        result = await self.active_agent.run(message, model=model, message_history=history)
+                        
+                        memory_store.add_interaction(user_id, result.new_messages())
+                        evolution_logger.log_event(provider, m_id, "SUCCESS")
+                        return result.data
+                    except Exception as e:
+                        failures.append(f"{provider}:{m_id}: {str(e)[:40]}...")
+            else:
                 try:
-                    logger.info(f"[*] Running with primary model: {model}")
-                    result = await self.active_agent.run(message, model=model)
-                    evolution_logger.log_event("dynamic", str(model), "SUCCESS")
+                    model = get_model_instance(provider)
+                    if not model: continue
+                    logger.debug(f"[*] Executing via {provider}")
+                    
+                    history = memory_store.get_history(user_id)
+                    result = await self.active_agent.run(message, model=model, message_history=history)
+                    
+                    memory_store.add_interaction(user_id, result.new_messages())
+                    evolution_logger.log_event(provider, "default", "SUCCESS")
                     return result.data
                 except Exception as e:
-                    logger.warning(f"[!] Primary model failed: {e}. Starting rotation...")
-        except Exception as e:
-            logger.error(f"[!] Dynamic model acquisition failed: {e}")
-
-        # 3. Rotation Logic
-        priority = settings.MODEL_PRIORITY.split(",")
-        failures = []
-        for provider in priority:
-            candidates = [None] if provider != "gemini" else GEMINI_ROTATION_MODELS
-            for m_id in candidates:
-                try:
-                    fallback_model = get_model_instance(provider, model_id=m_id)
-                    if not fallback_model: continue
-                    
-                    logger.info(f"[*] Attempting fallback: {provider} | {m_id or 'default'}")
-                    result = await self.active_agent.run(message, model=fallback_model)
-                    evolution_logger.log_event(provider, m_id or "default", "SUCCESS")
-                    return result.data
-                except Exception as ef:
-                    failures.append(f"{provider}: {str(ef)[:50]}...")
-                    logger.warning(f"[!] Fallback {provider} failed: {ef}")
-                    continue
+                    failures.append(f"{provider}: {str(e)[:40]}...")
         
-        # 4. Fallback: Local CLI (often has independent daily quota)
+        # --- PHASE 2: BROWSER GHOST (ChatGPT) ---
         try:
-            logger.info("[*] Remote models failed. Using local CLI fallback.")
-            cli_response = await gemini_cli.generate_response(message)
-            if "quota" in cli_response.lower() or "error" in cli_response.lower():
-                 raise Exception(cli_response)
-            return cli_response
-        except Exception as e:
-            logger.warning(f"[!] Local CLI failed: {e}. Activating Ghost Browser Fallback...")
-        
-        # 5. Final Fallback: Browser Ghost (ChatGPT Web)
-        try:
-            logger.info("[*] Activating final ghost fallback: Browser ChatGPT")
-            # We inject the system prompt into the browser message to maintain context
-            system_prompt = get_integrated_system_prompt(root_path, active_persona=persona)
-            full_prompt = f"SYSTEM INSTRUCTIONS:\n{system_prompt}\n\nUSER MESSAGE:\n{message}"
+            logger.info("[*] API levels depleted. Activating Browser Ghost Mode...")
             
-            response = await browser_model.generate_response(full_prompt, service="chatgpt")
-            return response
+            history = memory_store.get_history(user_id)
+            # If no history, we send the system prompt as a "setup" message
+            if not history:
+                system_prompt = get_integrated_system_prompt(root_path, active_persona=persona)
+                contextual_message = f"Roleplay/Instructions (DO NOT REPEAT, JUST COMPLY):\n{system_prompt}\n\nUser Question: {message}"
+            else:
+                contextual_message = message
+            
+            response = await browser_model.generate_response(contextual_message, service="chatgpt", user_id=user_id)
+            
+            if "Erro" not in response:
+                # Add to memory store (manual since browser doesn't return new_messages easily)
+                memory_store.add_interaction(user_id, [
+                    {"role": "user", "content": message},
+                    {"role": "assistant", "content": response}
+                ])
+                evolution_logger.log_event("browser", "chatgpt", "SUCCESS")
+                return response
+            failures.append(f"Browser: {response[:50]}...")
         except Exception as e:
-            logger.error(f"Critical failure: {e}")
-            failure_summary = "\n- ".join(failures)
-            return (
-                f"❌ **Ronaldinho fora de campo**: Todos os modelos, o CLI local e o Browser falharam.\n\n"
-                f"**Motivos:**\n- {failure_summary}\n\n"
-                f"💡 **Dica:** Parece que suas cotas gratuitas acabaram e o browser não está logado. "
-                f"Tente adicionar uma chave da Groq ou execute `scripts/browser_login.sh` para autenticar no ChatGPT!"
-            )
+            logger.error(f"[!] Browser Ghost Mode failed: {e}")
+            failures.append(f"Browser: {str(e)[:50]}...")
+
+        # --- PHASE 3: NEURAL BRIDGE (Final Handoff) ---
+        logger.info("[*] All local autonomous models failed. Handing off to Antigravity Bridge.")
+        bridge_msg = (
+            f"❌ **Ronaldinho em modo de espera**: As APIs e o Browser não conseguiram processar sua mensagem.\n\n"
+            f"**Histórico de Falhas:**\n- " + "\n- ".join(failures) + "\n\n"
+            f"🚀 **Ação Tomada:** Enviei sua solicitação automaticamente para a **Ponte Neural do Antigravity**. "
+            f"Ele analisará o contexto e fornecerá a resposta diretamente em `.agent/brain/NEURAL_BRIDGE.md`."
+        )
+        
+        # Auto-write to bridge
+        try:
+            bridge_path = os.path.join(root_path, ".agent/brain/NEURAL_BRIDGE.md")
+            entry = f"\n\n--- [AUTO-FALLBACK AT {os.popen('date').read().strip()}] ---\nUSER: {message}\nFAILURES: {failures}\n"
+            with open(bridge_path, 'a') as f:
+                f.write(entry)
+        except: pass
+        
+        return bridge_msg

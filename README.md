@@ -1,131 +1,145 @@
-# Ronaldinho-Agent 🚀
+# Ronaldinho Agent 🚀 (OpenClaw Pro Edition)
 
-Ronaldinho-Agent is a phenomenal autonomous engineering ecosystem, designed for world-class software development, high performance, and self-evolution.
+Ronaldinho is a phenomenal, autonomous engineering AI ecosystem. It is designed to be model-agnostic, self-evolving, and resilient, inspired by the high-performance principles of the **OpenClaw** framework.
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ System Architecture: The OpenClaw Standard
 
 ```mermaid
 graph TD
-    User([User]) --> |Telegram| Bridge[Python Bridge]
-    User --> |Browser| Dashboard[Premium Web Dashboard]
+    User([User]) --> |Telegram| Bridge[Neural Bridge]
+    User --> |Browser| Dashboard[OpenClaw Dashboard]
 
-    subgraph "Core Ecosystem"
+    subgraph "Neural Gateway"
         Bridge <--> Core[Neural Core - FastAPI]
         Dashboard <--> Core
-        Core --> Vault[(Secure Token Vault)]
-        Core --> Personas[TOON Specialist Personas]
+        Core --> Skills[Skills Engine - Dynamic Loading]
+        Core --> Context[Memory Store - Context Persistence]
     end
 
-    subgraph "AI Providers & Fallbacks"
-        Core --> Gemini[Google Gemini API]
-        Core --> OpenAI[OpenAI API]
+    subgraph "Execution Engine"
+        Core --> Lane[Execution Lane - Serial Queue]
+        Core --> Heartbeat[Neural Heartbeat - Background Worker]
+    end
+
+    subgraph "Model Providers (Agnostic)"
+        Core --> Gemini[Google Gemini 2.0]
+        Core --> OpenAI[OpenAI / O1]
+        Core --> Anthropic[Claude 3.5]
+        Core --> OpenRouter[OpenRouter Hub]
         Core --> NVIDIA[NVIDIA NIM]
-        Core --> Local[Local Gemini CLI]
-        Core --> Ghost[Browser Ghost Mode - Playwright]
+        Core --> Ghost[Browser Ghost Mode]
     end
-
-    Core -.-> |Dynamic Selection| Gemini
 ```
 
 ---
 
-## 🧠 Brain & Specialist Personas (TOON)
+## 🧠 Brain & Abilities
 
-Ronaldinho doesn't just process text; he embodies specializations. Using the **TOON** system, he dynamically switches identities based on your request:
+### ⚡ AgentSkills Engine
 
-- **Architect**: High-level structural design.
-- **Developer**: Full-stack implementation.
-- **Reviewer**: Debugging and code audit.
-- **Frontend**: UX/UI mastery.
-- **DevOps**: Automation and deployment.
+Ronaldinho can dynamically discover and load new capabilities without restarts.
 
-Specialist prompts are located in `.agent/team/*.toon`.
+- **Location**: `.agent/skills/`
+- **Native Tools**: Terminal access, File Editing, Python Sandbox.
+- **Self-Evolution**: Ronaldinho can create its own skills using the `create_new_skill` tool.
 
----
+### 🎭 TOON Specialist Personas
 
-## 🛡️ Resilience: Browser Ghost Fallback
+The system uses specialized "personas" to tackle different types of missions.
 
-When API quotas (Gemini/OpenAI) are exhausted, Ronaldinho activates the **Ghost Mode**. Using Playwright, he interacts directly with AI chat web interfaces as a human operator.
+- **Architect, Developer, DevOps, Security, Business...** and 100+ others.
+- Automatically detected based on your message intent.
 
-### 🔑 Authentication for Ghost Mode
+### 🚜 Execution Lane & Memory
 
-To use this fallback, you must provide a persistent browser session:
-
-1. Run the login helper:
-   ```bash
-   chmod +x scripts/browser_login.sh
-   ./scripts/browser_login.sh
-   ```
-2. Log in manually (e.g., ChatGPT) in the window that opens.
-3. Close the browser. Ronaldinho will now use this session in the background.
+- **Lane Queue**: Ensures commands are executed serially per user to prevent file corruption and race conditions.
+- **Context Persistence**: Maintains a rolling memory of the last 20 interactions, allowing for complex, multi-turn conversations.
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Prerequisites
+### 1. Installation
 
-- **Python 3.10+**
-- **Node.js** (for Playwright/CLI fallback)
-- **Telegram Bot Token** (via [@BotFather](https://t.me/botfather))
-
-### 2. Quick Start
+Ronaldinho comes with a professional CLI for easy management.
 
 ```bash
-# Setup Virtual Environment
-python3 -m venv venv
-source venv/bin/activate
+# Clone the repository
+git clone [repo-url]
+cd ronaldinho-agent
 
-# Install Dependencies
-pip install -r src/core/requirements.txt
-python3 -m playwright install chromium
-
-# Launch (Background Mode)
-chmod +x start_ronaldinho.sh
-./start_ronaldinho.sh
+# Install dependencies and setup environment
+chmod +x ronaldinho.sh
+./ronaldinho.sh install
 ```
 
----
+### 2. Management Commands (`./ronaldinho.sh`)
 
-## 🖥️ Premium Dashboard
+The master script manages the entire ecosystem:
 
-Access the glassmorphism dashboard at `http://localhost:3000`.
-
-- **Neural Core**: `http://localhost:5000`
-- **Signaling (P2P)**: Port `3001`
-
----
-
-## 📂 Repository Structure
-
-```text
-.
-├── .agent/                  # Intelligence Layer
-│   ├── soul/                # Identity (SOUL.md) & Knowledge
-│   ├── skills/              # Agentic Skills
-│   └── team/                # TOON Personas
-├── src/
-│   ├── core/                # Neural Core (FastAPI)
-│   ├── bridge/              # Telegram Bridge
-│   └── web/                 # Premium Dashboard
-├── scripts/                 # Automation & Maintenance
-├── logs_v1/                 # Execution logs
-└── start_ronaldinho.sh      # Unified Launcher
-```
+| Command                  | Description                                                 |
+| ------------------------ | ----------------------------------------------------------- |
+| `./ronaldinho.sh start`  | Launches all services (Core, Bridge, Heartbeat, Dashboard). |
+| `./ronaldinho.sh stop`   | Gracefully shuts down all processes.                        |
+| `./ronaldinho.sh status` | Checks the health of the Neural Core and Gateway.           |
+| `./ronaldinho.sh logs`   | Streams logs from all components.                           |
+| `./ronaldinho.sh skills` | Lists all active and discovered skills.                     |
 
 ---
 
-## 🔑 Environment Configuration (.env)
+## 🖥️ OpenClaw Dashboard
 
-| Variable             | Description                               |
-| -------------------- | ----------------------------------------- |
-| `LLM_PROVIDER`       | Primary provider (gemini, openai, nvidia) |
-| `GEMINI_API_KEY`     | Key for Google AI Studio                  |
-| `TELEGRAM_BOT_TOKEN` | Bot token from BotFather                  |
-| `PORT`               | Primary Core Port (Default: 5000)         |
+Access the premium control center at `http://localhost:3000`.
+
+- **Real-time Stats**: Track active providers, skill count, and heartbeat status.
+- **API Management**: Configure multiple keys (Gemini, Anthropic, OpenAI, etc.) with instant memory propagation.
+- **Browser Ghost Setup**: Trigger the manual login window to authorize ChatGPT or Claude sessions.
+
+---
+
+## 🛡️ Resilience & Fallbacks
+
+Ronaldinho features an industry-leading fallback chain via the **API Gateway**:
+
+1. **Primary API** (Gemini/Anthropic/OpenAI)
+2. **Rotating Keys** (Auto-failover between different API quotas)
+3. **Browser Ghost Mode** (Background Playwright automation)
+4. **Antigravity Neural Bridge** (Direct developer handoff)
+
+### 👻 Ghost Mode Setup
+
+If APIs fail, Ronaldinho uses your browser session. To configure:
+
+1. Open the Dashboard -> Integrations.
+2. Click **"Configurar Sessão"**.
+3. A browser will open. Log in to `chatgpt.com`.
+4. Close the browser. Ronaldinho is now authenticated.
+
+---
+
+## 🔑 Environment Variables (.env)
+
+| Variable             | Description                                                            |
+| -------------------- | ---------------------------------------------------------------------- |
+| `LLM_PROVIDER`       | Default provider (e.g., `gemini`).                                     |
+| `MODEL_PRIORITY`     | Custom fallback order (e.g., `gemini,openai,anthropic,local,browser`). |
+| `GEMINI_API_KEY`     | Google AI Studio key.                                                  |
+| `ANTHROPIC_API_KEY`  | Claude API key.                                                        |
+| `OPENROUTER_API_KEY` | OpenRouter access key.                                                 |
+| `TELEGRAM_BOT_TOKEN` | Bot key from @BotFather.                                               |
+
+---
+
+## 📂 Project Structure
+
+- `src/core/`: The Neural Core (FastAPI) and Orchestration Logic.
+- `src/bridge/`: The Telegram Neural Bridge.
+- `src/web/`: The OpenClaw Premium Dashboard.
+- `.agent/`: The persistent intelligence layer (Soul, Skills, Team).
 
 ---
 
 License: **MIT**
+**Fenomenal. Em campo. 🏟️**

@@ -7,6 +7,12 @@
 echo "🏀 Ronaldinho Browser Login Helper"
 echo "[*] Preparando navegador para login manual..."
 
+# Clear Playwright locks for Chromium to prevent ProcessSingleton errors
+session_dir=$(pwd)/.agent/browser_session
+find "$session_dir" -name "SingletonLock" -delete 2>/dev/null
+find "$session_dir" -name "SingletonSocket" -delete 2>/dev/null
+find "$session_dir" -name "SingletonCookie" -delete 2>/dev/null
+
 PYTHON_BIN=$(pwd)/venv/bin/python3
 
 $PYTHON_BIN -c "

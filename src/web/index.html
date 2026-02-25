@@ -1,90 +1,174 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ronaldinho AI | Neural Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body class="dark-mode">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ronaldinho AI | OpenClaw Edition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-mode">
     <div class="glass-container">
-      <aside class="sidebar">
-        <div class="logo">
-          <span class="emoji">⚽</span>
-          <h1>Ronaldinho</h1>
-          <p>Neural Agent v2.0</p>
-        </div>
-
-        <nav class="menu">
-          <button class="menu-item active" id="btn-chat">
-            <span class="icon">💬</span> Chat Principal
-          </button>
-          <button class="menu-item" id="btn-team">
-            <span class="icon">👥</span> Squad Especialista
-          </button>
-          <button class="menu-item" id="btn-settings">
-            <span class="icon">⚙️</span> Configurações
-          </button>
-        </nav>
-
-        <div class="status-panel">
-          <div class="status-item">
-            <span class="label">Core Status:</span>
-            <span class="value online" id="status-core">Online</span>
-          </div>
-          <div class="status-item">
-            <span class="label">Primary Model:</span>
-            <span class="value" id="status-model">Gemini 2.0</span>
-          </div>
-        </div>
-      </aside>
-
-      <main class="chat-area">
-        <header class="chat-header">
-          <div class="active-persona">
-            <span id="persona-icon">⚽</span>
-            <div>
-              <h2 id="persona-name">Ronaldinho (Orquestrador)</h2>
-              <p id="persona-status">Pronto para o drible</p>
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="emoji">🛸</span>
+                <h1>Ronaldinho</h1>
+                <p>OpenClaw Edition v2.5</p>
             </div>
-          </div>
-        </header>
 
-        <div class="messages" id="chat-messages">
-          <div class="message system">
-            <div class="bubble">
-              Bem-vindo ao campo, você está no controle. Como posso ajudar com
-              sua stack hoje?
+            <nav class="menu">
+                <button class="menu-item active" data-tab="dashboard">
+                    <span class="icon">📊</span> Visão Geral
+                </button>
+                <button class="menu-item" data-tab="keys">
+                    <span class="icon">🔑</span> Chaves & APIs
+                </button>
+                <button class="menu-item" data-tab="skills">
+                    <span class="icon">⚡</span> AgentSkills
+                </button>
+                <button class="menu-item" data-tab="integrations">
+                    <span class="icon">🔗</span> Integrações
+                </button>
+                <button class="menu-item" data-tab="advanced">
+                    <span class="icon">🛠️</span> Avançado
+                </button>
+            </nav>
+
+            <div class="status-panel">
+                <div class="status-item">
+                    <span class="label">Core:</span>
+                    <span class="value online" id="status-core">Online</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Heartbeat:</span>
+                    <span class="value online" id="status-heartbeat">Active</span>
+                </div>
             </div>
-          </div>
-        </div>
+        </aside>
 
-        <footer class="chat-input-area">
-          <div class="input-wrapper">
-            <textarea
-              id="user-input"
-              placeholder="Envie sua missão para o Ronaldinho..."
-              rows="1"
-            ></textarea>
-            <button id="send-btn">
-              <svg viewBox="0 0 24 24" width="24" height="24">
-                <path
-                  fill="currentColor"
-                  d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"
-                ></path>
-              </svg>
-            </button>
-          </div>
-        </footer>
-      </main>
+        <!-- Main Content Area -->
+        <main class="content-area">
+            <header class="content-header">
+                <h2 id="view-title">Dashboard Gateway</h2>
+                <div class="header-actions">
+                    <button id="save-all-btn" class="primary-btn">Propagar Configurações</button>
+                </div>
+            </header>
+
+            <div class="dynamic-content">
+                <!-- Tab: Dashboard -->
+                <div id="tab-dashboard" class="tab-pane active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>🤖 Provedor Ativo</h3>
+                            <p class="stat-val" id="val-llm">Gemini 2.0</p>
+                            <span class="stat-sub" id="val-priority">Priority: Google</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>⚡ Skills Ativas</h3>
+                            <p class="stat-val" id="val-skills">0 Skills</p>
+                            <span class="stat-sub">ClawHub Engine Loading</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>👻 Ghost Mode</h3>
+                            <p class="stat-val" id="val-ghost">Inativo</p>
+                            <span class="stat-sub">Playwright Failover</span>
+                        </div>
+                    </div>
+
+                    <div class="lane-status card">
+                        <h3>🚜 Execution Lane (Session Queue)</h3>
+                        <div class="lane-info">
+                            <p>O sistema de pista única garante que os comandos de terminal e automação de arquivos ocorram de forma serial e segura.</p>
+                            <div class="indicator green">Lane Status: Idle / Ready</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Keys -->
+                <div id="tab-keys" class="tab-pane">
+                    <div class="config-section card">
+                        <h3>Model Agnostic Configuration</h3>
+                        <div class="input-grid">
+                            <div class="input-group">
+                                <label>Google Gemini Key</label>
+                                <input type="password" id="key-gemini" placeholder="AIzaSy...">
+                            </div>
+                            <div class="input-group">
+                                <label>OpenAI Key</label>
+                                <input type="password" id="key-openai" placeholder="sk-...">
+                            </div>
+                            <div class="input-group">
+                                <label>Anthropic (Claude) Key</label>
+                                <input type="password" id="key-anthropic" placeholder="sk-ant-...">
+                            </div>
+                            <div class="input-group">
+                                <label>OpenRouter Key</label>
+                                <input type="password" id="key-openrouter" placeholder="sk-or-...">
+                            </div>
+                            <div class="input-group">
+                                <label>NVIDIA NIM Key</label>
+                                <input type="password" id="key-nvidia" placeholder="nvapi-...">
+                            </div>
+                            <div class="input-group">
+                                <label>Telegram Bot Token</label>
+                                <input type="password" id="key-telegram" placeholder="123456:ABC...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Skills -->
+                <div id="tab-skills" class="tab-pane">
+                    <div class="skills-grid" id="skills-list">
+                        <!-- Skills dynamic load -->
+                        <div class="card skill-loading">Carregando AgentSkills...</div>
+                    </div>
+                    <div class="help-box card">
+                        <p>💡 <b>Dica:</b> O Ronaldinho agora pode criar suas próprias skills se você solicitar via Telegram!</p>
+                    </div>
+                </div>
+
+                <!-- Tab: Integrations -->
+                <div id="tab-integrations" class="tab-pane">
+                    <div class="integrations-list">
+                        <div class="integration-item card">
+                            <div class="info">
+                                <h4>ChatGPT Ghost Mode</h4>
+                                <p>Bridge autônomo via Browser quando APIs de elite atingem o limite.</p>
+                            </div>
+                            <button class="secondary-btn" onclick="triggerBrowserLogin()">Configurar Sessão</button>
+                        </div>
+                        <div class="integration-item card">
+                            <div class="info">
+                                <h4>ClawHub Bridge</h4>
+                                <p>Sincronização com repositórios de habilidades externos.</p>
+                            </div>
+                            <span class="tag green">Ativo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Advanced -->
+                <div id="tab-advanced" class="tab-pane">
+                    <div class="card">
+                        <h3>Priority Pipeline</h3>
+                        <div class="input-group">
+                            <label>MODEL_PRIORITY</label>
+                            <input type="text" id="model-priority" placeholder="gemini,nvidia,openai,anthropic,openrouter">
+                        </div>
+                        <p class="help-text">A ordem em que o Ronaldinho tentará os modelos antes de cair no Ghost Mode.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
+    <div id="toast" class="toast">Mensagem salva com sucesso!⚽</div>
+
     <script src="script.js"></script>
-  </body>
+</body>
 </html>
