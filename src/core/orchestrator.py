@@ -13,8 +13,27 @@ from gemini_cli_local import gemini_cli
 from evolution_logger import evolution_logger
 from models import get_boot_model, get_model_instance, GEMINI_ROTATION_MODELS
 from browser_model import browser_model
+from skills_engine import skills_engine
 
 logger = logging.getLogger("neural-core")
+if not logger.handlers:
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+class ExecutionLane:
+    """
+    Ensures serial execution per user/session.
+    Prevents race conditions in tool usage (terminal, files).
+    Inspired by OpenClaw's Lane Queue.
+    """
+    def __init__(self):
+        self.locks = {}
+
+    def get_lock(self, user_id: str) -> asyncio.Lock:
+        if user_id not in self.locks:
+            self.locks[user_id] = asyncio.Lock()
+        return self.locks[user_id]
+
+lane_manager = ExecutionLane()
 
 # Global Tools Initialization
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -66,18 +85,50 @@ def create_agent(persona: str = None):
             f.write(entry)
         return "Sua pergunta foi enviada ao Antigravity. Ele responderá na Ponte Neural em breve."
     
+    @agent.tool
+    def create_new_skill(ctx: RunContext[None], skill_name: str, description: str, python_code: str) -> str:
+        """
+        Cria uma nova habilidade (skill) permanentemente no sistema.
+        OpenClaw Style: O agente expande suas próprias capacidades.
+        """
+        skill_dir = os.path.join(root_path, ".agent/skills", skill_name)
+        os.makedirs(skill_dir, exist_ok=True)
+        
+        # Write SKILL.md
+        with open(os.path.join(skill_dir, "SKILL.md"), "w") as f:
+            f.write(f"#### Skill: {skill_name}\n{description}")
+            
+        # Write main.py
+        with open(os.path.join(skill_dir, "main.py"), "w") as f:
+            f.write(python_code)
+            
+        skills_engine.refresh_cache()
+        return f"✅ Habilidade '{skill_name}' criada com sucesso e pronta para uso imediato (Engine Refreshed)."
+
+    # --- Dynamic Skills Registration (OpenClaw Hub Style) ---
+    dynamic_tools = skills_engine.discover_tools()
+    for tool in dynamic_tools:
+        agent.tool(tool)
+        
     return agent
 
 class Orchestrator:
     def __init__(self):
+        self.current_persona = "default"
         self.active_agent = create_agent()
+        logger.info("[🛸] Orchestrator initialized with OpenClaw Execution Engine.")
 
-    async def process_message(self, message: str) -> str:
+    async def process_message(self, message: str, user_id: str = "default_user") -> str:
+        async with lane_manager.get_lock(user_id):
+            return await self._process_logic(message)
+
+    async def _process_logic(self, message: str) -> str:
         # 1. Persona Detection
-        persona = detect_best_persona(message)
-        if persona:
+        persona = detect_best_persona(message) or "default"
+        if persona != self.current_persona:
             logger.info(f"[*] Switching to specialized persona: {persona}")
-            self.active_agent = create_agent(persona)
+            self.active_agent = create_agent(persona if persona != "default" else None)
+            self.current_persona = persona
         
         # 2. Strategy Choice: Complex Architecture vs Standard Task
         complexity_keywords = ["arquitetura", "refatore o core", "integracao complexa", "antigravity"]
@@ -88,24 +139,32 @@ class Orchestrator:
         
         failures = []
         
-        # --- PHASE 1: GEMINI API ---
-        for m_id in GEMINI_ROTATION_MODELS:
-            try:
-                model = get_model_instance("gemini", model_id=m_id)
-                if not model: continue
-                
-                logger.debug(f"[*] Attempting Gemini API: {m_id}")
-                result = await self.active_agent.run(message, model=model)
-                evolution_logger.log_event("gemini", m_id, "SUCCESS")
-                return result.data
-            except Exception as e:
-                err_str = str(e)
-                if "429" in err_str or "quota" in err_str.lower():
-                    logger.warning(f"[!] Gemini {m_id} quota exceeded.")
-                else:
-                    logger.warning(f"[!] Gemini {m_id} failed: {err_str[:100]}")
-                failures.append(f"Gemini {m_id}: {err_str[:50]}...")
-                continue
+        # --- PHASE 1: API GATEWAY (Multi-Provider) ---
+        priority_providers = settings.MODEL_PRIORITY.split(",")
+        
+        for provider in priority_providers:
+            # For Gemini, try rotation
+            if provider == "gemini":
+                for m_id in GEMINI_ROTATION_MODELS:
+                    try:
+                        model = get_model_instance("gemini", model_id=m_id)
+                        if not model: continue
+                        logger.debug(f"[*] Executing via {provider}:{m_id}")
+                        result = await self.active_agent.run(message, model=model)
+                        evolution_logger.log_event(provider, m_id, "SUCCESS")
+                        return result.data
+                    except Exception as e:
+                        failures.append(f"{provider}:{m_id}: {str(e)[:40]}...")
+            else:
+                try:
+                    model = get_model_instance(provider)
+                    if not model: continue
+                    logger.debug(f"[*] Executing via {provider}")
+                    result = await self.active_agent.run(message, model=model)
+                    evolution_logger.log_event(provider, "default", "SUCCESS")
+                    return result.data
+                except Exception as e:
+                    failures.append(f"{provider}: {str(e)[:40]}...")
         
         # --- PHASE 2: BROWSER GHOST (ChatGPT) ---
         try:

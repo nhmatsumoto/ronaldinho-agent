@@ -3,6 +3,13 @@ import logging
 
 logger = logging.getLogger("neural-core")
 
+# Simple In-Memory Cache for speed
+_prompt_cache = {
+    "base": None,
+    "skills": None,
+    "personas": {}
+}
+
 def load_soul_and_knowledge(root_path: str) -> str:
     """Loads the core soul and knowledge files into a single prompt string."""
     soul_path = os.path.join(root_path, ".agent/soul/SOUL.md")
@@ -47,18 +54,32 @@ def load_persona(root_path: str, persona_name: str) -> str:
     return ""
 
 def get_integrated_system_prompt(root_path: str, active_persona: str = None) -> str:
-    """Combines Soul, Knowledge, Skills and optional Persona into the final system prompt."""
-    soul_info = load_soul_and_knowledge(root_path)
-    skills_info = load_skills(root_path)
+    """Combines Soul, Knowledge, Skills and optional Persona into the final system prompt with caching."""
+    global _prompt_cache
     
-    full_prompt = [soul_info, skills_info]
+    if _prompt_cache["base"] is None:
+        _prompt_cache["base"] = load_soul_and_knowledge(root_path)
+    
+    if _prompt_cache["skills"] is None:
+        _prompt_cache["skills"] = load_skills(root_path)
+    
+    full_prompt = [_prompt_cache["base"], _prompt_cache["skills"]]
     
     if active_persona:
-        persona_info = load_persona(root_path, active_persona)
+        if active_persona not in _prompt_cache["personas"]:
+            _prompt_cache["personas"][active_persona] = load_persona(root_path, active_persona)
+        
+        persona_info = _prompt_cache["personas"][active_persona]
         if persona_info:
             full_prompt.append(persona_info)
             
     return "\n\n".join(full_prompt)
+
+def clear_brain_cache():
+    """Call this when .env or files are updated."""
+    global _prompt_cache
+    _prompt_cache = {"base": None, "skills": None, "personas": {}}
+    logger.info("[🧠] Brain cache cleared.")
 
 def detect_best_persona(message: str) -> str:
     """Heuristically determines the best specialist for a message."""

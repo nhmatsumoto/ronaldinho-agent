@@ -5,6 +5,8 @@ from orchestrator import Orchestrator
 from config import settings
 from auth import auth_manager
 from vault import vault
+from brain import clear_brain_cache
+from skills_engine import skills_engine
 import uvicorn
 import os
 
@@ -34,16 +36,21 @@ async def health_check():
     provider = settings.LLM_PROVIDER
     team_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.agent/team"))
     browser_session = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.agent/browser_session"))
+    skills_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.agent/skills"))
     
     has_browser_session = os.path.exists(browser_session) and len(os.listdir(browser_session)) > 1
+    skills_count = len(os.listdir(skills_path)) if os.path.exists(skills_path) else 0
     
     return {
         "status": "ok", 
         "service": "neural-core",
+        "edition": "openclaw-pro",
         "version": "1.0.1",
         "llm_provider": provider,
         "benchmarking": settings.ENABLE_BENCHMARKING,
         "active_team_count": len(os.listdir(team_path)) if os.path.exists(team_path) else 0,
+        "active_skills_count": skills_count,
+        "heartbeat": "active",
         "browser_ghost_mode": "active" if has_browser_session else "logged_out",
         "telegram_active": bool(settings.TELEGRAM_BOT_TOKEN)
     }
@@ -51,22 +58,37 @@ async def health_check():
 @app.get("/api/config")
 async def get_config():
     """Returns current sanitized config."""
-    # Only return keys we want the user to see/edit
     return {
         "GEMINI_API_KEY": settings.GEMINI_API_KEY[:8] + "..." if settings.GEMINI_API_KEY else "",
         "OPENAI_API_KEY": settings.OPENAI_API_KEY[:8] + "..." if settings.OPENAI_API_KEY else "",
+        "ANTHROPIC_API_KEY": settings.ANTHROPIC_API_KEY[:8] + "..." if settings.ANTHROPIC_API_KEY else "",
+        "OPENROUTER_API_KEY": settings.OPENROUTER_API_KEY[:8] + "..." if settings.OPENROUTER_API_KEY else "",
         "NVIDIA_API_KEY": settings.NVIDIA_API_KEY[:8] + "..." if settings.NVIDIA_API_KEY else "",
         "TELEGRAM_BOT_TOKEN": settings.TELEGRAM_BOT_TOKEN[:8] + "..." if settings.TELEGRAM_BOT_TOKEN else "",
         "LLM_PROVIDER": settings.LLM_PROVIDER,
         "MODEL_PRIORITY": settings.MODEL_PRIORITY
     }
 
+@app.get("/api/skills")
+async def list_skills():
+    """Lists all installed skills and their metadata."""
+    skills_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.agent/skills"))
+    skills = []
+    if os.path.exists(skills_path):
+        for s in os.listdir(skills_path):
+            if os.path.isdir(os.path.join(skills_path, s)):
+                skills.append({
+                    "id": s,
+                    "name": s.replace("_", " ").title(),
+                    "status": "active"
+                })
+    return {"skills": skills}
+
 @app.post("/api/config/save")
 async def save_config(request: ConfigUpdateRequest):
-    """Saves new keys to .env and reloads settings (simulated)."""
+    """Saves new keys to .env and reloads settings."""
     env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.env"))
     
-    # Read existing .env
     lines = []
     if os.path.exists(env_path):
         with open(env_path, 'r') as f:
@@ -74,14 +96,13 @@ async def save_config(request: ConfigUpdateRequest):
             
     updated_keys = request.keys
     new_lines = []
-    
-    # Simple .env update logic
     seen_keys = set()
+    
     for line in lines:
         matched = False
         for k, v in updated_keys.items():
             if line.startswith(f"{k}="):
-                if v and not v.endswith("..."): # Only update if it's a real new key (not redacted)
+                if v and not v.endswith("..."):
                     new_lines.append(f"{k}={v}\n")
                     seen_keys.add(k)
                     matched = True
@@ -95,92 +116,35 @@ async def save_config(request: ConfigUpdateRequest):
             
     with open(env_path, 'w') as f:
         f.writelines(new_lines)
-        
+    
     # Update settings in memory
     for k, v in updated_keys.items():
         if v and not v.endswith("..."):
             if hasattr(settings, k):
                 setattr(settings, k, v)
-        
+    
+    clear_brain_cache()
+    skills_engine.refresh_cache()
     return {"status": "success", "message": "Configurações salvas e aplicadas em tempo real (Core)."}
 
 @app.post("/api/chat")
 async def chat(request: MessageRequest):
     try:
-        # Orchestrator handles dynamic model/skill selection internally
-        response = await orchestrator.process_message(request.message)
+        response = await orchestrator.process_message(request.message, user_id=request.user_id)
         return {"response": response}
     except Exception as e:
         error_msg = str(e)
-        print(f"[!] Error in chat: {error_msg}")
         status_code = 429 if "quota" in error_msg.lower() or "429" in error_msg else 503
         raise HTTPException(status_code=status_code, detail=error_msg)
 
-# --- Antigravity Integration Endpoints ---
-
-@app.post("/api/antigravity/instruction")
-async def antigravity_instruction(request: MessageRequest):
-    """Specialized endpoint for high-level instructions from Antigravity."""
-    try:
-        # Force the Antigravity Envoy persona
-        response = await orchestrator.process_message(f"[ANTIGRAVITY_SIG] {request.message}")
-        return {
-            "origin": "Antigravity Global",
-            "status": "integrated",
-            "response": response
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @app.get("/api/antigravity/sync")
 async def antigravity_sync():
-    """Returns the current state of Ronaldinho for Antigravity synchronization."""
     team_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.agent/team"))
     return {
         "soul": "integrated",
         "active_team_count": len(os.listdir(team_path)) if os.path.exists(team_path) else 0,
-        "protocol": "PROTOCOL_ANTIGRAVITY.md found",
-        "timestamp": settings.PORT # Simple check
+        "protocol": "PROTOCOL_ANTIGRAVITY.md found"
     }
-
-# --- OAuth2 Endpoints ---
-
-@app.get("/api/auth/login/{provider}")
-async def auth_login(provider: str):
-    # Redirect back to the Dashboard so script.js can handle the code
-    redirect_uri = "http://localhost:3000/index.html"
-    try:
-        url = auth_manager.get_login_url(provider, redirect_uri)
-        if not url:
-            raise HTTPException(status_code=400, detail="Provedor inválido")
-        return {"url": url}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@app.get("/api/auth/callback")
-async def auth_callback(code: str, provider: str = "google"):
-    # The redirect_uri must match what was sent to Google
-    redirect_uri = "http://localhost:3000/index.html"
-    token = await auth_manager.exchange_code(provider, code, redirect_uri)
-    if not token:
-        raise HTTPException(status_code=400, detail="Falha na autenticação")
-    return {"status": "success", "message": f"Conectado ao {provider} com sucesso!"}
-
-@app.get("/api/auth/status")
-async def auth_status():
-    return {"providers": vault.list_providers()}
-
-@app.post("/api/browser/login")
-async def browser_login():
-    """Triggers the manual browser login script."""
-    import subprocess
-    try:
-        # Run the script in the background to not block the API
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../scripts/browser_login.sh"))
-        subprocess.Popen(["bash", script_path], cwd=os.path.dirname(os.path.dirname(script_path)))
-        return {"status": "success", "message": "Navegador de login aberto. Verifique sua barra de tarefas."}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=settings.PORT)

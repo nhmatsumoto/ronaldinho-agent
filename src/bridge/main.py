@@ -65,22 +65,51 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     print(f"[*] Message from {user_id} (Chat: {chat_id}): {text}")
     print(f"    [TELEGRAM] Processing mission for {update.effective_user.first_name}...")
-    await context.bot.send_chat_action(chat_id=chat_id, action="typing")
-    
-    async with httpx.AsyncClient() as client:
+# Global Persistent Client for speed
+http_client = httpx.AsyncClient(timeout=180)
+
+async def typing_loop(context, chat_id, stop_event):
+    """Keep the 'typing' indicator active until the response is ready."""
+    while not stop_event.is_set():
         try:
-            response = await client.post(
-                NEURAL_CORE_URL,
-                json={"message": text, "user_id": user_id, "platform": "telegram"},
-                timeout=180
-            )
-            if response.status_code == 200:
-                reply = response.json().get("response", "Erro: Resposta vazia.")
-                await send_large_message(context.bot, chat_id, reply)
-            else:
-                await context.bot.send_message(chat_id=chat_id, text=f"Erro no Neural Core: {response.status_code}")
-        except Exception as e:
-            await context.bot.send_message(chat_id=chat_id, text=f"Erro de conexão: {str(e)}")
+            await context.bot.send_chat_action(chat_id=chat_id, action="typing")
+            await asyncio.sleep(4)
+        except:
+            break
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id)
+    chat_id = str(update.effective_chat.id)
+    text = update.message.text
+    
+    # Save last chat ID for Antigravity fallbacks
+    with open(LAST_ID_FILE, 'w') as f:
+        f.write(chat_id)
+    
+    print(f"[*] Mission received: {text[:50]}...")
+    
+    # Start persistent typing indicator
+    stop_typing = asyncio.Event()
+    typing_task = asyncio.create_task(typing_loop(context, chat_id, stop_typing))
+    
+    try:
+        response = await http_client.post(
+            NEURAL_CORE_URL,
+            json={"message": text, "user_id": user_id, "platform": "telegram"}
+        )
+        
+        stop_typing.set()
+        await typing_task
+        
+        if response.status_code == 200:
+            reply = response.json().get("response", "Erro: Resposta vazia.")
+            await send_large_message(context.bot, chat_id, reply)
+        else:
+            await context.bot.send_message(chat_id=chat_id, text=f"⚠️ Neural Core Busy ({response.status_code})")
+            
+    except Exception as e:
+        stop_typing.set()
+        await context.bot.send_message(chat_id=chat_id, text=f"❌ Connection Lag: {str(e)[:100]}")
 
 async def main():
     if not TELEGRAM_BOT_TOKEN:
