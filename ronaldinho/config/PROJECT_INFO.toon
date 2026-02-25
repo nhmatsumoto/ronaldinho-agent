@@ -1,9 +1,0 @@
-| Project Name | Ronaldinho-Agent |
-| Description | crie um plano para empreender com saas no japão |
- |
- |
-| Stack | .NET 9, Docker, React, Gemini AI, TailwindCSS |
-| Status | ACTIVE (L6 Autonomy) |
-| Architecture | Clean Architecture + DDD |
-| Database | PostgreSQL + Redis |
-| Documentation | .agent/Engineering_Specs.toon |

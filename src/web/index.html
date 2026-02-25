@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ronaldinho AI | Neural Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="dark-mode">
+    <div class="glass-container">
+      <aside class="sidebar">
+        <div class="logo">
+          <span class="emoji">⚽</span>
+          <h1>Ronaldinho</h1>
+          <p>Neural Agent v2.0</p>
+        </div>
+
+        <nav class="menu">
+          <button class="menu-item active" id="btn-chat">
+            <span class="icon">💬</span> Chat Principal
+          </button>
+          <button class="menu-item" id="btn-team">
+            <span class="icon">👥</span> Squad Especialista
+          </button>
+          <button class="menu-item" id="btn-settings">
+            <span class="icon">⚙️</span> Configurações
+          </button>
+        </nav>
+
+        <div class="status-panel">
+          <div class="status-item">
+            <span class="label">Core Status:</span>
+            <span class="value online" id="status-core">Online</span>
+          </div>
+          <div class="status-item">
+            <span class="label">Primary Model:</span>
+            <span class="value" id="status-model">Gemini 2.0</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="chat-area">
+        <header class="chat-header">
+          <div class="active-persona">
+            <span id="persona-icon">⚽</span>
+            <div>
+              <h2 id="persona-name">Ronaldinho (Orquestrador)</h2>
+              <p id="persona-status">Pronto para o drible</p>
+            </div>
+          </div>
+        </header>
+
+        <div class="messages" id="chat-messages">
+          <div class="message system">
+            <div class="bubble">
+              Bem-vindo ao campo, você está no controle. Como posso ajudar com
+              sua stack hoje?
+            </div>
+          </div>
+        </div>
+
+        <footer class="chat-input-area">
+          <div class="input-wrapper">
+            <textarea
+              id="user-input"
+              placeholder="Envie sua missão para o Ronaldinho..."
+              rows="1"
+            ></textarea>
+            <button id="send-btn">
+              <svg viewBox="0 0 24 24" width="24" height="24">
+                <path
+                  fill="currentColor"
+                  d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </footer>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

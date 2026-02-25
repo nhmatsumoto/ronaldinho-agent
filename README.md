@@ -1,6 +1,6 @@
 # Ronaldinho-Agent 🚀
 
-Ronaldinho-Agent is an autonomous engineering ecosystem designed for high performance and self-evolution.
+Ronaldinho-Agent is a phenomenal autonomous engineering ecosystem, designed for world-class software development, high performance, and self-evolution.
 
 ---
 
@@ -9,141 +9,92 @@ Ronaldinho-Agent is an autonomous engineering ecosystem designed for high perfor
 ```mermaid
 graph TD
     User([User]) --> |Telegram| Bridge[Python Bridge]
-    User --> |Browser| Dashboard[Web Dashboard]
+    User --> |Browser| Dashboard[Premium Web Dashboard]
 
     subgraph "Core Ecosystem"
-        Bridge <--> Core[Python NeuralCore]
+        Bridge <--> Core[Neural Core - FastAPI]
         Dashboard <--> Core
         Core --> Vault[(Secure Token Vault)]
-        Core --> Bench[Model Benchmarker]
+        Core --> Personas[TOON Specialist Personas]
     end
 
-    subgraph "AI Providers"
-        Core --> Gemini[Google Gemini]
-        Core --> OpenAI[OpenAI]
+    subgraph "AI Providers & Fallbacks"
+        Core --> Gemini[Google Gemini API]
+        Core --> OpenAI[OpenAI API]
         Core --> NVIDIA[NVIDIA NIM]
         Core --> Local[Local Gemini CLI]
+        Core --> Ghost[Browser Ghost Mode - Playwright]
     end
 
-    Bench -.-> |Integrity Check| Gemini
-    Bench -.-> |Integrity Check| OpenAI
+    Core -.-> |Dynamic Selection| Gemini
 ```
 
 ---
 
-## � Evolutionary Memory & Decentralized Knowledge
+## 🧠 Brain & Specialist Personas (TOON)
 
-Ronaldinho maintains a self-improving memory system that combines local versioning with decentralized verification.
+Ronaldinho doesn't just process text; he embodies specializations. Using the **TOON** system, he dynamically switches identities based on your request:
 
-### 1. Git-Based Memory Diffs
+- **Architect**: High-level structural design.
+- **Developer**: Full-stack implementation.
+- **Reviewer**: Debugging and code audit.
+- **Frontend**: UX/UI mastery.
+- **DevOps**: Automation and deployment.
 
-All internal state changes, learned skills, and project modifications are tracked as versioned commits. This allows the agent to "rewind" its state or branch out into different knowledge paths.
-
-```mermaid
-gitGraph
-    commit id: "Core Setup"
-    commit id: "Learning: JavaScript"
-    branch feature/python-ai
-    checkout feature/python-ai
-    commit id: "Neural patterns"
-    commit id: "Vault implementation"
-    checkout main
-    merge feature/python-ai
-    commit id: "Evolution V3"
-```
-
-### 2. Blockchain Knowledge Ledger
-
-To ensure knowledge integrity and cross-agent synchronization, Ronaldinho anchors "Knowledge Transactions" to a decentralized ledger. This prevents data tampering and enables a shared source of truth for autonomous agents.
-
-```mermaid
-graph LR
-    Core[Neural Core] --> |New Fact/Skill| Tx[Knowledge Transaction]
-    Tx --> Hash[Cryptographic Hash]
-    Hash --> Chain{Blockchain Ledger}
-    Chain --> Block1[Block N]
-    Chain --> Block2[Block N+1]
-    Block1 -.-> |Sync| Other[Other Agents]
-```
+Specialist prompts are located in `.agent/team/*.toon`.
 
 ---
 
-## �🛠️ Getting Started
+## 🛡️ Resilience: Browser Ghost Fallback
+
+When API quotas (Gemini/OpenAI) are exhausted, Ronaldinho activates the **Ghost Mode**. Using Playwright, he interacts directly with AI chat web interfaces as a human operator.
+
+### 🔑 Authentication for Ghost Mode
+
+To use this fallback, you must provide a persistent browser session:
+
+1. Run the login helper:
+   ```bash
+   chmod +x scripts/browser_login.sh
+   ./scripts/browser_login.sh
+   ```
+2. Log in manually (e.g., ChatGPT) in the window that opens.
+3. Close the browser. Ronaldinho will now use this session in the background.
+
+---
+
+## 🚀 Getting Started
 
 ### 1. Prerequisites
 
 - **Python 3.10+**
-- **Docker & Docker Compose** (optional)
-- **Telegram Bot Token** (obtained via [@BotFather](https://t.me/botfather))
+- **Node.js** (for Playwright/CLI fallback)
+- **Telegram Bot Token** (via [@BotFather](https://t.me/botfather))
 
-### 2. Environment Configuration
-
-Create a `.env` file in the root directory (use `.env.example` as a template):
+### 2. Quick Start
 
 ```bash
-cp .env.example .env
-```
-
-### 3. Local Execution (Quick Start)
-
-```bash
+# Setup Virtual Environment
 python3 -m venv venv
 source venv/bin/activate
-pip install -r services/core/requirements.txt
+
+# Install Dependencies
+pip install -r src/core/requirements.txt
+python3 -m playwright install chromium
+
+# Launch (Background Mode)
 chmod +x start_ronaldinho.sh
 ./start_ronaldinho.sh
 ```
 
 ---
 
-## 🖥️ Web Dashboard & OAuth2 Flow
+## 🖥️ Premium Dashboard
 
-Ronaldinho uses a modern authentication flow to manage your AI credentials securely.
+Access the glassmorphism dashboard at `http://localhost:3000`.
 
-### Connection Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant D as Dashboard
-    participant C as NeuralCore
-    participant P as AI Provider
-    participant V as Vault
-
-    U->>D: Click "Connect"
-    D->>C: GET /api/auth/login
-    C-->>D: Authorization URL
-    D->>P: Redirect to Login
-    P-->>D: Return with Auth Code
-    D->>C: GET /api/auth/callback?code=...
-    C->>P: Exchange Code for Token
-    P-->>C: Access Token
-    C->>V: Encrypt and Save Token
-    V-->>C: Success
-    C-->>D: Status: Connected
-```
-
----
-
-## 🧠 Intelligence and Resilience
-
-### Model Selection (Integrity Logic)
-
-Ronaldinho doesn't just "ping" providers; it tests the functional capability of each model before selecting it.
-
-```mermaid
-graph LR
-    Start[Request Start] --> CheckVault{Token in Vault?}
-    CheckVault -->|Yes| UseVault[Use Personal Token]
-    CheckVault -->|No| UseEnv[Use .env Key]
-
-    UseVault --> Bench[Benchmarker: Test Latency/Integrity]
-    UseEnv --> Bench
-
-    Bench --> Best{Which is best?}
-    Best -->|Online| Model[Execute with Fast Model]
-    Best -->|Failure| Local[Fallback: Local Gemini CLI]
-```
+- **Neural Core**: `http://localhost:5000`
+- **Signaling (P2P)**: Port `3001`
 
 ---
 
@@ -151,33 +102,30 @@ graph LR
 
 ```text
 .
-├── services/
-│   ├── core/                # Brain & Manus Tools (FastAPI)
-│   ├── bridge/              # Telegram Bridge (Python)
-│   └── web/                 # Dashboard Web (OIDC/OAuth2)
-├── ronaldinho/              # Soul & Secure Vault
+├── .agent/                  # Intelligence Layer
+│   ├── soul/                # Identity (SOUL.md) & Knowledge
+│   ├── skills/              # Agentic Skills
+│   └── team/                # TOON Personas
+├── src/
+│   ├── core/                # Neural Core (FastAPI)
+│   ├── bridge/              # Telegram Bridge
+│   └── web/                 # Premium Dashboard
+├── scripts/                 # Automation & Maintenance
 ├── logs_v1/                 # Execution logs
 └── start_ronaldinho.sh      # Unified Launcher
 ```
 
 ---
 
-## 🔑 OAuth2 Setup (Dashboard)
+## 🔑 Environment Configuration (.env)
 
-To use the Dashboard's "Connect" buttons, you must provide your own OAuth2 credentials:
+| Variable             | Description                               |
+| -------------------- | ----------------------------------------- |
+| `LLM_PROVIDER`       | Primary provider (gemini, openai, nvidia) |
+| `GEMINI_API_KEY`     | Key for Google AI Studio                  |
+| `TELEGRAM_BOT_TOKEN` | Bot token from BotFather                  |
+| `PORT`               | Primary Core Port (Default: 5000)         |
 
-1. **Google Gemini**:
-   - Go to [Google Cloud Console](https://console.cloud.google.com/).
-   - Create a project and enable the **Generative Language API**.
-   - Create an **OAuth 2.0 Client ID** (Web Application).
-   - Add `http://localhost:3000/index.html` to **Authorized redirect URIs**.
-   - Copy the Client ID and Secret to your `.env`.
-
-2. **Configuration**:
-   Add these to your `.env`:
-   ```bash
-   GOOGLE_CLIENT_ID=your-id.apps.googleusercontent.com
-   GOOGLE_CLIENT_SECRET=your-secret
-   ```
+---
 
 License: **MIT**
