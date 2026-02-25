@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 # Load Env
 load_dotenv(os.path.join(os.path.dirname(__file__), "../../.env"))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-NEURAL_CORE_URL = os.getenv("NEURAL_CORE_URL", "http://localhost:5000/api/chat")
+NEURAL_CORE_URL = os.getenv("NEURAL_CORE_URL", "http://127.0.0.1:5000/api/chat")
 BRIDGE_FILE = os.path.join(os.path.dirname(__file__), "../../.agent/brain/NEURAL_BRIDGE.md")
 LAST_ID_FILE = os.path.join(os.path.dirname(__file__), "../../.agent/brain/LAST_TELEGRAM_ID.txt")
 
@@ -72,7 +72,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             response = await client.post(
                 NEURAL_CORE_URL,
                 json={"message": text, "user_id": user_id, "platform": "telegram"},
-                timeout=60
+                timeout=180
             )
             if response.status_code == 200:
                 reply = response.json().get("response", "Erro: Resposta vazia.")

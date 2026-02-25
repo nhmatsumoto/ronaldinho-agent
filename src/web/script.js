@@ -4,7 +4,7 @@ const viewTitle = document.getElementById('view-title');
 const saveBtn = document.getElementById('save-all-btn');
 const toast = document.getElementById('toast');
 
-const CORE_URL = 'http://localhost:5000';
+const CORE_URL = 'http://127.0.0.1:5000';
 
 // Tab switching
 menuItems.forEach(item => {

@@ -1,41 +1,65 @@
-# Secrets & Credentials
+# --- SECRETS ---
 .env
 *.env
 .env.*
 secrets/
-**/*/secrets/
-**/*/secure_tokens/
+**/secrets/
+**/*.txt
+**/*.md
+!README.md
+!CONTRIBUTING.md
+!CHANGELOG.md
+!LICENSE
+!SECURITY.md
+!.github/**/*.md
 
-# Ronaldinho Local Workspace
+# --- RONALDINHO CORE ---
+.agent/
+**/.agent/
 workspace/
 ronaldinho/data/
-ronaldinho/audit/*.jsonl
-ronaldinho/memory/snapshots/*.json
-ronaldinho/reports/*.md
-!ronaldinho/audit/.gitkeep
-!ronaldinho/memory/snapshots/.gitkeep
+ronaldinho/memory/
+ronaldinho/audit/
+ronaldinho/reports/
 
-# Metadata & Performance
-.agent/
-ronaldinho/config/PERFORMANCE_LOG.toon
+# --- PYTHON ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
 
-# Build artifacts
-[Bb]in/
-[Oo]bj/
+# --- LOGS ---
+logs/
+logs_v1/
+*.log
+signaling.log
+
+# --- BUILD & TEMP ---
+dist/
+build/
 *.user
 *.userosscache
 *.sln.docstates
-dist/
-build/
-
-# Docker
-.docker/
-docker-compose.override.yml*
-
-# Logs & Temporary
-*.log
-logs/runs/
 tmp/
 build_output.txt
-DIGITE_O_CODIGO.sh
-ronaldinho/memory/
+
+# --- OTHERS ---
+.DS_Store
+.idea/
+.vscode/
+node_modules/
+.docker/
+docker-compose.override.yml

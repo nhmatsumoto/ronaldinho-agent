@@ -7,6 +7,9 @@ echo "🏀 Ronaldinho Agent is starting (Pure Background Mode)..."
 # Pre-flight: Kill any existing processes on ports 3000 and 5000
 echo "[*] Cleaning up old processes..."
 fuser -k 3000/tcp 3001/tcp 5000/tcp > /dev/null 2>&1
+pkill -f "main.py" > /dev/null 2>&1
+pkill -f "signaling_server.py" > /dev/null 2>&1
+sleep 1
 
 # 0. Check Virtual Environment and Logs
 if [ ! -d "venv" ]; then

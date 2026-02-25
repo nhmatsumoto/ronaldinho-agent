@@ -96,7 +96,13 @@ async def save_config(request: ConfigUpdateRequest):
     with open(env_path, 'w') as f:
         f.writelines(new_lines)
         
-    return {"status": "success", "message": "Configurações salvas. Reinicie o Ronaldinho para aplicar."}
+    # Update settings in memory
+    for k, v in updated_keys.items():
+        if v and not v.endswith("..."):
+            if hasattr(settings, k):
+                setattr(settings, k, v)
+        
+    return {"status": "success", "message": "Configurações salvas e aplicadas em tempo real (Core)."}
 
 @app.post("/api/chat")
 async def chat(request: MessageRequest):

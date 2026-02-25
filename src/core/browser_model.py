@@ -30,52 +30,73 @@ class BrowserModel:
                 ]
             )
             page = self.browser_context.pages[0] if self.browser_context.pages else await self.browser_context.new_page()
-            
-            # Listen for session data to extract the Access Token automatically
             page.on("response", self._intercept_auth)
-            
             await page.set_viewport_size({"width": 1920, "height": 1080})
+            
+            # Initial token extraction
+            try:
+                await page.goto("https://chatgpt.com", wait_until="domcontentloaded", timeout=30000)
+                await asyncio.sleep(5)
+                await self._extract_token_via_js(page)
+            except: pass
+            
             return page
         return self.browser_context.pages[0]
 
+    async def _extract_token_via_js(self, page):
+        try:
+            token = await page.evaluate("() => { try { return JSON.stringify(window.__NEXT_DATA__.props.pageProps.session); } catch(e) { return null; } }")
+            if token:
+                data = json.loads(token)
+                acc_token = data.get("accessToken")
+                if acc_token:
+                    self._save_token(acc_token)
+                    return
+            
+            acc_token = await page.evaluate("async () => { try { const r = await fetch('/api/auth/session'); const d = await r.json(); return d.accessToken; } catch(e) { return null; } }")
+            if acc_token:
+                self._save_token(acc_token)
+        except Exception as e:
+            logger.debug(f"JS Token Extraction failed: {e}")
+
+    def _save_token(self, token):
+        self.access_token = token
+        logger.info("[*] ChatGPT Token Intercepted/Extracted Successfully!")
+        token_path = os.path.join(self.session_dir, "last_token.txt")
+        with open(token_path, "w") as f:
+            f.write(self.access_token)
+
     async def _intercept_auth(self, response):
-        """Intercepts internal auth session to get the Access Token."""
-        # logger.debug(f"Intercepted: {response.url}")
-        if "auth/session" in response.url and response.status == 200:
+        url = response.url.lower()
+        if "auth/session" in url and response.status == 200:
             try:
                 data = await response.json()
                 if "accessToken" in data:
-                    self.access_token = data["accessToken"]
-                    logger.info("[*] ChatGPT Access Token Intercepted Successfully!")
-                    # Save it for light persistence
-                    with open(os.path.join(self.session_dir, "last_token.txt"), "w") as f:
-                        f.write(self.access_token)
-                else:
-                    logger.warning(f"[!] Auth session found but no accessToken in response: {list(data.keys())}")
-            except Exception as e:
-                logger.debug(f"Failed to parse auth session JSON: {e}")
+                    self._save_token(data["accessToken"])
+            except: pass
 
     async def generate_response(self, prompt: str, service="chatgpt") -> str:
-        """
-        Generates response. 
-        Tries Autonomous API first (Direct HTTP), then falls back to Browser Ghosting.
-        """
-        # Load token if exists
+        try:
+            return await asyncio.wait_for(self._generate_logic(prompt, service), timeout=95)
+        except asyncio.TimeoutError:
+            return "❌ Erro: Timeout (95s). O ChatGPT está demorando muito para responder."
+        except Exception as e:
+            return f"❌ Erro Crítico Motor: {str(e)}"
+
+    async def _generate_logic(self, prompt: str, service="chatgpt") -> str:
         token_path = os.path.join(self.session_dir, "last_token.txt")
         if not self.access_token and os.path.exists(token_path):
             with open(token_path, "r") as f:
                 self.access_token = f.read().strip()
 
-        # 1. ATTEMPT AUTONOMOUS API MODE (Dribbling Cloudflare)
+        # 1. AUTONOMOUS API MODE
         if self.access_token:
             try:
-                # This is a simplified version of the unofficial API logic
                 async with httpx.AsyncClient() as client:
                     headers = {
                         "Authorization": f"Bearer {self.access_token}",
                         "Content-Type": "application/json",
-                        "User-Agent": self.user_agent,
-                        "Accept": "text/event-stream"
+                        "User-Agent": self.user_agent
                     }
                     payload = {
                         "action": "next",
@@ -86,21 +107,15 @@ class BrowserModel:
                             "metadata": {}
                         }],
                         "model": "auto",
-                        "parent_message_id": "cb1c876e-821f-11ed-a1eb-0242ac120002", # Simplified
+                        "parent_message_id": "cb1c876e-821f-11ed-a1eb-0242ac120002",
                         "timezone_offset_min": -180,
                         "history_and_training_disabled": False
                     }
-                    
-                    # Note: Direct backend-api often needs more complex cookies/headers
-                    # We try it, but fall back instantly if it fails
                     resp = await client.post("https://chatgpt.com/backend-api/conversation", 
-                                          json=payload, headers=headers, timeout=20)
+                                          json=payload, headers=headers, timeout=30)
                     if resp.status_code == 200:
-                        logger.info("[*] Autonomous Engine: Direct API success.")
-                        # Parse SSE response (simplified)
-                        lines = resp.text.split("\n")
                         last_data = ""
-                        for line in lines:
+                        for line in resp.text.split("\n"):
                             if line.startswith("data: "):
                                 try:
                                     data_part = json.loads(line[6:])
@@ -108,20 +123,18 @@ class BrowserModel:
                                         last_data = "".join(data_part["message"]["content"]["parts"])
                                 except: pass
                         if last_data: return last_data
-            except Exception as e:
-                logger.debug(f"Direct API failed, falling back to browser: {e}")
+            except: pass
 
-        # 2. FALLBACK TO BROWSER GHOST MODE (Playwright)
+        # 2. BROWSER GHOST MODE
         page = await self._setup(headless=True)
         try:
             if service == "chatgpt":
                 await page.goto("https://chatgpt.com", wait_until="domcontentloaded", timeout=60000)
-                await asyncio.sleep(8)
+                await asyncio.sleep(5)
                 
                 if await page.query_selector("text=Log in") or await page.query_selector("text=Sign in"):
-                    return "❌ Erro: Sessão expirada. Rode './scripts/browser_login.sh' no painel."
+                    return "❌ Erro: Login necessário no ChatGPT."
 
-                # Find input
                 selectors = ["#prompt-textarea", "textarea", "div[contenteditable='true']"]
                 input_field = None
                 for _ in range(10):
@@ -131,25 +144,24 @@ class BrowserModel:
                     if input_field: break
                     await asyncio.sleep(1)
                 
-                if not input_field: return "❌ Erro: ChatGPT UI não carregou ou campo não encontrado."
+                if not input_field: return "❌ Erro: Campo de entrada não encontrado."
 
                 await input_field.fill(prompt)
                 await asyncio.sleep(1)
                 await page.keyboard.press("Enter")
                 
-                # Wait respond
-                await asyncio.sleep(8)
+                await asyncio.sleep(10)
                 try:
                     await page.wait_for_selector("button[data-testid='send-button']:not([disabled])", timeout=120000)
                 except: pass
                 
                 messages = await page.query_selector_all("div[data-message-author-role='assistant']")
-                if messages:
-                    return await messages[-1].inner_text()
+                if messages: return await messages[-1].inner_text()
                 
                 return "❌ Erro: Resposta não detectada."
         except Exception as e:
-            return f"❌ Erro Crítico BrowserModel: {str(e)}"
+            return f"❌ Erro Browser: {str(e)}"
+        return "❌ Erro Desconhecido."
 
     async def close(self):
         if self.browser_context: await self.browser_context.close()
