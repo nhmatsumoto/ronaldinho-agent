@@ -1,6 +1,7 @@
 import os
 import logging
 import random
+import asyncio
 from pydantic_ai import Agent, RunContext
 
 from config import settings
@@ -12,6 +13,7 @@ from benchmarker import get_latencies, get_fastest_provider
 from gemini_cli_local import gemini_cli
 from evolution_logger import evolution_logger
 from models import get_boot_model, get_model_instance, GEMINI_ROTATION_MODELS
+from browser_model import browser_model
 
 logger = logging.getLogger("neural-core")
 
@@ -111,6 +113,7 @@ class Orchestrator:
 
         # 3. Rotation Logic
         priority = settings.MODEL_PRIORITY.split(",")
+        failures = []
         for provider in priority:
             candidates = [None] if provider != "gemini" else GEMINI_ROTATION_MODELS
             for m_id in candidates:
@@ -123,13 +126,35 @@ class Orchestrator:
                     evolution_logger.log_event(provider, m_id or "default", "SUCCESS")
                     return result.data
                 except Exception as ef:
+                    failures.append(f"{provider}: {str(ef)[:50]}...")
                     logger.warning(f"[!] Fallback {provider} failed: {ef}")
                     continue
         
-        # 4. Final Fallback: Local CLI
+        # 4. Fallback: Local CLI (often has independent daily quota)
         try:
-            logger.info("[*] All remote models failed. Using local CLI fallback.")
-            return await gemini_cli.generate_response(message)
+            logger.info("[*] Remote models failed. Using local CLI fallback.")
+            cli_response = await gemini_cli.generate_response(message)
+            if "quota" in cli_response.lower() or "error" in cli_response.lower():
+                 raise Exception(cli_response)
+            return cli_response
+        except Exception as e:
+            logger.warning(f"[!] Local CLI failed: {e}. Activating Ghost Browser Fallback...")
+        
+        # 5. Final Fallback: Browser Ghost (ChatGPT Web)
+        try:
+            logger.info("[*] Activating final ghost fallback: Browser ChatGPT")
+            # We inject the system prompt into the browser message to maintain context
+            system_prompt = get_integrated_system_prompt(root_path, active_persona=persona)
+            full_prompt = f"SYSTEM INSTRUCTIONS:\n{system_prompt}\n\nUSER MESSAGE:\n{message}"
+            
+            response = await browser_model.generate_response(full_prompt, service="chatgpt")
+            return response
         except Exception as e:
             logger.error(f"Critical failure: {e}")
-            return "❌ **Ronaldinho fora de campo**: Todos os modelos falharam. Verifique sua conexão!"
+            failure_summary = "\n- ".join(failures)
+            return (
+                f"❌ **Ronaldinho fora de campo**: Todos os modelos, o CLI local e o Browser falharam.\n\n"
+                f"**Motivos:**\n- {failure_summary}\n\n"
+                f"💡 **Dica:** Parece que suas cotas gratuitas acabaram e o browser não está logado. "
+                f"Tente adicionar uma chave da Groq ou execute `scripts/browser_login.sh` para autenticar no ChatGPT!"
+            )

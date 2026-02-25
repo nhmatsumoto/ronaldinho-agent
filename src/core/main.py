@@ -45,7 +45,8 @@ async def chat(request: MessageRequest):
     except Exception as e:
         error_msg = str(e)
         print(f"[!] Error in chat: {error_msg}")
-        raise HTTPException(status_code=503, detail=error_msg)
+        status_code = 429 if "quota" in error_msg.lower() or "429" in error_msg else 503
+        raise HTTPException(status_code=status_code, detail=error_msg)
 
 # --- OAuth2 Endpoints ---
 

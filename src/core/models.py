@@ -11,9 +11,13 @@ from vault import vault
 
 logger = logging.getLogger("neural-core")
 
+# Models known to have separate or generous free tier quotas.
+# Fixed names for pydantic-ai compatibility.
 GEMINI_ROTATION_MODELS = [
     "gemini-2.0-flash",
+    "gemini-2.0-flash-exp",
     "gemini-1.5-flash", 
+    "gemini-1.5-flash-8b",
     "gemini-1.5-pro"
 ]
 
@@ -23,23 +27,24 @@ def get_model_instance(provider_name: str, model_id: str = None):
             user_token = vault.get_token("google")
             api_key = user_token.get("access_token") if user_token else settings.GEMINI_API_KEY
             if not api_key: return None
+            
+            m_id = model_id or "gemini-2.0-flash"
+            # Attempting to use the model ID directly as pydantic-ai handles the prefix
             provider = GoogleGLAProvider(api_key=api_key)
-            return GeminiModel(model_id or "gemini-2.0-flash", provider=provider)
+            return GeminiModel(m_id, provider=provider)
         
         elif provider_name == "openai":
-            if not settings.OPENAI_API_KEY: return None
-            provider = OpenAIProvider(api_key=settings.OPENAI_API_KEY)
+            api_key = settings.OPENAI_API_KEY
+            if not api_key: return None
+            provider = OpenAIProvider(api_key=api_key)
             return OpenAIChatModel(model_id or "gpt-4o", provider=provider)
-        
-        elif provider_name == "anthropic":
-            if not settings.ANTHROPIC_API_KEY: return None
-            provider = AnthropicProvider(api_key=settings.ANTHROPIC_API_KEY)
-            return AnthropicModel(model_id or "claude-3-5-sonnet-latest", provider=provider)
         
         elif provider_name == "nvidia":
             if not settings.NVIDIA_API_KEY: return None
+            # Standard NVIDIA IDs often use meta/ llama-3.1 etc
+            m_id = model_id or "meta/llama-3.1-8b-instruct"
             provider = OpenAIProvider(api_key=settings.NVIDIA_API_KEY, base_url=settings.NVIDIA_BASE_URL)
-            return OpenAIChatModel(model_id or settings.NVIDIA_MODEL_ID, provider=provider)
+            return OpenAIChatModel(m_id, provider=provider)
         
         elif provider_name == "groq":
             if not settings.GROQ_API_KEY: return None
@@ -55,5 +60,4 @@ def get_boot_model():
     for provider in priority:
         instance = get_model_instance(provider)
         if instance: return instance
-    # Ultimate fallback with hardcoded string (pydantic-ai will try to resolve it from env)
     return "google-gla:gemini-2.0-flash"
