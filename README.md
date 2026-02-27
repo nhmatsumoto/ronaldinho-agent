@@ -1,5 +1,4 @@
-# Ronaldinho Agent 🚀 (OpenClaw Pro Edition)
-
+# Ronaldinho Agent 🚀
 Ronaldinho is a phenomenal, autonomous engineering AI ecosystem. It is designed to be model-agnostic, self-evolving, and resilient, inspired by the high-performance principles of the **OpenClaw** framework.
 
 ---
