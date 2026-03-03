@@ -131,6 +131,7 @@ class Program
         if (earlyVault.GetGlobalKey("OPENAI") is string ok) builder.Configuration["OPENAI_API_KEY"] = ok;
         if (earlyVault.GetGlobalKey("ANTHROPIC") is string ak) builder.Configuration["ANTHROPIC_API_KEY"] = ak;
         if (earlyVault.GetGlobalKey("NVIDIA") is string nk) builder.Configuration["NVIDIA_API_KEY"] = nk;
+        if (earlyVault.GetGlobalKey("OPENROUTER") is string ork) builder.Configuration["OPENROUTER_API_KEY"] = ork;
 
         // 5. Initialize Core Services (singleton-like instantiations)
         var fileSystemSkill = new Services.SuperToolbox.FileSystemSkill(rootPath);
